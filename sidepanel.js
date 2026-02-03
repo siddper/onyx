@@ -105,11 +105,76 @@ exportBtn.addEventListener("click", async () => {
   chrome.tabs.create({ url: obsidianUrl });
 });
 
+// Wrap selection with char (open before, close after). Same char both sides except () [] {}
+const WRAP_CLOSE = { "`": "`", "*": "*", "(": ")", "{": "}", "[": "]", "~": "~" };
+const WRAP_OPEN = { Backquote: "`" }; // some keyboards report ` as "Backquote"
+const CLOSE_TO_OPEN = { "`": "`", "*": "*", ")": "(", "}": "{", "]": "[", "~": "~" };
+
 markdownInput.addEventListener("keydown", (e) => {
+  const start = markdownInput.selectionStart;
+  const end = markdownInput.selectionEnd;
+  const hasSelection = start !== end;
+  const value = markdownInput.value;
+  const openChar = WRAP_OPEN[e.key] ?? e.key;
+  const closeChar = WRAP_CLOSE[openChar] ?? WRAP_CLOSE[e.key];
+
+  // Backspace: empty pair (open|close) -> delete both
+  if (!hasSelection && e.key === "Backspace" && start > 0) {
+    const charBefore = value[start - 1];
+    const charAfter = value[start];
+    const expectedClose = WRAP_CLOSE[charBefore];
+    if (expectedClose !== undefined && charAfter === expectedClose) {
+      e.preventDefault();
+      markdownInput.value = value.slice(0, start - 1) + value.slice(start + 1);
+      markdownInput.selectionStart = markdownInput.selectionEnd = start - 1;
+      updatePreview();
+      saveSettings();
+      return;
+    }
+  }
+
+  // Delete: empty pair (open|close) -> delete both
+  if (!hasSelection && e.key === "Delete" && start > 0 && start < value.length) {
+    const charBefore = value[start - 1];
+    const charAfter = value[start];
+    const expectedOpen = CLOSE_TO_OPEN[charAfter];
+    if (expectedOpen !== undefined && charBefore === expectedOpen) {
+      e.preventDefault();
+      markdownInput.value = value.slice(0, start - 1) + value.slice(start + 1);
+      markdownInput.selectionStart = markdownInput.selectionEnd = start - 1;
+      updatePreview();
+      saveSettings();
+      return;
+    }
+  }
+
+  if (hasSelection && closeChar) {
+    e.preventDefault();
+    const before = markdownInput.value.slice(0, start);
+    const selected = markdownInput.value.slice(start, end);
+    const after = markdownInput.value.slice(end);
+    markdownInput.value = before + openChar + selected + closeChar + after;
+    markdownInput.selectionStart = start + openChar.length;
+    markdownInput.selectionEnd = start + openChar.length + selected.length;
+    updatePreview();
+    saveSettings();
+    return;
+  }
+
+  // No selection: insert pair and put cursor in between (* -> *|*, [ -> [|])
+  if (!hasSelection && closeChar) {
+    e.preventDefault();
+    const before = markdownInput.value.slice(0, start);
+    const after = markdownInput.value.slice(end);
+    markdownInput.value = before + openChar + closeChar + after;
+    markdownInput.selectionStart = markdownInput.selectionEnd = start + openChar.length;
+    updatePreview();
+    saveSettings();
+    return;
+  }
+
   if (e.key === "Tab") {
     e.preventDefault();
-    const start = markdownInput.selectionStart;
-    const end = markdownInput.selectionEnd;
     const spaces = "    ";
     const before = markdownInput.value.slice(0, start);
     const after = markdownInput.value.slice(end);
