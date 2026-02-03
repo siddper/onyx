@@ -1,5 +1,6 @@
 const vaultInput = document.getElementById("vaultInput");
 const titleInput = document.getElementById("titleInput");
+const folderInput = document.getElementById("folderInput");
 const markdownInput = document.getElementById("markdownInput");
 const markdownPreview = document.getElementById("markdownPreview");
 const saveSettingsBtn = document.getElementById("saveSettingsBtn");
@@ -36,10 +37,12 @@ function encodeObsidianParam(value) {
   return encodeURIComponent(value);
 }
 
-function buildObsidianUrl({ vault, title, content }) {
+function buildObsidianUrl({ vault, title, content, folder }) {
+  // Use "file" for path (folder/note); Obsidian requires / encoded as %2F
+  const filePath = folder ? `${folder.replace(/\/$/, "")}/${title}` : title;
   const params = [
     `vault=${encodeObsidianParam(vault)}`,
-    `name=${encodeObsidianParam(title)}`,
+    `file=${encodeObsidianParam(filePath)}`,
     `content=${encodeObsidianParam(content)}`
   ];
   return `obsidian://new?${params.join("&")}`;
@@ -50,6 +53,7 @@ async function loadSettings() {
   const settings = data[STORAGE_KEY] || {};
   vaultInput.value = settings.vault || "";
   titleInput.value = settings.title || "";
+  folderInput.value = settings.folder || "";
   markdownInput.value = settings.content || "";
 }
 
@@ -67,6 +71,7 @@ async function saveSettings(extra = {}) {
   const payload = {
     vault: vaultInput.value.trim(),
     title: titleInput.value.trim(),
+    folder: folderInput.value.trim(),
     content: markdownInput.value,
     ...extra
   };
@@ -91,11 +96,12 @@ exportBtn.addEventListener("click", async () => {
   }
 
   const title = normalizeTitle(titleInput.value);
+  const folder = folderInput.value.trim();
   const content = markdownInput.value;
 
-  await saveSettings({ title, content });
+  await saveSettings({ title, folder, content });
 
-  const obsidianUrl = buildObsidianUrl({ vault, title, content });
+  const obsidianUrl = buildObsidianUrl({ vault, title, content, folder });
   chrome.tabs.create({ url: obsidianUrl });
 });
 
