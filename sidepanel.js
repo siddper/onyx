@@ -3,9 +3,25 @@ const titleInput = document.getElementById("titleInput");
 const folderInput = document.getElementById("folderInput");
 const markdownInput = document.getElementById("markdownInput");
 const markdownPreview = document.getElementById("markdownPreview");
-const saveSettingsBtn = document.getElementById("saveSettingsBtn");
 const exportBtn = document.getElementById("exportBtn");
 const status = document.getElementById("status");
+
+const SAVE_DELAY_MS = 800;
+let saveTimeout = null;
+
+function scheduleSave() {
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    saveTimeout = null;
+    saveSettings();
+  }, SAVE_DELAY_MS);
+}
+
+function flushSave() {
+  clearTimeout(saveTimeout);
+  saveTimeout = null;
+  return saveSettings();
+}
 
 function updatePreview() {
   markdownPreview.innerHTML = typeof renderMarkdown === "function"
@@ -63,7 +79,7 @@ async function applyPendingImport() {
     markdownInput.value = pendingImportToEditor;
     await chrome.storage.local.remove("pendingImportToEditor");
     updatePreview();
-    await saveSettings();
+    scheduleSave();
   }
 }
 
@@ -78,13 +94,9 @@ async function saveSettings(extra = {}) {
   await chrome.storage.sync.set({ [STORAGE_KEY]: payload });
 }
 
-saveSettingsBtn.addEventListener("click", async () => {
-  await saveSettings();
-  const label = saveSettingsBtn.textContent;
-  saveSettingsBtn.textContent = "Saved!";
-  setTimeout(() => {
-    saveSettingsBtn.textContent = label;
-  }, 2000);
+[vaultInput, titleInput, folderInput].forEach((el) => {
+  el.addEventListener("input", scheduleSave);
+  el.addEventListener("change", scheduleSave);
 });
 
 exportBtn.addEventListener("click", async () => {
@@ -95,14 +107,21 @@ exportBtn.addEventListener("click", async () => {
     return;
   }
 
+  await flushSave();
+
   const title = normalizeTitle(titleInput.value);
   const folder = folderInput.value.trim();
   const content = markdownInput.value;
-
-  await saveSettings({ title, folder, content });
-
   const obsidianUrl = buildObsidianUrl({ vault, title, content, folder });
   chrome.tabs.create({ url: obsidianUrl });
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) flushSave();
+});
+
+window.addEventListener("pagehide", () => {
+  flushSave();
 });
 
 // Wrap selection with char (open before, close after). Same char both sides except () [] {}
@@ -117,7 +136,7 @@ function editorInsert(replaceStart, replaceEnd, text, cursorStart, cursorEnd) {
   document.execCommand("insertText", false, text);
   markdownInput.setSelectionRange(cursorStart, cursorEnd ?? cursorStart);
   updatePreview();
-  saveSettings();
+  scheduleSave();
 }
 
 markdownInput.addEventListener("keydown", (e) => {
@@ -196,14 +215,14 @@ markdownInput.addEventListener("keydown", (e) => {
 
 markdownInput.addEventListener("input", () => {
   updatePreview();
-  saveSettings();
+  scheduleSave();
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && changes.pendingImportToEditor?.newValue != null) {
     markdownInput.value = changes.pendingImportToEditor.newValue;
     updatePreview();
-    saveSettings();
+    scheduleSave();
     chrome.storage.local.remove("pendingImportToEditor");
   }
 });

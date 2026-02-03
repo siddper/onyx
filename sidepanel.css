@@ -34,7 +34,7 @@ body {
 
 .toolbar {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr auto auto auto;
+  grid-template-columns: 1fr 1fr 1fr auto auto;
   gap: 8px;
   align-items: end;
   padding: 12px;
@@ -253,12 +253,8 @@ body {
   font-weight: 600;
 }
 
-.ghost {
-  margin-top: 10px;
-}
 
-.primary,
-.ghost {
+.primary {
   border: none;
   border-radius: 8px;
   padding: 9px 14px;
@@ -267,10 +263,10 @@ body {
   background: var(--accent);
   color: var(--ink);
   transition: all 0.2s ease;
+  margin-top: 10px;
 }
 
-.primary:hover,
-.ghost:hover {
+.primary:hover {
   background: var(--accent-hover);
 }
 
