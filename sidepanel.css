@@ -1,0 +1,259 @@
+:root {
+  color-scheme: dark;
+  --bg: #0e0f10;
+  --panel: #141618;
+  --panel-strong: #1a1d20;
+  --ink: #e8e8e8;
+  --muted: #9aa0a6;
+  --accent: #2a2f33;
+  --accent-hover: #262a2e;
+  --radius: 10px;
+  --mono: "Geist Mono", "SF Mono", "JetBrains Mono", ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+  outline: none;
+  font-family: var(--mono);
+  scrollbar-width: none;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.app {
+  min-height: 100vh;
+  padding: 16px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 12px;
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto auto auto;
+  gap: 8px;
+  align-items: end;
+  padding: 12px;
+  background: var(--panel);
+  border-radius: var(--radius);
+}
+
+.toolbar label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.toolbar input {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  background: var(--panel-strong);
+  color: var(--ink);
+}
+
+.toolbar input::selection {
+  background: var(--accent-hover);
+}
+
+#status {
+  font-size: 12px;
+  color: var(--muted);
+  align-self: center;
+}
+
+.editor-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  min-height: 0;
+  flex: 1;
+}
+
+.editor-pane,
+.preview-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--panel);
+  border-radius: var(--radius);
+  min-height: 0;
+}
+
+.pane-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+#markdownInput {
+  width: 100%;
+  flex: 1;
+  min-height: 200px;
+  border: none;
+  resize: none;
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.6;
+  background: transparent;
+  color: var(--ink);
+}
+
+#markdownInput::selection {
+  background: var(--accent-hover);
+}
+
+#markdownPreview {
+  flex: 1;
+  min-height: 200px;
+  overflow: auto;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Rendered markdown styling */
+.markdown-body {
+  font-family: var(--mono);
+}
+
+.markdown-body h1 {
+  font-size: 1.75em;
+  font-weight: 700;
+  margin: 0.75em 0 0.5em;
+  padding-bottom: 0.2em;
+  border-bottom: 1px solid var(--accent);
+}
+
+.markdown-body h1:first-child {
+  margin-top: 0;
+}
+
+.markdown-body h2 {
+  font-size: 1.4em;
+  font-weight: 600;
+  margin: 0.75em 0 0.4em;
+}
+
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  font-size: 1.15em;
+  font-weight: 600;
+  margin: 0.6em 0 0.3em;
+}
+
+.markdown-body p {
+  margin: 0.5em 0;
+}
+
+.markdown-body p:first-child {
+  margin-top: 0;
+}
+
+.markdown-body strong {
+  font-weight: 700;
+}
+
+.markdown-body em {
+  font-style: italic;
+}
+
+.markdown-body code {
+  font-size: 0.9em;
+  padding: 0.15em 0.4em;
+  background: var(--panel-strong);
+  border-radius: 4px;
+  color: var(--ink);
+}
+
+.markdown-body pre {
+  margin: 0.75em 0;
+  padding: 12px;
+  background: var(--panel-strong);
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.markdown-body pre code {
+  padding: 0;
+  background: none;
+  font-size: 13px;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.markdown-body li {
+  margin: 0.25em 0;
+}
+
+.markdown-body blockquote {
+  margin: 0.75em 0;
+  padding: 0 1em;
+  border-left: 4px solid var(--muted);
+  color: var(--muted);
+}
+
+.markdown-body blockquote p {
+  margin: 0.35em 0;
+}
+
+.markdown-body a {
+  color: #7eb8da;
+  text-decoration: none;
+}
+
+.markdown-body a:hover {
+  text-decoration: underline;
+}
+
+.markdown-body hr {
+  border: none;
+  border-top: 1px solid var(--accent);
+  margin: 1em 0;
+}
+
+.ghost {
+  margin-top: 10px;
+}
+
+.primary,
+.ghost {
+  border: none;
+  border-radius: 8px;
+  padding: 9px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  background: var(--accent);
+  color: var(--ink);
+  transition: all 0.2s ease;
+}
+
+.primary:hover,
+.ghost:hover {
+  background: var(--accent-hover);
+}
+
+@media (max-width: 720px) {
+  .toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-wrap {
+    grid-template-columns: 1fr;
+  }
+}

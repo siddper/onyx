@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Markdown Editor",
+  "version": "0.1.0",
+  "description": "Open a side panel markdown editor and export to Obsidian.",
+  "permissions": ["sidePanel", "storage"],
+  "action": {
+    "default_title": "Open Markdown Side Panel"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}

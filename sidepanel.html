@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Markdown Side Panel</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <div class="app">
+      <section class="toolbar" aria-label="Obsidian Settings">
+        <label>
+          Vault name
+          <input id="vaultInput" type="text" placeholder="MyVault" />
+        </label>
+        <label style="margin-top: 5px;">
+          Note title
+          <input id="titleInput" type="text" placeholder="Untitled" />
+        </label>
+        <button id="saveSettingsBtn" class="ghost">Save Settings</button>
+        <button id="exportBtn" class="primary">Export to Obsidian</button>
+        <span id="status" role="status" aria-live="polite"></span>
+      </section>
+
+      <main class="editor-wrap">
+        <div class="editor-pane">
+          <label class="pane-label" for="markdownInput">Source</label>
+          <textarea id="markdownInput" placeholder="# Start writing markdown..." spellcheck="true"></textarea>
+        </div>
+        <div class="preview-pane">
+          <span class="pane-label">Preview</span>
+          <div id="markdownPreview" class="markdown-body" aria-live="polite"></div>
+        </div>
+      </main>
+    </div>
+
+    <script src="markdown.js"></script>
+    <script src="sidepanel.js"></script>
+  </body>
+</html>
