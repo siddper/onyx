@@ -53,6 +53,16 @@ async function loadSettings() {
   markdownInput.value = settings.content || "";
 }
 
+async function applyPendingImport() {
+  const { pendingImportToEditor } = await chrome.storage.local.get("pendingImportToEditor");
+  if (pendingImportToEditor != null && pendingImportToEditor !== "") {
+    markdownInput.value = pendingImportToEditor;
+    await chrome.storage.local.remove("pendingImportToEditor");
+    updatePreview();
+    await saveSettings();
+  }
+}
+
 async function saveSettings(extra = {}) {
   const payload = {
     vault: vaultInput.value.trim(),
@@ -105,5 +115,16 @@ markdownInput.addEventListener("input", () => {
   saveSettings();
 });
 
-loadSettings();
-updatePreview();
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes.pendingImportToEditor?.newValue != null) {
+    markdownInput.value = changes.pendingImportToEditor.newValue;
+    updatePreview();
+    saveSettings();
+    chrome.storage.local.remove("pendingImportToEditor");
+  }
+});
+
+loadSettings().then(() => {
+  updatePreview();
+  applyPendingImport();
+});
