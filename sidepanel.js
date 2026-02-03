@@ -128,6 +128,22 @@ markdownInput.addEventListener("keydown", (e) => {
   const openChar = WRAP_OPEN[e.key] ?? e.key;
   const closeChar = WRAP_CLOSE[openChar] ?? WRAP_CLOSE[e.key];
 
+  // Cmd+B / Ctrl+B: bold (**)
+  if ((e.metaKey || e.ctrlKey) && e.key === "b") {
+    e.preventDefault();
+    const selected = value.slice(start, end);
+    editorInsert(start, end, "**" + selected + "**", start + 2, start + 2 + selected.length);
+    return;
+  }
+
+  // Cmd+I / Ctrl+I: italic (*)
+  if ((e.metaKey || e.ctrlKey) && e.key === "i") {
+    e.preventDefault();
+    const selected = value.slice(start, end);
+    editorInsert(start, end, "*" + selected + "*", start + 1, start + 1 + selected.length);
+    return;
+  }
+
   // Backspace: empty pair (open|close) -> delete both
   if (!hasSelection && e.key === "Backspace" && start > 0) {
     const charBefore = value[start - 1];
