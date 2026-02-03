@@ -75,7 +75,11 @@ async function saveSettings(extra = {}) {
 
 saveSettingsBtn.addEventListener("click", async () => {
   await saveSettings();
-  setStatus("Saved settings.");
+  const label = saveSettingsBtn.textContent;
+  saveSettingsBtn.textContent = "Saved!";
+  setTimeout(() => {
+    saveSettingsBtn.textContent = label;
+  }, 2000);
 });
 
 exportBtn.addEventListener("click", async () => {

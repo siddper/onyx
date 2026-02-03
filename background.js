@@ -29,10 +29,9 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   } else if (info.menuItemId === "importToObsidian") {
     const { obsidianSettings } = await chrome.storage.sync.get("obsidianSettings");
     const vault = obsidianSettings?.vault?.trim() || "";
-    const title = obsidianSettings?.title?.trim() || "Imported";
     const params = [
       `vault=${encodeURIComponent(vault)}`,
-      `name=${encodeURIComponent(title)}`,
+      `name=${encodeURIComponent("Import from Markdown Editor")}`,
       `content=${encodeURIComponent(text)}`
     ];
     chrome.tabs.create({ url: `obsidian://new?${params.join("&")}` });

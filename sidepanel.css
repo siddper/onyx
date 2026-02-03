@@ -234,6 +234,25 @@ body {
   margin: 1em 0;
 }
 
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75em 0;
+  font-size: 14px;
+}
+
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid var(--accent);
+  padding: 0.4em 0.75em;
+  text-align: left;
+}
+
+.markdown-body thead th {
+  background: var(--panel-strong);
+  font-weight: 600;
+}
+
 .ghost {
   margin-top: 10px;
 }

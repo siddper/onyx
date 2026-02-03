@@ -124,6 +124,49 @@
       return 0;
     }
 
+    // Table (| col1 | col2 |)
+    if (trimmed.startsWith("|") && trimmed.includes("|", 1)) {
+      const rows = [];
+      let j = 0;
+      while (j < nextLines.length && nextLines[j].trim().startsWith("|") && nextLines[j].trim().includes("|", 1)) {
+        rows.push(nextLines[j].trim());
+        j++;
+      }
+      const allRows = [trimmed, ...rows];
+      const parseCells = (row) => {
+        const parts = row.split("|").map((s) => s.trim());
+        if (parts[0] === "") parts.shift();
+        if (parts[parts.length - 1] === "") parts.pop();
+        return parts;
+      };
+      const isSeparator = (cells) =>
+        cells.length > 0 && cells.every((c) => /^:?-+:?$/.test(c));
+      const headerCells = parseCells(allRows[0]);
+      let headerRow = null;
+      let bodyRows = allRows;
+      if (allRows.length >= 2 && isSeparator(parseCells(allRows[1]))) {
+        headerRow = headerCells;
+        bodyRows = allRows.slice(2);
+      } else {
+        bodyRows = allRows;
+      }
+      let html = "<table><tbody>";
+      if (headerRow) {
+        html =
+          "<table><thead><tr>" +
+          headerRow.map((c) => "<th>" + parseInline(c) + "</th>").join("") +
+          "</tr></thead><tbody>";
+      }
+      for (const row of bodyRows) {
+        const cells = parseCells(row);
+        if (cells.length === 0) continue;
+        html += "<tr>" + cells.map((c) => "<td>" + parseInline(c) + "</td>").join("") + "</tr>";
+      }
+      html += "</tbody></table>";
+      output.push(html);
+      return j;
+    }
+
     // Paragraph
     output.push("<p>" + parseInline(trimmed) + "</p>");
     return 0;
