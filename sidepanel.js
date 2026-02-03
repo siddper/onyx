@@ -110,6 +110,16 @@ const WRAP_CLOSE = { "`": "`", "*": "*", "(": ")", "{": "}", "[": "]", "~": "~" 
 const WRAP_OPEN = { Backquote: "`" }; // some keyboards report ` as "Backquote"
 const CLOSE_TO_OPEN = { "`": "`", "*": "*", ")": "(", "}": "{", "]": "[", "~": "~" };
 
+// Use execCommand so edits participate in browser undo/redo (Cmd+Z / Ctrl+Z)
+function editorInsert(replaceStart, replaceEnd, text, cursorStart, cursorEnd) {
+  markdownInput.focus();
+  markdownInput.setSelectionRange(replaceStart, replaceEnd);
+  document.execCommand("insertText", false, text);
+  markdownInput.setSelectionRange(cursorStart, cursorEnd ?? cursorStart);
+  updatePreview();
+  saveSettings();
+}
+
 markdownInput.addEventListener("keydown", (e) => {
   const start = markdownInput.selectionStart;
   const end = markdownInput.selectionEnd;
@@ -125,10 +135,7 @@ markdownInput.addEventListener("keydown", (e) => {
     const expectedClose = WRAP_CLOSE[charBefore];
     if (expectedClose !== undefined && charAfter === expectedClose) {
       e.preventDefault();
-      markdownInput.value = value.slice(0, start - 1) + value.slice(start + 1);
-      markdownInput.selectionStart = markdownInput.selectionEnd = start - 1;
-      updatePreview();
-      saveSettings();
+      editorInsert(start - 1, start + 1, "", start - 1, start - 1);
       return;
     }
   }
@@ -140,48 +147,34 @@ markdownInput.addEventListener("keydown", (e) => {
     const expectedOpen = CLOSE_TO_OPEN[charAfter];
     if (expectedOpen !== undefined && charBefore === expectedOpen) {
       e.preventDefault();
-      markdownInput.value = value.slice(0, start - 1) + value.slice(start + 1);
-      markdownInput.selectionStart = markdownInput.selectionEnd = start - 1;
-      updatePreview();
-      saveSettings();
+      editorInsert(start - 1, start + 1, "", start - 1, start - 1);
       return;
     }
   }
 
   if (hasSelection && closeChar) {
     e.preventDefault();
-    const before = markdownInput.value.slice(0, start);
-    const selected = markdownInput.value.slice(start, end);
-    const after = markdownInput.value.slice(end);
-    markdownInput.value = before + openChar + selected + closeChar + after;
-    markdownInput.selectionStart = start + openChar.length;
-    markdownInput.selectionEnd = start + openChar.length + selected.length;
-    updatePreview();
-    saveSettings();
+    const selected = value.slice(start, end);
+    editorInsert(
+      start,
+      end,
+      openChar + selected + closeChar,
+      start + openChar.length,
+      start + openChar.length + selected.length
+    );
     return;
   }
 
   // No selection: insert pair and put cursor in between (* -> *|*, [ -> [|])
   if (!hasSelection && closeChar) {
     e.preventDefault();
-    const before = markdownInput.value.slice(0, start);
-    const after = markdownInput.value.slice(end);
-    markdownInput.value = before + openChar + closeChar + after;
-    markdownInput.selectionStart = markdownInput.selectionEnd = start + openChar.length;
-    updatePreview();
-    saveSettings();
+    editorInsert(start, end, openChar + closeChar, start + openChar.length, start + openChar.length);
     return;
   }
 
   if (e.key === "Tab") {
     e.preventDefault();
-    const spaces = "    ";
-    const before = markdownInput.value.slice(0, start);
-    const after = markdownInput.value.slice(end);
-    markdownInput.value = before + spaces + after;
-    markdownInput.selectionStart = markdownInput.selectionEnd = start + spaces.length;
-    updatePreview();
-    saveSettings();
+    editorInsert(start, end, "    ", start + 4, start + 4);
   }
 });
 
