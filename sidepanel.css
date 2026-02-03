@@ -197,6 +197,13 @@ body {
   padding-left: 1.5em;
 }
 
+.markdown-body ul ul,
+.markdown-body ol ol,
+.markdown-body ul ol,
+.markdown-body ol ul {
+  margin: 0.25em 0;
+}
+
 .markdown-body li {
   margin: 0.25em 0;
 }

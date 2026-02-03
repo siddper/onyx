@@ -85,6 +85,21 @@ exportBtn.addEventListener("click", async () => {
   chrome.tabs.create({ url: obsidianUrl });
 });
 
+markdownInput.addEventListener("keydown", (e) => {
+  if (e.key === "Tab") {
+    e.preventDefault();
+    const start = markdownInput.selectionStart;
+    const end = markdownInput.selectionEnd;
+    const spaces = "    ";
+    const before = markdownInput.value.slice(0, start);
+    const after = markdownInput.value.slice(end);
+    markdownInput.value = before + spaces + after;
+    markdownInput.selectionStart = markdownInput.selectionEnd = start + spaces.length;
+    updatePreview();
+    saveSettings();
+  }
+});
+
 markdownInput.addEventListener("input", () => {
   updatePreview();
   saveSettings();

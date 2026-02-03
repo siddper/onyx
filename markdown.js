@@ -19,6 +19,30 @@
       .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
   }
 
+  function buildListTree(items) {
+    const root = { indent: -1, children: [] };
+    const stack = [root];
+    for (const item of items) {
+      while (stack.length > 1 && stack[stack.length - 1].indent >= item.indent) stack.pop();
+      const node = { indent: item.indent, content: item.content, children: [] };
+      stack[stack.length - 1].children.push(node);
+      stack.push(node);
+    }
+    return root.children;
+  }
+
+  function renderListTree(items, openTag, closeTag, renderItemContent) {
+    const tree = buildListTree(items);
+    function renderNode(node) {
+      const nested =
+        node.children.length > 0
+          ? openTag + node.children.map(renderNode).join("") + closeTag
+          : "";
+      return "<li>" + renderItemContent(node) + nested + "</li>";
+    }
+    return openTag + tree.map(renderNode).join("") + closeTag;
+  }
+
   function parseBlock(line, nextLines, output) {
     const trimmed = line.trim();
     if (!trimmed) {
@@ -52,27 +76,33 @@
       return i;
     }
 
-    // Unordered list
+    // Unordered list (with nesting by indentation)
     if ((match = trimmed.match(/^[-*+]\s+(.+)$/))) {
-      const items = [parseInline(match[1])];
+      const getIndent = (raw) => (raw.match(/^[\s]*/)[0].replace(/\t/g, "    ").length);
+      const items = [{ indent: getIndent(line), content: match[1] }];
       let j = 0;
       while (j < nextLines.length && /^\s*[-*+]\s+.+/.test(nextLines[j])) {
-        items.push(parseInline(nextLines[j].replace(/^\s*[-*+]\s+/, "")));
+        const raw = nextLines[j];
+        const bulletMatch = raw.match(/^(\s*)[-*+]\s+(.+)$/);
+        if (bulletMatch) items.push({ indent: getIndent(raw), content: bulletMatch[2] });
         j++;
       }
-      output.push("<ul>" + items.map((item) => `<li>${item}</li>`).join("") + "</ul>");
+      output.push(renderListTree(items, "<ul>", "</ul>", (item) => parseInline(item.content)));
       return j;
     }
 
-    // Ordered list
+    // Ordered list (with nesting by indentation)
     if ((match = trimmed.match(/^\d+\.\s+(.+)$/))) {
-      const items = [parseInline(match[1])];
+      const getIndent = (raw) => (raw.match(/^[\s]*/)[0].replace(/\t/g, "    ").length);
+      const items = [{ indent: getIndent(line), content: match[1] }];
       let j = 0;
       while (j < nextLines.length && /^\s*\d+\.\s+.+/.test(nextLines[j])) {
-        items.push(parseInline(nextLines[j].replace(/^\s*\d+\.\s+/, "")));
+        const raw = nextLines[j];
+        const bulletMatch = raw.match(/^(\s*)\d+\.\s+(.+)$/);
+        if (bulletMatch) items.push({ indent: getIndent(raw), content: bulletMatch[2] });
         j++;
       }
-      output.push("<ol>" + items.map((item) => `<li>${item}</li>`).join("") + "</ol>");
+      output.push(renderListTree(items, "<ol>", "</ol>", (item) => parseInline(item.content)));
       return j;
     }
 
