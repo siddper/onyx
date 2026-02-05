@@ -41,7 +41,11 @@
       <main class="editor-wrap" id="editorWrap">
         <div class="editor-pane">
           <label class="pane-label" for="markdownInput">Source</label>
-          <textarea id="markdownInput" placeholder="# Start writing markdown..." spellcheck="true"></textarea>
+          <div class="editor-caret-wrap">
+            <textarea id="markdownInput" placeholder="# Start writing markdown..." spellcheck="true"></textarea>
+            <div id="editorCaretMirror" class="editor-caret-mirror" aria-hidden="true"></div>
+            <div id="editorFakeCaret" class="editor-fake-caret" aria-hidden="true"></div>
+          </div>
         </div>
         <div class="preview-pane">
           <span class="pane-label">Preview</span>

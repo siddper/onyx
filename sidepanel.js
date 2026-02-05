@@ -8,8 +8,14 @@ const status = document.getElementById("status");
 const settingsBtn = document.getElementById("settingsBtn");
 const editorWrap = document.getElementById("editorWrap");
 const customFontsEl = document.getElementById("customFonts");
+const editorCaretWrap = document.querySelector(".editor-caret-wrap");
+const editorCaretMirror = document.getElementById("editorCaretMirror");
+const editorFakeCaret = document.getElementById("editorFakeCaret");
 
 const EDITOR_SETTINGS_KEY = "editorSettings";
+let caretStyle = "line";
+let caretBlinkTimer = null;
+let caretVisible = true;
 
 const FONT_PRESETS = [
   { id: "inter", label: "Inter", fontFamily: '"Inter", sans-serif' },
@@ -116,8 +122,89 @@ async function loadEditorSettings() {
   const data = await chrome.storage.sync.get(EDITOR_SETTINGS_KEY);
   const editorSettings = data[EDITOR_SETTINGS_KEY] || {};
   const previewEnabled = editorSettings.previewEnabled !== false;
+  caretStyle = editorSettings.caretStyle || "line";
+  if (editorFakeCaret) editorFakeCaret.dataset.style = caretStyle;
   applyPreviewVisibility(previewEnabled);
   applyFonts(editorSettings);
+}
+
+function getCaretCoordinates() {
+  if (!editorCaretMirror || !markdownInput) return null;
+  const text = markdownInput.value;
+  const pos = markdownInput.selectionEnd;
+  const before = text.substring(0, pos);
+  const after = text.substring(pos);
+  const cs = getComputedStyle(markdownInput);
+  editorCaretMirror.style.fontFamily = cs.fontFamily;
+  editorCaretMirror.style.fontSize = cs.fontSize;
+  editorCaretMirror.style.lineHeight = cs.lineHeight;
+  const padL = parseFloat(cs.paddingLeft) || 0;
+  const padT = parseFloat(cs.paddingTop) || 0;
+  editorCaretMirror.style.width = (markdownInput.clientWidth - padL - (parseFloat(cs.paddingRight) || 0)) + "px";
+  editorCaretMirror.style.padding = "0";
+  editorCaretMirror.style.boxSizing = "border-box";
+  editorCaretMirror.innerHTML = escapeHtml(before) + '<span data-caret-pos>\u200b</span><span data-char-width>M</span>' + escapeHtml(after);
+  const span = editorCaretMirror.querySelector("[data-caret-pos]");
+  const charSpan = editorCaretMirror.querySelector("[data-char-width]");
+  if (!span) return null;
+  const left = span.offsetLeft - markdownInput.scrollLeft + padL;
+  const top = span.offsetTop - markdownInput.scrollTop + padT;
+  const height = span.offsetHeight;
+  const raw = charSpan ? charSpan.offsetLeft - span.offsetLeft : 8;
+  const charWidth = Math.max(10, Math.round(raw * 1.1));
+  return { left, top, height, bottom: top + height, charWidth };
+}
+
+function updateFakeCaret() {
+  if (!editorFakeCaret || !editorCaretWrap) return;
+  if (document.activeElement !== markdownInput) {
+    editorFakeCaret.style.opacity = "0";
+    return;
+  }
+  const coords = getCaretCoordinates();
+  if (!coords) {
+    editorFakeCaret.style.opacity = "0";
+    return;
+  }
+  editorFakeCaret.style.left = coords.left + "px";
+  if (caretStyle === "underline") {
+    editorFakeCaret.style.width = (coords.charWidth ?? 8) + "px";
+    editorFakeCaret.style.height = "2px";
+    editorFakeCaret.style.top = coords.bottom - 2 + "px";
+  } else if (caretStyle === "block") {
+    editorFakeCaret.style.width = (coords.charWidth ?? 8) + "px";
+    editorFakeCaret.style.top = coords.top + "px";
+    editorFakeCaret.style.height = coords.height + "px";
+  } else {
+    editorFakeCaret.style.width = "2px";
+    editorFakeCaret.style.top = coords.top + "px";
+    editorFakeCaret.style.height = coords.height + "px";
+  }
+  editorFakeCaret.style.opacity = caretVisible ? "1" : "0";
+}
+
+function scheduleCaretUpdate() {
+  requestAnimationFrame(() => {
+    updateFakeCaret();
+  });
+}
+
+function startCaretBlink() {
+  if (caretBlinkTimer) return;
+  caretVisible = true;
+  editorFakeCaret.style.opacity = "1";
+  caretBlinkTimer = setInterval(() => {
+    caretVisible = !caretVisible;
+    editorFakeCaret.style.opacity = caretVisible ? "1" : "0";
+  }, 530);
+}
+
+function stopCaretBlink() {
+  if (caretBlinkTimer) {
+    clearInterval(caretBlinkTimer);
+    caretBlinkTimer = null;
+  }
+  editorFakeCaret.style.opacity = "0";
 }
 
 function applyPreviewVisibility(enabled) {
@@ -177,6 +264,11 @@ chrome.storage.onChanged.addListener((changes, area) => {
     const s = changes[EDITOR_SETTINGS_KEY].newValue;
     applyPreviewVisibility(s.previewEnabled !== false);
     applyFonts(s);
+    if (s.caretStyle && editorFakeCaret) {
+      caretStyle = s.caretStyle;
+      editorFakeCaret.dataset.style = caretStyle;
+      scheduleCaretUpdate();
+    }
   }
 });
 
@@ -201,6 +293,7 @@ function editorInsert(replaceStart, replaceEnd, text, cursorStart, cursorEnd) {
   markdownInput.setSelectionRange(cursorStart, cursorEnd ?? cursorStart);
   updatePreview();
   scheduleSave();
+  scheduleCaretUpdate();
 }
 
 markdownInput.addEventListener("keydown", (e) => {
@@ -280,6 +373,18 @@ markdownInput.addEventListener("keydown", (e) => {
 markdownInput.addEventListener("input", () => {
   updatePreview();
   scheduleSave();
+  scheduleCaretUpdate();
+});
+markdownInput.addEventListener("click", scheduleCaretUpdate);
+markdownInput.addEventListener("keyup", scheduleCaretUpdate);
+markdownInput.addEventListener("scroll", scheduleCaretUpdate);
+markdownInput.addEventListener("focus", () => {
+  startCaretBlink();
+  scheduleCaretUpdate();
+});
+markdownInput.addEventListener("blur", () => {
+  stopCaretBlink();
+  if (editorFakeCaret) editorFakeCaret.style.opacity = "0";
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
@@ -296,4 +401,5 @@ loadSettings()
   .then(() => {
     updatePreview();
     applyPendingImport();
+    scheduleCaretUpdate();
   });
