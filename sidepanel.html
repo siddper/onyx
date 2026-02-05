@@ -24,12 +24,31 @@
             Note title
             <input id="titleInput" type="text" placeholder="Untitled" />
           </label>
-          <button id="exportBtn" class="primary">Export to Obsidian</button>
           <span id="status" role="status" aria-live="polite"></span>
+        </div>
+        <div class="toolbar-row">
+          <button id="exportBtn" class="primary">Export to Obsidian</button>
+        </div>
+        <div class="toolbar-row">
+          <button id="settingsBtn" class="ghost">Settings</button>
         </div>
       </section>
 
-      <main class="editor-wrap">
+      <div id="settingsOverlay" class="settings-overlay" aria-hidden="true">
+        <div class="settings-panel" role="dialog" aria-labelledby="settingsTitle" aria-modal="true">
+          <h2 id="settingsTitle" class="settings-title">Settings</h2>
+          <div class="settings-item">
+            <label class="settings-label" for="previewToggle">Show preview</label>
+            <label class="toggle-wrap" aria-label="Toggle preview">
+              <input id="previewToggle" type="checkbox" checked />
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+          <button id="settingsDoneBtn" class="primary">Done</button>
+        </div>
+      </div>
+
+      <main class="editor-wrap" id="editorWrap">
         <div class="editor-pane">
           <label class="pane-label" for="markdownInput">Source</label>
           <textarea id="markdownInput" placeholder="# Start writing markdown..." spellcheck="true"></textarea>

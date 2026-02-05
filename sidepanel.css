@@ -60,7 +60,7 @@ body {
 }
 
 .toolbar-row:not(.toolbar-row--half) {
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto;
 }
 
 .toolbar label {
@@ -278,20 +278,127 @@ body {
 }
 
 
-.primary {
+.primary,
+.ghost {
   border: none;
   border-radius: 8px;
   padding: 9px 14px;
   font-size: 12px;
   cursor: pointer;
+  transition: all 0.2s ease;
   background: var(--accent);
   color: var(--ink);
-  transition: all 0.2s ease;
-  margin-top: 10px;
 }
 
-.primary:hover {
+.primary:hover, .ghost:hover {
   background: var(--accent-hover);
+}
+
+/* Settings overlay */
+.settings-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.settings-overlay.is-open {
+  display: flex;
+}
+
+.settings-panel {
+  width: 100%;
+  max-width: 320px;
+  padding: 20px;
+  background: var(--panel);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.settings-title {
+  margin: 0 0 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.settings-label {
+  font-size: 13px;
+  color: var(--ink);
+  margin: 0;
+  cursor: pointer;
+}
+
+.toggle-wrap {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.toggle-wrap input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-track {
+  position: relative;
+  display: block;
+  width: 36px;
+  height: 20px;
+  background: var(--panel-strong);
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.toggle-wrap input:checked + .toggle-track {
+  background: var(--accent);
+}
+
+.toggle-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: var(--ink);
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.toggle-wrap input:checked + .toggle-track::after {
+  transform: translateX(16px);
+}
+
+.settings-panel .primary {
+  width: 100%;
+  margin-top: 0;
+}
+
+/* Preview hidden layout */
+.editor-wrap.preview-hidden .preview-pane {
+  display: none;
+}
+
+.editor-wrap.preview-hidden {
+  grid-template-columns: 1fr;
 }
 
 @media (max-width: 720px) {

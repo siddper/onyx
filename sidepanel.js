@@ -5,6 +5,13 @@ const markdownInput = document.getElementById("markdownInput");
 const markdownPreview = document.getElementById("markdownPreview");
 const exportBtn = document.getElementById("exportBtn");
 const status = document.getElementById("status");
+const settingsBtn = document.getElementById("settingsBtn");
+const settingsOverlay = document.getElementById("settingsOverlay");
+const previewToggle = document.getElementById("previewToggle");
+const settingsDoneBtn = document.getElementById("settingsDoneBtn");
+const editorWrap = document.getElementById("editorWrap");
+
+const EDITOR_SETTINGS_KEY = "editorSettings";
 
 const SAVE_DELAY_MS = 800;
 let saveTimeout = null;
@@ -24,6 +31,7 @@ function flushSave() {
 }
 
 function updatePreview() {
+  if (editorWrap.classList.contains("preview-hidden")) return;
   markdownPreview.innerHTML = typeof renderMarkdown === "function"
     ? renderMarkdown(markdownInput.value)
     : escapeHtml(markdownInput.value);
@@ -73,6 +81,19 @@ async function loadSettings() {
   markdownInput.value = settings.content || "";
 }
 
+async function loadEditorSettings() {
+  const data = await chrome.storage.sync.get(EDITOR_SETTINGS_KEY);
+  const editorSettings = data[EDITOR_SETTINGS_KEY] || {};
+  const previewEnabled = editorSettings.previewEnabled !== false;
+  previewToggle.checked = previewEnabled;
+  applyPreviewVisibility(previewEnabled);
+}
+
+function applyPreviewVisibility(enabled) {
+  editorWrap.classList.toggle("preview-hidden", !enabled);
+  if (enabled) updatePreview();
+}
+
 async function applyPendingImport() {
   const { pendingImportToEditor } = await chrome.storage.local.get("pendingImportToEditor");
   if (pendingImportToEditor != null && pendingImportToEditor !== "") {
@@ -114,6 +135,29 @@ exportBtn.addEventListener("click", async () => {
   const content = markdownInput.value;
   const obsidianUrl = buildObsidianUrl({ vault, title, content, folder });
   chrome.tabs.create({ url: obsidianUrl });
+});
+
+settingsBtn.addEventListener("click", () => {
+  settingsOverlay.classList.add("is-open");
+  settingsOverlay.setAttribute("aria-hidden", "false");
+});
+
+settingsDoneBtn.addEventListener("click", () => {
+  settingsOverlay.classList.remove("is-open");
+  settingsOverlay.setAttribute("aria-hidden", "true");
+});
+
+settingsOverlay.addEventListener("click", (e) => {
+  if (e.target === settingsOverlay) {
+    settingsOverlay.classList.remove("is-open");
+    settingsOverlay.setAttribute("aria-hidden", "true");
+  }
+});
+
+previewToggle.addEventListener("change", async () => {
+  const enabled = previewToggle.checked;
+  applyPreviewVisibility(enabled);
+  await chrome.storage.sync.set({ [EDITOR_SETTINGS_KEY]: { previewEnabled: enabled } });
 });
 
 document.addEventListener("visibilitychange", () => {
@@ -227,7 +271,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
 });
 
-loadSettings().then(() => {
-  updatePreview();
-  applyPendingImport();
-});
+loadSettings()
+  .then(() => loadEditorSettings())
+  .then(() => {
+    updatePreview();
+    applyPendingImport();
+  });
