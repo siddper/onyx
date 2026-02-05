@@ -17,6 +17,7 @@
   box-sizing: border-box;
   outline: none;
   font-family: var(--font-interface);
+  scrollbar-width: none;
 }
 
 html, body {
@@ -67,6 +68,11 @@ html, body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  margin-bottom: 16px;
+}
+
+.settings-item:last-child {
+  margin-bottom: 0;
 }
 
 .settings-label {
@@ -171,4 +177,19 @@ html, body {
 
 .settings-input::placeholder {
   color: var(--muted);
+}
+
+/* Sharp corners: override all border-radius when preference is off */
+.corners-sharp,
+.corners-sharp * {
+  border-radius: 0 !important;
+}
+
+/* Keep toggles rounded regardless of corners preference */
+.corners-sharp .toggle-track {
+  border-radius: 10px !important;
+}
+
+.corners-sharp .toggle-track::after {
+  border-radius: 50% !important;
 }

@@ -120,18 +120,26 @@ function applyFonts(settings = {}) {
   document.documentElement.style.setProperty("--font-code", codeFamily);
 }
 
+function applyCorners(settings) {
+  const rounded = settings?.cornersRounded !== false;
+  document.documentElement.classList.toggle("corners-sharp", !rounded);
+}
+
 async function loadEditorSettings() {
   const data = await chrome.storage.sync.get(EDITOR_SETTINGS_KEY);
   const editorSettings = data[EDITOR_SETTINGS_KEY] || {};
   const previewEnabled = editorSettings.previewEnabled !== false;
   caretStyle = editorSettings.caretStyle || "line";
   caretAnimation = editorSettings.caretAnimation || "blink";
+  caretMovement = editorSettings.caretMovement || "instant";
   if (editorFakeCaret) {
     editorFakeCaret.dataset.style = caretStyle;
     editorFakeCaret.dataset.animation = caretAnimation;
+    editorFakeCaret.dataset.movement = caretMovement;
   }
   applyPreviewVisibility(previewEnabled);
   applyFonts(editorSettings);
+  applyCorners(editorSettings);
 }
 
 function getCaretCoordinates() {
@@ -285,6 +293,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
     const s = changes[EDITOR_SETTINGS_KEY].newValue;
     applyPreviewVisibility(s.previewEnabled !== false);
     applyFonts(s);
+    applyCorners(s);
     if (editorFakeCaret) {
       if (s.caretStyle) {
         caretStyle = s.caretStyle;

@@ -8,6 +8,7 @@ const FONT_PRESETS = [
 ];
 
 const previewToggle = document.getElementById("previewToggle");
+const cornersToggle = document.getElementById("cornersToggle");
 const interfaceFontSelect = document.getElementById("interfaceFontSelect");
 const interfaceFontCustom = document.getElementById("interfaceFontCustom");
 const interfaceFontUrl = document.getElementById("interfaceFontUrl");
@@ -37,6 +38,7 @@ const caretMovementSelect = document.getElementById("caretMovementSelect");
 function getSettingsFromForm() {
   return {
     previewEnabled: previewToggle.checked,
+    cornersRounded: cornersToggle.checked,
     caretStyle: caretStyleSelect.value,
     caretAnimation: caretAnimationSelect.value,
     caretMovement: caretMovementSelect.value,
@@ -92,6 +94,8 @@ async function loadSettings() {
   const data = await chrome.storage.sync.get(EDITOR_SETTINGS_KEY);
   const s = data[EDITOR_SETTINGS_KEY] || {};
   previewToggle.checked = s.previewEnabled !== false;
+  cornersToggle.checked = s.cornersRounded !== false;
+  document.documentElement.classList.toggle("corners-sharp", !cornersToggle.checked);
   caretStyleSelect.value = s.caretStyle || "line";
   caretAnimationSelect.value = s.caretAnimation || "blink";
   caretMovementSelect.value = s.caretMovement || "instant";
@@ -124,6 +128,11 @@ populateFontSelects();
 
 previewToggle.addEventListener("change", () => {
   saveSettings({ previewEnabled: previewToggle.checked });
+});
+
+cornersToggle.addEventListener("change", () => {
+  document.documentElement.classList.toggle("corners-sharp", !cornersToggle.checked);
+  saveSettings({ cornersRounded: cornersToggle.checked });
 });
 
 caretStyleSelect.addEventListener("change", () => {
