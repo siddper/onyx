@@ -8,13 +8,15 @@
   --accent: #2a2f33;
   --accent-hover: #262a2e;
   --radius: 10px;
-  --mono: "Geist Mono", "SF Mono", "JetBrains Mono", ui-monospace, monospace;
+  --font-interface: "Inter", sans-serif;
+  --font-editor: "Inter", sans-serif;
+  --font-code: "JetBrains Mono", monospace;
 }
 
 * {
   box-sizing: border-box;
   outline: none;
-  font-family: var(--mono);
+  font-family: var(--font-interface);
   scrollbar-width: none;
 }
 
@@ -126,7 +128,7 @@ body {
   min-height: 200px;
   border: none;
   resize: none;
-  font-family: var(--mono);
+  font-family: var(--font-editor);
   font-size: 14px;
   line-height: 1.6;
   background: transparent;
@@ -145,9 +147,10 @@ body {
   line-height: 1.6;
 }
 
-/* Rendered markdown styling */
-.markdown-body {
-  font-family: var(--mono);
+/* Rendered markdown styling – preview uses editor font */
+.markdown-body,
+.markdown-body * {
+  font-family: var(--font-editor);
 }
 
 .markdown-body h1 {
@@ -194,6 +197,7 @@ body {
 }
 
 .markdown-body code {
+  font-family: var(--font-code);
   font-size: 0.9em;
   padding: 0.15em 0.4em;
   background: var(--panel-strong);
@@ -202,6 +206,7 @@ body {
 }
 
 .markdown-body pre {
+  font-family: var(--font-code);
   margin: 0.75em 0;
   padding: 12px;
   background: var(--panel-strong);
@@ -210,6 +215,7 @@ body {
 }
 
 .markdown-body pre code {
+  font-family: var(--font-code);
   padding: 0;
   background: none;
   font-size: 13px;
@@ -385,6 +391,51 @@ body {
 
 .toggle-wrap input:checked + .toggle-track::after {
   transform: translateX(16px);
+}
+
+.settings-block {
+  margin-bottom: 16px;
+}
+
+.settings-block .settings-label {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.settings-select {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  background: var(--panel-strong);
+  color: var(--ink);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.settings-font-custom {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.settings-font-custom[hidden] {
+  display: none;
+}
+
+.settings-input {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 12px;
+  background: var(--panel-strong);
+  color: var(--ink);
+  border: none;
+  border-radius: 8px;
+}
+
+.settings-input::placeholder {
+  color: var(--muted);
 }
 
 .settings-panel .primary {

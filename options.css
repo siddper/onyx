@@ -1,0 +1,170 @@
+:root {
+  color-scheme: dark;
+  --bg: #0e0f10;
+  --panel: #141618;
+  --panel-strong: #1a1d20;
+  --ink: #e8e8e8;
+  --muted: #9aa0a6;
+  --accent: #2a2f33;
+  --accent-hover: #262a2e;
+  --radius: 10px;
+  --font-interface: "Inter", sans-serif;
+  --font-editor: "Inter", sans-serif;
+  --font-code: "JetBrains Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+  outline: none;
+  font-family: var(--font-interface);
+}
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+.options-page {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.options-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 24px;
+  color: var(--ink);
+}
+
+.options-section {
+  background: var(--panel);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.options-heading {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 8px;
+}
+
+.options-hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settings-label {
+  font-size: 13px;
+  color: var(--ink);
+  margin: 0;
+  cursor: pointer;
+}
+
+.toggle-wrap {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.toggle-wrap input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-track {
+  position: relative;
+  display: block;
+  width: 36px;
+  height: 20px;
+  background: var(--panel-strong);
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.toggle-wrap input:checked + .toggle-track {
+  background: var(--accent);
+}
+
+.toggle-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: var(--ink);
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.toggle-wrap input:checked + .toggle-track::after {
+  transform: translateX(16px);
+}
+
+.settings-block {
+  margin-bottom: 20px;
+}
+
+.settings-block:last-child {
+  margin-bottom: 0;
+}
+
+.settings-block .settings-label {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.settings-select {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  background: var(--panel-strong);
+  color: var(--ink);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.settings-font-custom {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.settings-font-custom[hidden] {
+  display: none;
+}
+
+.settings-input {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 12px;
+  background: var(--panel-strong);
+  color: var(--ink);
+  border: none;
+  border-radius: 8px;
+}
+
+.settings-input::placeholder {
+  color: var(--muted);
+}

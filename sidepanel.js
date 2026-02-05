@@ -6,12 +6,16 @@ const markdownPreview = document.getElementById("markdownPreview");
 const exportBtn = document.getElementById("exportBtn");
 const status = document.getElementById("status");
 const settingsBtn = document.getElementById("settingsBtn");
-const settingsOverlay = document.getElementById("settingsOverlay");
-const previewToggle = document.getElementById("previewToggle");
-const settingsDoneBtn = document.getElementById("settingsDoneBtn");
 const editorWrap = document.getElementById("editorWrap");
+const customFontsEl = document.getElementById("customFonts");
 
 const EDITOR_SETTINGS_KEY = "editorSettings";
+
+const FONT_PRESETS = [
+  { id: "inter", label: "Inter", fontFamily: '"Inter", sans-serif' },
+  { id: "jetbrains-mono", label: "JetBrains Mono", fontFamily: '"JetBrains Mono", monospace' },
+  { id: "geist-mono", label: "Geist Mono", fontFamily: '"Geist Mono", monospace' }
+];
 
 const SAVE_DELAY_MS = 800;
 let saveTimeout = null;
@@ -81,12 +85,39 @@ async function loadSettings() {
   markdownInput.value = settings.content || "";
 }
 
+function normalizeFontUrl(input) {
+  const s = (input || "").trim();
+  if (!s) return "";
+  if (/^https?:\/\//i.test(s)) return `@import url("${s}");`;
+  if (s.startsWith("@import")) return s;
+  return `@import url("${s}");`;
+}
+
+function applyFonts(settings = {}) {
+  const imports = [];
+  if (settings.interfaceFont === "custom" && settings.interfaceFontUrl) imports.push(normalizeFontUrl(settings.interfaceFontUrl));
+  if (settings.editorFont === "custom" && settings.editorFontUrl && settings.editorFontUrl !== settings.interfaceFontUrl) imports.push(normalizeFontUrl(settings.editorFontUrl));
+  const codeUrl = settings.codeFontUrl?.trim();
+  if (settings.codeFont === "custom" && codeUrl && codeUrl !== settings.interfaceFontUrl?.trim() && codeUrl !== settings.editorFontUrl?.trim()) imports.push(normalizeFontUrl(settings.codeFontUrl));
+  if (customFontsEl) customFontsEl.textContent = imports.join("\n");
+
+  const ifPreset = FONT_PRESETS.find((p) => p.id === (settings.interfaceFont || "inter"));
+  const edPreset = FONT_PRESETS.find((p) => p.id === (settings.editorFont || "inter"));
+  const codePreset = FONT_PRESETS.find((p) => p.id === (settings.codeFont || "jetbrains-mono"));
+  const ifFamily = settings.interfaceFont === "custom" && settings.interfaceFontFamily ? settings.interfaceFontFamily : (ifPreset?.fontFamily ?? FONT_PRESETS[0].fontFamily);
+  const edFamily = settings.editorFont === "custom" && settings.editorFontFamily ? settings.editorFontFamily : (edPreset?.fontFamily ?? FONT_PRESETS[0].fontFamily);
+  const codeFamily = settings.codeFont === "custom" && settings.codeFontFamily ? settings.codeFontFamily : (codePreset?.fontFamily ?? FONT_PRESETS[1].fontFamily);
+  document.documentElement.style.setProperty("--font-interface", ifFamily);
+  document.documentElement.style.setProperty("--font-editor", edFamily);
+  document.documentElement.style.setProperty("--font-code", codeFamily);
+}
+
 async function loadEditorSettings() {
   const data = await chrome.storage.sync.get(EDITOR_SETTINGS_KEY);
   const editorSettings = data[EDITOR_SETTINGS_KEY] || {};
   const previewEnabled = editorSettings.previewEnabled !== false;
-  previewToggle.checked = previewEnabled;
   applyPreviewVisibility(previewEnabled);
+  applyFonts(editorSettings);
 }
 
 function applyPreviewVisibility(enabled) {
@@ -138,26 +169,15 @@ exportBtn.addEventListener("click", async () => {
 });
 
 settingsBtn.addEventListener("click", () => {
-  settingsOverlay.classList.add("is-open");
-  settingsOverlay.setAttribute("aria-hidden", "false");
+  chrome.runtime.openOptionsPage?.() || chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
 });
 
-settingsDoneBtn.addEventListener("click", () => {
-  settingsOverlay.classList.remove("is-open");
-  settingsOverlay.setAttribute("aria-hidden", "true");
-});
-
-settingsOverlay.addEventListener("click", (e) => {
-  if (e.target === settingsOverlay) {
-    settingsOverlay.classList.remove("is-open");
-    settingsOverlay.setAttribute("aria-hidden", "true");
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "sync" && changes[EDITOR_SETTINGS_KEY]?.newValue) {
+    const s = changes[EDITOR_SETTINGS_KEY].newValue;
+    applyPreviewVisibility(s.previewEnabled !== false);
+    applyFonts(s);
   }
-});
-
-previewToggle.addEventListener("change", async () => {
-  const enabled = previewToggle.checked;
-  applyPreviewVisibility(enabled);
-  await chrome.storage.sync.set({ [EDITOR_SETTINGS_KEY]: { previewEnabled: enabled } });
 });
 
 document.addEventListener("visibilitychange", () => {

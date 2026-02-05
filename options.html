@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Markdown Editor – Settings</title>
+    <link rel="stylesheet" href="options.css" />
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+    </style>
+    <style id="customFonts"></style>
+  </head>
+  <body>
+    <div class="options-page">
+      <h1 class="options-title">Markdown Editor Settings</h1>
+
+      <section class="options-section">
+        <div class="settings-item">
+          <label class="settings-label" for="previewToggle">Show preview in side panel</label>
+          <label class="toggle-wrap" aria-label="Toggle preview">
+            <input id="previewToggle" type="checkbox" checked />
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </section>
+
+      <section class="options-section">
+        <h2 class="options-heading">Fonts</h2>
+        <p class="options-hint">Choose a preset or select “Custom” to paste a Google Fonts (or other) @import URL and font family name.</p>
+
+        <div class="settings-block">
+          <label class="settings-label" for="interfaceFontSelect">Interface font</label>
+          <select id="interfaceFontSelect" class="settings-select"></select>
+          <div id="interfaceFontCustom" class="settings-font-custom" hidden>
+            <input id="interfaceFontUrl" class="settings-input" type="text" placeholder="Paste @import url(...) or Google Fonts link" />
+            <input id="interfaceFontFamily" class="settings-input" type="text" placeholder="Font family name (e.g. Inter, Roboto)" />
+          </div>
+        </div>
+
+        <div class="settings-block">
+          <label class="settings-label" for="editorFontSelect">Editor font</label>
+          <select id="editorFontSelect" class="settings-select"></select>
+          <div id="editorFontCustom" class="settings-font-custom" hidden>
+            <input id="editorFontUrl" class="settings-input" type="text" placeholder="Paste @import url(...) or Google Fonts link" />
+            <input id="editorFontFamily" class="settings-input" type="text" placeholder="Font family name (e.g. JetBrains Mono)" />
+          </div>
+        </div>
+
+        <div class="settings-block">
+          <label class="settings-label" for="codeFontSelect">Monospace / code font</label>
+          <select id="codeFontSelect" class="settings-select"></select>
+          <div id="codeFontCustom" class="settings-font-custom" hidden>
+            <input id="codeFontUrl" class="settings-input" type="text" placeholder="Paste @import url(...) or Google Fonts link" />
+            <input id="codeFontFamily" class="settings-input" type="text" placeholder="Font family name (e.g. Fira Code)" />
+          </div>
+        </div>
+      </section>
+    </div>
+    <script src="options.js"></script>
+  </body>
+</html>

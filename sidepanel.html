@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Markdown Side Panel</title>
     <link rel="stylesheet" href="sidepanel.css" />
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+    </style>
+    <style id="customFonts"></style>
   </head>
   <body>
     <div class="app">
@@ -33,20 +37,6 @@
           <button id="settingsBtn" class="ghost">Settings</button>
         </div>
       </section>
-
-      <div id="settingsOverlay" class="settings-overlay" aria-hidden="true">
-        <div class="settings-panel" role="dialog" aria-labelledby="settingsTitle" aria-modal="true">
-          <h2 id="settingsTitle" class="settings-title">Settings</h2>
-          <div class="settings-item">
-            <label class="settings-label" for="previewToggle">Show preview</label>
-            <label class="toggle-wrap" aria-label="Toggle preview">
-              <input id="previewToggle" type="checkbox" checked />
-              <span class="toggle-track"></span>
-            </label>
-          </div>
-          <button id="settingsDoneBtn" class="primary">Done</button>
-        </div>
-      </div>
 
       <main class="editor-wrap" id="editorWrap">
         <div class="editor-pane">
