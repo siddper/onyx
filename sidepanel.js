@@ -14,6 +14,7 @@ const editorFakeCaret = document.getElementById("editorFakeCaret");
 
 const EDITOR_SETTINGS_KEY = "editorSettings";
 let caretStyle = "line";
+let caretAnimation = "blink";
 let caretBlinkTimer = null;
 let caretVisible = true;
 
@@ -123,7 +124,11 @@ async function loadEditorSettings() {
   const editorSettings = data[EDITOR_SETTINGS_KEY] || {};
   const previewEnabled = editorSettings.previewEnabled !== false;
   caretStyle = editorSettings.caretStyle || "line";
-  if (editorFakeCaret) editorFakeCaret.dataset.style = caretStyle;
+  caretAnimation = editorSettings.caretAnimation || "blink";
+  if (editorFakeCaret) {
+    editorFakeCaret.dataset.style = caretStyle;
+    editorFakeCaret.dataset.animation = caretAnimation;
+  }
   applyPreviewVisibility(previewEnabled);
   applyFonts(editorSettings);
 }
@@ -151,7 +156,7 @@ function getCaretCoordinates() {
   const top = span.offsetTop - markdownInput.scrollTop + padT;
   const height = span.offsetHeight;
   const raw = charSpan ? charSpan.offsetLeft - span.offsetLeft : 8;
-  const charWidth = Math.max(10, Math.round(raw * 1.1));
+  const charWidth = Math.max(8, Math.round(raw * 1));
   return { left, top, height, bottom: top + height, charWidth };
 }
 
@@ -180,7 +185,12 @@ function updateFakeCaret() {
     editorFakeCaret.style.top = coords.top + "px";
     editorFakeCaret.style.height = coords.height + "px";
   }
-  editorFakeCaret.style.opacity = caretVisible ? "1" : "0";
+  if (caretAnimation === "blink") {
+    editorFakeCaret.style.opacity = caretVisible ? "1" : "0";
+  } else if (caretAnimation === "solid") {
+    editorFakeCaret.style.opacity = "1";
+  }
+  /* phase / expand: opacity and animation from CSS */
 }
 
 function scheduleCaretUpdate() {
@@ -190,13 +200,22 @@ function scheduleCaretUpdate() {
 }
 
 function startCaretBlink() {
-  if (caretBlinkTimer) return;
-  caretVisible = true;
-  editorFakeCaret.style.opacity = "1";
-  caretBlinkTimer = setInterval(() => {
-    caretVisible = !caretVisible;
-    editorFakeCaret.style.opacity = caretVisible ? "1" : "0";
-  }, 530);
+  if (caretAnimation === "blink") {
+    if (caretBlinkTimer) return;
+    caretVisible = true;
+    editorFakeCaret.style.opacity = "1";
+    caretBlinkTimer = setInterval(() => {
+      caretVisible = !caretVisible;
+      editorFakeCaret.style.opacity = caretVisible ? "1" : "0";
+    }, 530);
+  } else {
+    caretVisible = true;
+    if (caretAnimation === "solid") editorFakeCaret.style.opacity = "1";
+    if (caretAnimation === "phase" || caretAnimation === "expand") {
+      editorFakeCaret.style.animation = "";
+      editorFakeCaret.style.opacity = "";
+    }
+  }
 }
 
 function stopCaretBlink() {
@@ -205,6 +224,7 @@ function stopCaretBlink() {
     caretBlinkTimer = null;
   }
   editorFakeCaret.style.opacity = "0";
+  editorFakeCaret.style.animation = "none";
 }
 
 function applyPreviewVisibility(enabled) {
@@ -264,9 +284,15 @@ chrome.storage.onChanged.addListener((changes, area) => {
     const s = changes[EDITOR_SETTINGS_KEY].newValue;
     applyPreviewVisibility(s.previewEnabled !== false);
     applyFonts(s);
-    if (s.caretStyle && editorFakeCaret) {
-      caretStyle = s.caretStyle;
-      editorFakeCaret.dataset.style = caretStyle;
+    if (editorFakeCaret) {
+      if (s.caretStyle) {
+        caretStyle = s.caretStyle;
+        editorFakeCaret.dataset.style = caretStyle;
+      }
+      if (s.caretAnimation) {
+        caretAnimation = s.caretAnimation;
+        editorFakeCaret.dataset.animation = caretAnimation;
+      }
       scheduleCaretUpdate();
     }
   }

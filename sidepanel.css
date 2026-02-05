@@ -160,11 +160,22 @@ body {
   box-sizing: border-box;
 }
 
+@keyframes caret-phase {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+@keyframes caret-expand {
+  0%, 100% { opacity: 1; transform: scaleY(1); }
+  50% { opacity: 1; transform: scaleY(0.4); }
+}
+
 .editor-fake-caret {
   position: absolute;
   pointer-events: none;
   background: var(--ink);
   transition: opacity 0.08s ease;
+  transform-origin: bottom;
 }
 
 .editor-fake-caret[data-style="line"] {
@@ -173,11 +184,21 @@ body {
 
 /* Block: wider vertical bar (width set in JS from char width) */
 .editor-fake-caret[data-style="block"] {
-  /* width set in JS */
+  width: 8px; /* fallback; JS sets from char width */
 }
 
 .editor-fake-caret[data-style="underline"] {
-  /* width/height set in JS: horizontal line under caret */
+  width: 8px; /* fallback; JS sets from char width */
+  transform-origin: left center;
+}
+
+/* Caret animations */
+.editor-fake-caret[data-animation="phase"] {
+  animation: caret-phase 1.1s ease-in-out infinite;
+}
+
+.editor-fake-caret[data-animation="expand"] {
+  animation: caret-expand 0.9s ease-in-out infinite;
 }
 
 #markdownPreview {
