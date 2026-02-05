@@ -18,28 +18,49 @@
   scrollbar-width: none;
 }
 
+html,
 body {
+  height: 100%;
   margin: 0;
   background: var(--bg);
   color: var(--ink);
 }
 
 .app {
-  min-height: 100vh;
+  height: 100%;
   padding: 16px;
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 12px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .toolbar {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr auto auto;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-  align-items: end;
   padding: 12px;
   background: var(--panel);
   border-radius: var(--radius);
+}
+
+.toolbar-row {
+  display: grid;
+  gap: 8px;
+  align-items: end;
+}
+
+.toolbar-row--half {
+  grid-template-columns: 1fr 1fr;
+}
+
+.toolbar-row--half label {
+  min-width: 0;
+}
+
+.toolbar-row:not(.toolbar-row--half) {
+  grid-template-columns: 1fr auto auto;
 }
 
 .toolbar label {
@@ -51,6 +72,8 @@ body {
 }
 
 .toolbar input {
+  width: 100%;
+  min-width: 0;
   border: none;
   border-radius: 8px;
   padding: 8px 10px;
@@ -74,7 +97,7 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   min-height: 0;
-  flex: 1;
+  overflow: hidden;
 }
 
 .editor-pane,
@@ -86,6 +109,7 @@ body {
   background: var(--panel);
   border-radius: var(--radius);
   min-height: 0;
+  overflow: hidden;
 }
 
 .pane-label {
@@ -271,7 +295,7 @@ body {
 }
 
 @media (max-width: 720px) {
-  .toolbar {
+  .toolbar-row:not(.toolbar-row--half) {
     grid-template-columns: 1fr;
   }
 
