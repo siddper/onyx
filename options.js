@@ -32,12 +32,14 @@ function normalizeFontUrl(input) {
 
 const caretStyleSelect = document.getElementById("caretStyleSelect");
 const caretAnimationSelect = document.getElementById("caretAnimationSelect");
+const caretMovementSelect = document.getElementById("caretMovementSelect");
 
 function getSettingsFromForm() {
   return {
     previewEnabled: previewToggle.checked,
     caretStyle: caretStyleSelect.value,
     caretAnimation: caretAnimationSelect.value,
+    caretMovement: caretMovementSelect.value,
     interfaceFont: interfaceFontSelect.value,
     editorFont: editorFontSelect.value,
     codeFont: codeFontSelect.value,
@@ -92,6 +94,7 @@ async function loadSettings() {
   previewToggle.checked = s.previewEnabled !== false;
   caretStyleSelect.value = s.caretStyle || "line";
   caretAnimationSelect.value = s.caretAnimation || "blink";
+  caretMovementSelect.value = s.caretMovement || "instant";
   interfaceFontSelect.value = s.interfaceFont || "inter";
   editorFontSelect.value = s.editorFont || "inter";
   codeFontSelect.value = s.codeFont || "jetbrains-mono";
@@ -129,6 +132,10 @@ caretStyleSelect.addEventListener("change", () => {
 
 caretAnimationSelect.addEventListener("change", () => {
   saveSettings({ caretAnimation: caretAnimationSelect.value });
+});
+
+caretMovementSelect.addEventListener("change", () => {
+  saveSettings({ caretMovement: caretMovementSelect.value });
 });
 
 [interfaceFontSelect, editorFontSelect, codeFontSelect].forEach((sel) => {

@@ -15,6 +15,7 @@ const editorFakeCaret = document.getElementById("editorFakeCaret");
 const EDITOR_SETTINGS_KEY = "editorSettings";
 let caretStyle = "line";
 let caretAnimation = "blink";
+let caretMovement = "instant";
 let caretBlinkTimer = null;
 let caretVisible = true;
 
@@ -292,6 +293,10 @@ chrome.storage.onChanged.addListener((changes, area) => {
       if (s.caretAnimation) {
         caretAnimation = s.caretAnimation;
         editorFakeCaret.dataset.animation = caretAnimation;
+      }
+      if (s.caretMovement) {
+        caretMovement = s.caretMovement;
+        editorFakeCaret.dataset.movement = caretMovement;
       }
       scheduleCaretUpdate();
     }

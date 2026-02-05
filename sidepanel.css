@@ -178,6 +178,11 @@ body {
   transform-origin: bottom;
 }
 
+/* Smooth movement: no delay, just smooth animation as it follows the cursor */
+.editor-fake-caret[data-movement="smooth"] {
+  transition: left 0.06s ease-out, top 0.06s ease-out, width 0.06s ease-out, height 0.06s ease-out, opacity 0.08s ease;
+}
+
 .editor-fake-caret[data-style="line"] {
   width: 2px;
 }
