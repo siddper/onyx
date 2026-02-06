@@ -212,7 +212,7 @@ body {
   overflow: auto;
   font-size: 14px;
   line-height: 1.6;
-  padding: 12px;
+  padding: 12px 12px 12px 0;
   box-sizing: border-box;
 }
 
@@ -293,6 +293,7 @@ body {
 .markdown-body ul,
 .markdown-body ol {
   margin: 0.5em 0;
+  margin-left: 6px;
   padding-left: 1.5em;
   list-style-position: outside;
 }
