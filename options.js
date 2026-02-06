@@ -1,5 +1,8 @@
 const EDITOR_SETTINGS_KEY = "editorSettings";
 
+const CUSTOM_SELECT_CHECK_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" class="custom-select-option__check"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>';
+
 const FONT_PRESETS = [
   { id: "inter", label: "Inter", fontFamily: '"Inter", sans-serif' },
   { id: "jetbrains-mono", label: "JetBrains Mono", fontFamily: '"JetBrains Mono", monospace' },
@@ -84,6 +87,101 @@ function populateFontSelects() {
   });
 }
 
+function initCustomSelect(selectEl) {
+  const wrap = document.createElement("div");
+  wrap.className = "custom-select-wrap";
+  selectEl.parentNode.insertBefore(wrap, selectEl);
+  wrap.appendChild(selectEl);
+
+  const trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className = "custom-select-trigger";
+  trigger.setAttribute("aria-haspopup", "listbox");
+  trigger.setAttribute("aria-expanded", "false");
+  updateTriggerText();
+  wrap.appendChild(trigger);
+
+  const dropdown = document.createElement("div");
+  dropdown.className = "custom-select-dropdown";
+  dropdown.setAttribute("role", "listbox");
+  dropdown.setAttribute("aria-label", selectEl.id ? document.querySelector(`label[for="${selectEl.id}"]`)?.textContent?.trim() || "Options" : "Options");
+
+  function setOptionCheck(optionEl, selected) {
+    const checkSlot = optionEl.querySelector(".custom-select-option__check-slot");
+    if (!checkSlot) return;
+    if (selected) {
+      checkSlot.innerHTML = CUSTOM_SELECT_CHECK_SVG;
+      const svg = checkSlot.querySelector("svg");
+      if (svg) {
+        svg.style.width = "16px";
+        svg.style.height = "16px";
+        svg.style.fill = "currentColor";
+      }
+    } else {
+      checkSlot.innerHTML = "";
+    }
+  }
+
+  for (let i = 0; i < selectEl.options.length; i++) {
+    const opt = selectEl.options[i];
+    const item = document.createElement("div");
+    item.className = "custom-select-option";
+    item.setAttribute("role", "option");
+    item.setAttribute("aria-selected", opt.value === selectEl.value);
+    item.dataset.value = opt.value;
+
+    const label = document.createElement("span");
+    label.textContent = opt.textContent;
+    item.appendChild(label);
+
+    const checkSlot = document.createElement("span");
+    checkSlot.className = "custom-select-option__check-slot";
+    checkSlot.setAttribute("aria-hidden", "true");
+    item.appendChild(checkSlot);
+
+    if (opt.value === selectEl.value) setOptionCheck(item, true);
+
+    item.addEventListener("click", (e) => {
+      e.stopPropagation();
+      selectEl.value = opt.value;
+      dropdown.querySelectorAll(".custom-select-option").forEach((o) => {
+        const isSelected = o.dataset.value === opt.value;
+        o.setAttribute("aria-selected", isSelected);
+        setOptionCheck(o, isSelected);
+      });
+      closeDropdown();
+      updateTriggerText();
+      selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    dropdown.appendChild(item);
+  }
+  wrap.appendChild(dropdown);
+
+  function updateTriggerText() {
+    const selected = selectEl.options[selectEl.selectedIndex];
+    trigger.textContent = selected ? selected.textContent : "";
+  }
+
+  function closeDropdown(e) {
+    if (e && !wrap.contains(e.target)) return;
+    dropdown.classList.remove("open");
+    trigger.setAttribute("aria-expanded", "false");
+    document.removeEventListener("click", closeDropdown);
+  }
+
+  trigger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = dropdown.classList.toggle("open");
+    trigger.setAttribute("aria-expanded", open);
+    if (open) setTimeout(() => document.addEventListener("click", closeDropdown), 0);
+    else document.removeEventListener("click", closeDropdown);
+  });
+}
+
+function initCustomSelects() {
+  document.querySelectorAll("select.settings-select").forEach(initCustomSelect);
+}
+
 function showHideCustomFields() {
   interfaceFontCustom.hidden = interfaceFontSelect.value !== "custom";
   editorFontCustom.hidden = editorFontSelect.value !== "custom";
@@ -160,6 +258,7 @@ caretMovementSelect.addEventListener("change", () => {
 });
 
 loadSettings().then(() => {
+  initCustomSelects();
   if (window.location.hash === "#section-fonts") {
     document.getElementById("section-fonts")?.scrollIntoView({ behavior: "smooth" });
     showHideCustomFields();
