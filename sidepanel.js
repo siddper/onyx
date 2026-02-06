@@ -241,6 +241,100 @@ function applyPreviewVisibility(enabled) {
   if (enabled) updatePreview();
 }
 
+async function saveEditorSettings(partial) {
+  const data = await chrome.storage.sync.get(EDITOR_SETTINGS_KEY);
+  const current = data[EDITOR_SETTINGS_KEY] || {};
+  await chrome.storage.sync.set({ [EDITOR_SETTINGS_KEY]: { ...current, ...partial } });
+}
+
+const CONTEXT_MENU_CHECK_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" class="context-menu-option__check"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>';
+
+let contextMenuEl = null;
+
+function closeContextMenu() {
+  if (contextMenuEl) {
+    contextMenuEl.remove();
+    contextMenuEl = null;
+  }
+  document.removeEventListener("click", closeContextMenu);
+  document.removeEventListener("scroll", closeContextMenu, true);
+}
+
+function showContextMenu(x, y) {
+  closeContextMenu();
+
+  const options = [
+    {
+      id: "preview",
+      label: "Show preview",
+      getChecked: () => !editorWrap.classList.contains("preview-hidden"),
+      onToggle: async () => {
+        const next = editorWrap.classList.contains("preview-hidden");
+        await saveEditorSettings({ previewEnabled: next });
+        applyPreviewVisibility(next);
+      }
+    }
+  ];
+
+  const container = document.createElement("div");
+  container.className = "context-menu";
+  container.setAttribute("role", "menu");
+
+  options.forEach((opt) => {
+    const row = document.createElement("div");
+    row.className = "context-menu-option";
+    row.setAttribute("role", "menuitemcheckbox");
+    row.setAttribute("aria-checked", opt.getChecked());
+    row.textContent = opt.label;
+
+    if (opt.getChecked()) {
+      const checkWrap = document.createElement("span");
+      checkWrap.className = "context-menu-option__check";
+      checkWrap.innerHTML = CONTEXT_MENU_CHECK_SVG;
+      const svg = checkWrap.querySelector("svg");
+      if (svg) {
+        svg.style.width = "16px";
+        svg.style.height = "16px";
+        svg.style.fill = "currentColor";
+      }
+      row.appendChild(checkWrap);
+    } else {
+      const spacer = document.createElement("span");
+      spacer.className = "context-menu-option__check";
+      spacer.setAttribute("aria-hidden", "true");
+      row.appendChild(spacer);
+    }
+
+    row.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      await opt.onToggle();
+      closeContextMenu();
+    });
+
+    container.appendChild(row);
+  });
+
+  document.body.appendChild(container);
+  contextMenuEl = container;
+
+  const rect = container.getBoundingClientRect();
+  const pad = 8;
+  let left = x;
+  let top = y;
+  if (left + rect.width > window.innerWidth - pad) left = window.innerWidth - rect.width - pad;
+  if (top + rect.height > window.innerHeight - pad) top = window.innerHeight - rect.height - pad;
+  if (left < pad) left = pad;
+  if (top < pad) top = pad;
+  container.style.left = left + "px";
+  container.style.top = top + "px";
+
+  setTimeout(() => {
+    document.addEventListener("click", closeContextMenu);
+    document.addEventListener("scroll", closeContextMenu, true);
+  }, 0);
+}
+
 async function applyPendingImport() {
   const { pendingImportToEditor } = await chrome.storage.local.get("pendingImportToEditor");
   if (pendingImportToEditor != null && pendingImportToEditor !== "") {
@@ -435,6 +529,17 @@ chrome.storage.onChanged.addListener((changes, area) => {
     scheduleSave();
     chrome.storage.local.remove("pendingImportToEditor");
   }
+});
+
+const editorPane = document.querySelector(".editor-pane");
+const previewPane = document.querySelector(".preview-pane");
+[editorPane, previewPane].forEach((el) => {
+  if (!el) return;
+  el.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    showContextMenu(e.clientX, e.clientY);
+  });
 });
 
 loadSettings()
