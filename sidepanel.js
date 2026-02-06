@@ -320,6 +320,16 @@ function showContextMenu(x, y) {
       }
     },
     {
+      id: "corners",
+      label: "Rounded corners",
+      getChecked: () => !document.documentElement.classList.contains("corners-sharp"),
+      onToggle: async () => {
+        const next = document.documentElement.classList.contains("corners-sharp");
+        await saveEditorSettings({ cornersRounded: next });
+        applyCorners({ cornersRounded: next });
+      }
+    },
+    {
       id: "caret-shape",
       label: "Caret shape",
       submenu: caretSubmenu,
@@ -554,7 +564,7 @@ exportBtn.addEventListener("click", async () => {
 });
 
 settingsBtn.addEventListener("click", () => {
-  chrome.runtime.openOptionsPage?.() || chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
+  chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
