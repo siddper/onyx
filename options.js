@@ -159,4 +159,9 @@ caretMovementSelect.addEventListener("change", () => {
   el.addEventListener("blur", syncAndSave);
 });
 
-loadSettings();
+loadSettings().then(() => {
+  if (window.location.hash === "#section-fonts") {
+    document.getElementById("section-fonts")?.scrollIntoView({ behavior: "smooth" });
+    showHideCustomFields();
+  }
+});

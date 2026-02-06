@@ -16,6 +16,7 @@ const EDITOR_SETTINGS_KEY = "editorSettings";
 let caretStyle = "line";
 let caretAnimation = "blink";
 let caretMovement = "instant";
+let editorFont = "inter";
 let caretBlinkTimer = null;
 let caretVisible = true;
 
@@ -132,6 +133,7 @@ async function loadEditorSettings() {
   caretStyle = editorSettings.caretStyle || "line";
   caretAnimation = editorSettings.caretAnimation || "blink";
   caretMovement = editorSettings.caretMovement || "instant";
+  editorFont = editorSettings.editorFont || "inter";
   if (editorFakeCaret) {
     editorFakeCaret.dataset.style = caretStyle;
     editorFakeCaret.dataset.animation = caretAnimation;
@@ -299,6 +301,13 @@ function showContextMenu(x, y) {
     { id: "smooth", label: "Smooth", getChecked: () => caretMovement === "smooth", value: "smooth" }
   ];
 
+  const fontSubmenu = [
+    { id: "inter", label: "Inter", getChecked: () => editorFont === "inter", value: "inter" },
+    { id: "jetbrains-mono", label: "JetBrains Mono", getChecked: () => editorFont === "jetbrains-mono", value: "jetbrains-mono" },
+    { id: "geist-mono", label: "Geist Mono", getChecked: () => editorFont === "geist-mono", value: "geist-mono" },
+    { id: "custom", label: "Custom", getChecked: () => editorFont === "custom", value: "custom" }
+  ];
+
   const options = [
     {
       id: "preview",
@@ -339,6 +348,22 @@ function showContextMenu(x, y) {
         await saveEditorSettings({ caretMovement: item.value });
         caretMovement = item.value;
         if (editorFakeCaret) editorFakeCaret.dataset.movement = caretMovement;
+      }
+    },
+    {
+      id: "font",
+      label: "Font",
+      submenu: fontSubmenu,
+      onSelectItem: async (item) => {
+        if (item.value === "custom") {
+          await saveEditorSettings({ editorFont: "custom" });
+          closeContextMenu();
+          chrome.tabs.create({ url: chrome.runtime.getURL("options.html#section-fonts") });
+        } else {
+          await saveEditorSettings({ editorFont: item.value });
+          editorFont = item.value;
+          closeContextMenu();
+        }
       }
     }
   ];
@@ -551,6 +576,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
         caretMovement = s.caretMovement;
         editorFakeCaret.dataset.movement = caretMovement;
       }
+      if (s.editorFont) editorFont = s.editorFont;
       scheduleCaretUpdate();
     }
   }
