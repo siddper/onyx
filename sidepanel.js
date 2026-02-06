@@ -416,6 +416,7 @@ markdownInput.addEventListener("input", () => {
   scheduleCaretUpdate();
 });
 markdownInput.addEventListener("click", scheduleCaretUpdate);
+markdownInput.addEventListener("keydown", scheduleCaretUpdate);
 markdownInput.addEventListener("keyup", scheduleCaretUpdate);
 markdownInput.addEventListener("scroll", scheduleCaretUpdate);
 markdownInput.addEventListener("focus", () => {
