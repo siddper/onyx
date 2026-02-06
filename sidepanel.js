@@ -250,9 +250,26 @@ async function saveEditorSettings(partial) {
 const CONTEXT_MENU_CHECK_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" class="context-menu-option__check"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>';
 
+const CONTEXT_MENU_ARROW_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" class="context-menu-option__arrow"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></svg>';
+
 let contextMenuEl = null;
+let contextSubmenuEl = null;
+let contextSubmenuCloseTimer = null;
+
+function hideSubmenu() {
+  if (contextSubmenuCloseTimer) {
+    clearTimeout(contextSubmenuCloseTimer);
+    contextSubmenuCloseTimer = null;
+  }
+  if (contextSubmenuEl) {
+    contextSubmenuEl.remove();
+    contextSubmenuEl = null;
+  }
+}
 
 function closeContextMenu() {
+  hideSubmenu();
   if (contextMenuEl) {
     contextMenuEl.remove();
     contextMenuEl = null;
@@ -264,6 +281,24 @@ function closeContextMenu() {
 function showContextMenu(x, y) {
   closeContextMenu();
 
+  const caretSubmenu = [
+    { id: "line", label: "Line", getChecked: () => caretStyle === "line", value: "line" },
+    { id: "block", label: "Block", getChecked: () => caretStyle === "block", value: "block" },
+    { id: "underline", label: "Underline", getChecked: () => caretStyle === "underline", value: "underline" }
+  ];
+
+  const caretAnimationSubmenu = [
+    { id: "solid", label: "Solid", getChecked: () => caretAnimation === "solid", value: "solid" },
+    { id: "blink", label: "Blink", getChecked: () => caretAnimation === "blink", value: "blink" },
+    { id: "phase", label: "Phase", getChecked: () => caretAnimation === "phase", value: "phase" },
+    { id: "expand", label: "Expand", getChecked: () => caretAnimation === "expand", value: "expand" }
+  ];
+
+  const caretMovementSubmenu = [
+    { id: "instant", label: "Instant", getChecked: () => caretMovement === "instant", value: "instant" },
+    { id: "smooth", label: "Smooth", getChecked: () => caretMovement === "smooth", value: "smooth" }
+  ];
+
   const options = [
     {
       id: "preview",
@@ -274,21 +309,42 @@ function showContextMenu(x, y) {
         await saveEditorSettings({ previewEnabled: next });
         applyPreviewVisibility(next);
       }
+    },
+    {
+      id: "caret-shape",
+      label: "Caret shape",
+      submenu: caretSubmenu,
+      onSelectItem: async (item) => {
+        await saveEditorSettings({ caretStyle: item.value });
+        caretStyle = item.value;
+        if (editorFakeCaret) editorFakeCaret.dataset.style = caretStyle;
+        scheduleCaretUpdate();
+      }
+    },
+    {
+      id: "caret-animation",
+      label: "Caret animation",
+      submenu: caretAnimationSubmenu,
+      onSelectItem: async (item) => {
+        await saveEditorSettings({ caretAnimation: item.value });
+        caretAnimation = item.value;
+        if (editorFakeCaret) editorFakeCaret.dataset.animation = caretAnimation;
+      }
+    },
+    {
+      id: "caret-movement",
+      label: "Caret movement",
+      submenu: caretMovementSubmenu,
+      onSelectItem: async (item) => {
+        await saveEditorSettings({ caretMovement: item.value });
+        caretMovement = item.value;
+        if (editorFakeCaret) editorFakeCaret.dataset.movement = caretMovement;
+      }
     }
   ];
 
-  const container = document.createElement("div");
-  container.className = "context-menu";
-  container.setAttribute("role", "menu");
-
-  options.forEach((opt) => {
-    const row = document.createElement("div");
-    row.className = "context-menu-option";
-    row.setAttribute("role", "menuitemcheckbox");
-    row.setAttribute("aria-checked", opt.getChecked());
-    row.textContent = opt.label;
-
-    if (opt.getChecked()) {
+  function appendCheckOrSpacer(row, checked) {
+    if (checked) {
       const checkWrap = document.createElement("span");
       checkWrap.className = "context-menu-option__check";
       checkWrap.innerHTML = CONTEXT_MENU_CHECK_SVG;
@@ -305,12 +361,106 @@ function showContextMenu(x, y) {
       spacer.setAttribute("aria-hidden", "true");
       row.appendChild(spacer);
     }
+  }
 
-    row.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      await opt.onToggle();
-      closeContextMenu();
+  function showSubmenuAt(rowEl, opt) {
+    if (contextSubmenuCloseTimer) {
+      clearTimeout(contextSubmenuCloseTimer);
+      contextSubmenuCloseTimer = null;
+    }
+    hideSubmenu();
+    const submenu = document.createElement("div");
+    submenu.className = "context-menu-submenu";
+    submenu.setAttribute("role", "menu");
+
+    opt.submenu.forEach((item) => {
+      const subRow = document.createElement("div");
+      subRow.className = "context-menu-option";
+      subRow.setAttribute("role", "menuitemradio");
+      subRow.setAttribute("aria-checked", item.getChecked());
+      subRow.textContent = item.label;
+      appendCheckOrSpacer(subRow, item.getChecked());
+
+      subRow.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        await opt.onSelectItem(item);
+        closeContextMenu();
+      });
+
+      subRow.addEventListener("mouseenter", () => {
+        if (contextSubmenuCloseTimer) {
+          clearTimeout(contextSubmenuCloseTimer);
+          contextSubmenuCloseTimer = null;
+        }
+      });
+      subRow.addEventListener("mouseleave", () => {
+        contextSubmenuCloseTimer = setTimeout(hideSubmenu, 150);
+      });
+
+      submenu.appendChild(subRow);
     });
+
+    document.body.appendChild(submenu);
+    contextSubmenuEl = submenu;
+
+    submenu.addEventListener("mouseenter", () => {
+      if (contextSubmenuCloseTimer) {
+        clearTimeout(contextSubmenuCloseTimer);
+        contextSubmenuCloseTimer = null;
+      }
+    });
+    submenu.addEventListener("mouseleave", () => {
+      contextSubmenuCloseTimer = setTimeout(hideSubmenu, 150);
+    });
+
+    const rowRect = rowEl.getBoundingClientRect();
+    const subRect = submenu.getBoundingClientRect();
+    const pad = 8;
+    let left = rowRect.right + 4;
+    let top = rowRect.top;
+    if (left + subRect.width > window.innerWidth - pad) left = Math.max(pad, window.innerWidth - subRect.width - pad);
+    if (top + subRect.height > window.innerHeight - pad) top = window.innerHeight - subRect.height - pad;
+    if (top < pad) top = pad;
+    submenu.style.left = left + "px";
+    submenu.style.top = top + "px";
+  }
+
+  const container = document.createElement("div");
+  container.className = "context-menu";
+  container.setAttribute("role", "menu");
+
+  options.forEach((opt) => {
+    const row = document.createElement("div");
+    row.className = "context-menu-option";
+    if (opt.submenu) row.classList.add("context-menu-option--submenu-trigger");
+    row.setAttribute("role", opt.submenu ? "menuitem" : "menuitemcheckbox");
+    if (!opt.submenu) row.setAttribute("aria-checked", opt.getChecked());
+    row.textContent = opt.label;
+
+    if (opt.submenu) {
+      const arrowWrap = document.createElement("span");
+      arrowWrap.className = "context-menu-option__arrow";
+      arrowWrap.innerHTML = CONTEXT_MENU_ARROW_SVG;
+      const svg = arrowWrap.querySelector("svg");
+      if (svg) {
+        svg.style.width = "16px";
+        svg.style.height = "16px";
+        svg.style.fill = "currentColor";
+      }
+      row.appendChild(arrowWrap);
+
+      row.addEventListener("mouseenter", () => showSubmenuAt(row, opt));
+      row.addEventListener("mouseleave", () => {
+        contextSubmenuCloseTimer = setTimeout(hideSubmenu, 150);
+      });
+    } else {
+      appendCheckOrSpacer(row, opt.getChecked());
+      row.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        await opt.onToggle();
+        closeContextMenu();
+      });
+    }
 
     container.appendChild(row);
   });

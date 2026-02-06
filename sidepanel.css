@@ -575,6 +575,31 @@ body {
   color: var(--ink);
 }
 
+.context-menu-option__arrow {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--ink);
+}
+
+.context-menu-option--submenu-trigger {
+  cursor: default;
+}
+
+.context-menu-submenu {
+  position: fixed;
+  z-index: 1001;
+  background: var(--panel);
+  padding: 4px;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  min-width: 140px;
+}
+
+.context-menu-submenu .context-menu-option {
+  border-radius: var(--radius);
+}
+
 /* Sharp corners: override all border-radius when preference is off */
 .corners-sharp,
 .corners-sharp * {
