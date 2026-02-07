@@ -37,6 +37,8 @@ function normalizeFontUrl(input) {
 const caretStyleSelect = document.getElementById("caretStyleSelect");
 const caretAnimationSelect = document.getElementById("caretAnimationSelect");
 const caretMovementSelect = document.getElementById("caretMovementSelect");
+const importObsidianNoteName = document.getElementById("importObsidianNoteName");
+const importObsidianFolder = document.getElementById("importObsidianFolder");
 
 function getSettingsFromForm() {
   return {
@@ -53,7 +55,9 @@ function getSettingsFromForm() {
     editorFontUrl: editorFontUrl.value.trim(),
     editorFontFamily: editorFontFamily.value.trim(),
     codeFontUrl: codeFontUrl.value.trim(),
-    codeFontFamily: codeFontFamily.value.trim()
+    codeFontFamily: codeFontFamily.value.trim(),
+    importObsidianNoteName: importObsidianNoteName.value.trim(),
+    importObsidianFolder: importObsidianFolder.value.trim()
   };
 }
 
@@ -197,6 +201,8 @@ async function loadSettings() {
   caretStyleSelect.value = s.caretStyle || "line";
   caretAnimationSelect.value = s.caretAnimation || "blink";
   caretMovementSelect.value = s.caretMovement || "instant";
+  importObsidianNoteName.value = s.importObsidianNoteName ?? "Import From Markdown Editor";
+  importObsidianFolder.value = s.importObsidianFolder ?? "";
   interfaceFontSelect.value = s.interfaceFont || "inter";
   editorFontSelect.value = s.editorFont || "inter";
   codeFontSelect.value = s.codeFont || "jetbrains-mono";
@@ -243,6 +249,15 @@ caretAnimationSelect.addEventListener("change", () => {
 
 caretMovementSelect.addEventListener("change", () => {
   saveSettings({ caretMovement: caretMovementSelect.value });
+});
+
+[importObsidianNoteName, importObsidianFolder].forEach((el) => {
+  el.addEventListener("blur", () => {
+    saveSettings({
+      importObsidianNoteName: importObsidianNoteName.value.trim() || "Import From Markdown Editor",
+      importObsidianFolder: importObsidianFolder.value.trim()
+    });
+  });
 });
 
 [interfaceFontSelect, editorFontSelect, codeFontSelect].forEach((sel) => {

@@ -27,12 +27,14 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     await chrome.storage.local.set({ pendingImportToEditor: text });
     await chrome.sidePanel.open({ tabId: tab.id });
   } else if (info.menuItemId === "importToObsidian") {
-    const { obsidianSettings } = await chrome.storage.sync.get("obsidianSettings");
-    const vault = obsidianSettings?.vault?.trim() || "";
-    const folder = obsidianSettings?.folder?.trim() || "";
-    const filePath = folder
-      ? `${folder.replace(/\/$/, "")}/Import from Markdown Editor`
-      : "Import from Markdown Editor";
+    const [obsidian, editor] = await Promise.all([
+      chrome.storage.sync.get("obsidianSettings"),
+      chrome.storage.sync.get("editorSettings")
+    ]);
+    const vault = obsidian.obsidianSettings?.vault?.trim() || "";
+    const noteName = (editor.editorSettings?.importObsidianNoteName ?? "").trim() || "Import From Markdown Editor";
+    const folder = (editor.editorSettings?.importObsidianFolder || "").trim();
+    const filePath = folder ? `${folder.replace(/\/$/, "")}/${noteName}` : noteName;
     const params = [
       `vault=${encodeURIComponent(vault)}`,
       `file=${encodeURIComponent(filePath)}`,
