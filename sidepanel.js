@@ -7,6 +7,7 @@ const exportBtn = document.getElementById("exportBtn");
 const status = document.getElementById("status");
 const settingsBtn = document.getElementById("settingsBtn");
 const editorWrap = document.getElementById("editorWrap");
+const editorResizer = document.getElementById("editorResizer");
 const customFontsEl = document.getElementById("customFonts");
 const editorCaretWrap = document.querySelector(".editor-caret-wrap");
 const editorCaretMirror = document.getElementById("editorCaretMirror");
@@ -142,6 +143,18 @@ async function loadEditorSettings() {
   applyPreviewVisibility(previewEnabled);
   applyFonts(editorSettings);
   applyCorners(editorSettings);
+  const pct = editorSettings.sourceWidthPercent;
+  if (typeof pct === "number" && pct >= 10 && pct <= 90 && editorWrap) {
+    editorWrap.style.setProperty("--source-width", pct + "%");
+  } else if (editorWrap) {
+    editorWrap.style.removeProperty("--source-width");
+  }
+  const heightPct = editorSettings.sourceHeightPercent;
+  if (typeof heightPct === "number" && heightPct >= 10 && heightPct <= 90 && editorWrap) {
+    editorWrap.style.setProperty("--source-height", heightPct + "%");
+  } else if (editorWrap) {
+    editorWrap.style.removeProperty("--source-height");
+  }
 }
 
 function getCaretCoordinates() {
@@ -589,6 +602,16 @@ chrome.storage.onChanged.addListener((changes, area) => {
       if (s.editorFont) editorFont = s.editorFont;
       scheduleCaretUpdate();
     }
+    if (editorWrap && !editorWrap.classList.contains("preview-hidden")) {
+      if (typeof s.sourceWidthPercent === "number" && !isStackedLayout()) {
+        const pct = Math.max(SOURCE_WIDTH_MIN, Math.min(SOURCE_WIDTH_MAX, s.sourceWidthPercent));
+        editorWrap.style.setProperty("--source-width", pct + "%");
+      }
+      if (typeof s.sourceHeightPercent === "number" && isStackedLayout()) {
+        const pct = Math.max(SOURCE_HEIGHT_MIN, Math.min(SOURCE_HEIGHT_MAX, s.sourceHeightPercent));
+        editorWrap.style.setProperty("--source-height", pct + "%");
+      }
+    }
   }
 });
 
@@ -727,6 +750,72 @@ const previewPane = document.querySelector(".preview-pane");
     showContextMenu(e.clientX, e.clientY);
   });
 });
+
+const SOURCE_WIDTH_MIN = 10;
+const SOURCE_WIDTH_MAX = 90;
+const SOURCE_HEIGHT_MIN = 10;
+const SOURCE_HEIGHT_MAX = 90;
+
+function isStackedLayout() {
+  return window.matchMedia("(max-width: 720px)").matches;
+}
+
+if (editorResizer && editorWrap) {
+  editorResizer.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const wrapRect = () => editorWrap.getBoundingClientRect();
+    const stacked = isStackedLayout();
+
+    if (stacked) {
+      const update = (clientY) => {
+        const r = wrapRect();
+        const y = clientY - r.top;
+        let pct = Math.round((y / r.height) * 100);
+        pct = Math.max(SOURCE_HEIGHT_MIN, Math.min(SOURCE_HEIGHT_MAX, pct));
+        editorWrap.style.setProperty("--source-height", pct + "%");
+        return pct;
+      };
+      let lastPct = 50;
+      const onMove = (e) => { lastPct = update(e.clientY); };
+      const onUp = async () => {
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        await saveEditorSettings({ sourceHeightPercent: lastPct });
+      };
+      document.body.style.cursor = "row-resize";
+      document.body.style.userSelect = "none";
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+      update(e.clientY);
+    } else {
+      const update = (clientX) => {
+        const r = wrapRect();
+        const x = clientX - r.left;
+        let pct = Math.round((x / r.width) * 100);
+        pct = Math.max(SOURCE_WIDTH_MIN, Math.min(SOURCE_WIDTH_MAX, pct));
+        editorWrap.style.setProperty("--source-width", pct + "%");
+        return pct;
+      };
+      let lastPct = 50;
+      const onMove = (e) => { lastPct = update(e.clientX); };
+      const onUp = async () => {
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        await saveEditorSettings({ sourceWidthPercent: lastPct });
+      };
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+      update(e.clientX);
+    }
+  });
+}
 
 loadSettings()
   .then(() => loadEditorSettings())

@@ -96,10 +96,40 @@ body {
 
 .editor-wrap {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  grid-template-columns: minmax(120px, var(--source-width, 1fr)) 12px minmax(120px, 1fr);
+  gap: 0;
   min-height: 0;
   overflow: hidden;
+}
+
+.editor-resizer {
+  width: 12px;
+  min-width: 12px;
+  cursor: col-resize;
+  background: var(--bg);
+  position: relative;
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+/* Vertical divider line (side-by-side): visible only on hover */
+.editor-resizer::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  transform: translateX(-50%);
+  background: var(--panel-strong);
+  opacity: 0;
+  transition: opacity 0.15s ease, width 0.15s ease;
+  border-radius: 1px;
+}
+
+.editor-resizer:hover::before,
+.editor-resizer:active::before {
+  opacity: 1;
 }
 
 .editor-pane,
@@ -112,6 +142,7 @@ body {
   border-radius: var(--radius);
   min-height: 0;
   overflow: hidden;
+  min-width: 0;
 }
 
 .pane-label {
@@ -125,14 +156,14 @@ body {
 .editor-caret-wrap {
   position: relative;
   flex: 1;
-  min-height: 200px;
+  min-height: 120px;
   min-width: 0;
 }
 
 #markdownInput {
   width: 100%;
   height: 100%;
-  min-height: 200px;
+  min-height: 120px;
   border: none;
   resize: none;
   font-family: var(--font-editor);
@@ -208,7 +239,7 @@ body {
 
 #markdownPreview {
   flex: 1;
-  min-height: 200px;
+  min-height: 120px;
   overflow: auto;
   font-size: 14px;
   line-height: 1.6;
@@ -524,12 +555,14 @@ body {
 }
 
 /* Preview hidden layout */
-.editor-wrap.preview-hidden .preview-pane {
+.editor-wrap.preview-hidden .preview-pane,
+.editor-wrap.preview-hidden .editor-resizer {
   display: none;
 }
 
 .editor-wrap.preview-hidden {
   grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
 }
 
 @media (max-width: 720px) {
@@ -537,8 +570,36 @@ body {
     grid-template-columns: 1fr;
   }
 
+  /* Stacked layout: source and preview in rows with a horizontal resizer between them */
   .editor-wrap {
     grid-template-columns: 1fr;
+    grid-template-rows: minmax(120px, var(--source-height, 1fr)) 12px minmax(120px, 1fr);
+  }
+
+  .editor-wrap .editor-resizer {
+    width: auto;
+    min-width: unset;
+    height: 12px;
+    min-height: 12px;
+    cursor: row-resize;
+    grid-column: 1;
+  }
+
+  /* Horizontal divider line when stacked: visible only on hover */
+  .editor-wrap .editor-resizer::before {
+    left: 0;
+    right: 0;
+    top: 50%;
+    bottom: auto;
+    width: auto;
+    height: 2px;
+    transform: translateY(-50%);
+    background: var(--panel-strong);
+  }
+
+  .editor-wrap .editor-resizer:hover::before,
+  .editor-wrap .editor-resizer:active::before {
+    width: auto;
   }
 }
 
