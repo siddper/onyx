@@ -317,6 +317,7 @@ const caretAnimationSelect = document.getElementById("caretAnimationSelect");
 const caretMovementSelect = document.getElementById("caretMovementSelect");
 const importObsidianNoteName = document.getElementById("importObsidianNoteName");
 const importObsidianFolder = document.getElementById("importObsidianFolder");
+const customCssInput = document.getElementById("customCssInput");
 
 function getSettingsFromForm() {
   return {
@@ -336,7 +337,8 @@ function getSettingsFromForm() {
     codeFontUrl: codeFontUrl.value.trim(),
     codeFontFamily: codeFontFamily.value.trim(),
     importObsidianNoteName: importObsidianNoteName.value.trim(),
-    importObsidianFolder: importObsidianFolder.value.trim()
+    importObsidianFolder: importObsidianFolder.value.trim(),
+    customCss: customCssInput ? customCssInput.value.trim() : ""
   };
 }
 
@@ -509,6 +511,7 @@ async function loadSettings() {
   editorFontFamily.value = s.editorFontFamily || "";
   codeFontUrl.value = s.codeFontUrl || "";
   codeFontFamily.value = s.codeFontFamily || "";
+  if (customCssInput) customCssInput.value = s.customCss ?? "";
   showHideCustomFields();
   applyFonts(s);
 }
@@ -574,6 +577,25 @@ if (radiusSlider) {
     const px = parseInt(radiusSlider.value, 10);
     applyRadius(px);
     saveSettings({ radiusPx: px });
+  });
+}
+
+const customCssApplyBtn = document.getElementById("customCssApplyBtn");
+const customCssStatus = document.getElementById("customCssStatus");
+if (customCssInput) {
+  customCssInput.addEventListener("blur", () => {
+    saveSettings({ customCss: customCssInput.value.trim() });
+  });
+}
+if (customCssApplyBtn && customCssInput && customCssStatus) {
+  customCssApplyBtn.addEventListener("click", async () => {
+    const css = customCssInput.value.trim();
+    await saveSettings({ customCss: css });
+    customCssStatus.textContent = "Applied";
+    customCssStatus.setAttribute("aria-live", "polite");
+    setTimeout(() => {
+      customCssStatus.textContent = "";
+    }, 2000);
   });
 }
 

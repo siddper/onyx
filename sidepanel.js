@@ -333,6 +333,27 @@ async function loadEditorSettings() {
   } else {
     document.documentElement.style.setProperty("--radius", "8px");
   }
+  const rawCss = typeof editorSettings.customCss === "string" ? editorSettings.customCss : "";
+  if (rawCss) {
+    document.body.classList.add("custom-css-loaded");
+    const wrapped = rawCss.replace(/([^{]+)\{/g, (_, selectors) => {
+      const s = selectors.trimStart();
+      if (s.startsWith("@")) return selectors + "{";
+      const prefixed = s.split(",").map((sel) => "body.custom-css-loaded " + sel.trim()).join(", ");
+      return prefixed + " {";
+    });
+    let customCssEl = document.getElementById("customCss");
+    if (!customCssEl) {
+      customCssEl = document.createElement("style");
+      customCssEl.id = "customCss";
+      document.body.appendChild(customCssEl);
+    }
+    customCssEl.textContent = wrapped;
+  } else {
+    document.body.classList.remove("custom-css-loaded");
+    const customCssEl = document.getElementById("customCss");
+    if (customCssEl) customCssEl.textContent = "";
+  }
 }
 
 function getCaretCoordinates() {
@@ -784,6 +805,27 @@ chrome.storage.onChanged.addListener((changes, area) => {
       document.documentElement.style.setProperty("--radius", s.radiusPx + "px");
     } else {
       document.documentElement.style.setProperty("--radius", "8px");
+    }
+    const rawCss = typeof s.customCss === "string" ? s.customCss : "";
+    if (rawCss) {
+      document.body.classList.add("custom-css-loaded");
+      const wrapped = rawCss.replace(/([^{]+)\{/g, (_, selectors) => {
+        const s = selectors.trimStart();
+        if (s.startsWith("@")) return selectors + "{";
+        const prefixed = s.split(",").map((sel) => "body.custom-css-loaded " + sel.trim()).join(", ");
+        return prefixed + " {";
+      });
+      let customCssEl = document.getElementById("customCss");
+      if (!customCssEl) {
+        customCssEl = document.createElement("style");
+        customCssEl.id = "customCss";
+        document.body.appendChild(customCssEl);
+      }
+      customCssEl.textContent = wrapped;
+    } else {
+      document.body.classList.remove("custom-css-loaded");
+      const customCssEl = document.getElementById("customCss");
+      if (customCssEl) customCssEl.textContent = "";
     }
   }
 });

@@ -115,6 +115,20 @@
       </section>
 
       <section class="options-section">
+        <h2 class="options-heading">Custom CSS</h2>
+        <p class="options-hint">CSS applied only to the side panel (not this Settings page). Your selectors are automatically scoped so they override default styles (e.g. <code>input { border-radius: 0 }</code> works).</p>
+        <div class="settings-block">
+          <label class="settings-label" for="customCssInput">Custom CSS</label>
+          <textarea id="customCssInput" class="settings-textarea" rows="8" placeholder=".app { }" spellcheck="false"></textarea>
+          <div class="settings-apply-row">
+            <button type="button" id="customCssApplyBtn" class="settings-btn">Apply</button>
+            <span id="customCssStatus" class="custom-css-status" aria-live="polite"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="options-section">
+        <h2 class="options-heading">Other</h2>
         <div class="settings-item">
           <label class="settings-label" for="radiusSlider">Corner radius</label>
           <div class="settings-slider-wrap">
