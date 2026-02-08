@@ -581,20 +581,19 @@ if (radiusSlider) {
 }
 
 const customCssApplyBtn = document.getElementById("customCssApplyBtn");
-const customCssStatus = document.getElementById("customCssStatus");
 if (customCssInput) {
   customCssInput.addEventListener("blur", () => {
     saveSettings({ customCss: customCssInput.value.trim() });
   });
 }
-if (customCssApplyBtn && customCssInput && customCssStatus) {
+if (customCssApplyBtn && customCssInput) {
   customCssApplyBtn.addEventListener("click", async () => {
     const css = customCssInput.value.trim();
     await saveSettings({ customCss: css });
-    customCssStatus.textContent = "Applied";
-    customCssStatus.setAttribute("aria-live", "polite");
+    const label = customCssApplyBtn.textContent;
+    customCssApplyBtn.textContent = "Applied!";
     setTimeout(() => {
-      customCssStatus.textContent = "";
+      customCssApplyBtn.textContent = label;
     }, 2000);
   });
 }

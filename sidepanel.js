@@ -14,6 +14,7 @@ const editorCaretMirror = document.getElementById("editorCaretMirror");
 const editorFakeCaret = document.getElementById("editorFakeCaret");
 
 const EDITOR_SETTINGS_KEY = "editorSettings";
+const CUSTOM_CSS_SCOPE = "body.custom-css-loaded.custom-css-scope ";
 let caretStyle = "line";
 let caretAnimation = "blink";
 let caretMovement = "instant";
@@ -335,11 +336,11 @@ async function loadEditorSettings() {
   }
   const rawCss = typeof editorSettings.customCss === "string" ? editorSettings.customCss : "";
   if (rawCss) {
-    document.body.classList.add("custom-css-loaded");
+    document.body.classList.add("custom-css-loaded", "custom-css-scope");
     const wrapped = rawCss.replace(/([^{]+)\{/g, (_, selectors) => {
       const s = selectors.trimStart();
       if (s.startsWith("@")) return selectors + "{";
-      const prefixed = s.split(",").map((sel) => "body.custom-css-loaded " + sel.trim()).join(", ");
+      const prefixed = s.split(",").map((sel) => CUSTOM_CSS_SCOPE + sel.trim()).join(", ");
       return prefixed + " {";
     });
     let customCssEl = document.getElementById("customCss");
@@ -350,7 +351,7 @@ async function loadEditorSettings() {
     }
     customCssEl.textContent = wrapped;
   } else {
-    document.body.classList.remove("custom-css-loaded");
+    document.body.classList.remove("custom-css-loaded", "custom-css-scope");
     const customCssEl = document.getElementById("customCss");
     if (customCssEl) customCssEl.textContent = "";
   }
@@ -808,11 +809,11 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
     const rawCss = typeof s.customCss === "string" ? s.customCss : "";
     if (rawCss) {
-      document.body.classList.add("custom-css-loaded");
+      document.body.classList.add("custom-css-loaded", "custom-css-scope");
       const wrapped = rawCss.replace(/([^{]+)\{/g, (_, selectors) => {
         const s = selectors.trimStart();
         if (s.startsWith("@")) return selectors + "{";
-        const prefixed = s.split(",").map((sel) => "body.custom-css-loaded " + sel.trim()).join(", ");
+        const prefixed = s.split(",").map((sel) => CUSTOM_CSS_SCOPE + sel.trim()).join(", ");
         return prefixed + " {";
       });
       let customCssEl = document.getElementById("customCss");
@@ -823,7 +824,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
       }
       customCssEl.textContent = wrapped;
     } else {
-      document.body.classList.remove("custom-css-loaded");
+      document.body.classList.remove("custom-css-loaded", "custom-css-scope");
       const customCssEl = document.getElementById("customCss");
       if (customCssEl) customCssEl.textContent = "";
     }
