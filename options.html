@@ -32,6 +32,13 @@
             <option value="monokai">Monokai</option>
           </select>
         </div>
+        <div class="settings-block">
+          <label class="settings-label">Custom themes</label>
+          <p class="options-hint">Import a theme from a JSON config file. See <code>CUSTOM-THEMES.md</code> in the project root for the config format.</p>
+          <input id="themeFileInput" type="file" accept=".json,application/json" hidden />
+          <button type="button" id="importThemeBtn" class="settings-btn settings-btn--secondary">Import theme</button>
+          <ul id="customThemesList" class="custom-themes-list" aria-label="Imported custom themes"></ul>
+        </div>
       </section>
 
       <section class="options-section">

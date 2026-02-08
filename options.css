@@ -163,6 +163,64 @@ html, body {
   margin-bottom: 8px;
 }
 
+.settings-btn {
+  padding: 8px 14px;
+  font-size: 13px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  background: var(--accent);
+  color: var(--ink);
+  transition: background 0.2s ease;
+}
+
+.settings-btn:hover {
+  background: var(--accent-hover);
+}
+
+.settings-btn--secondary {
+  margin-top: 4px;
+}
+
+.custom-themes-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.custom-themes-list:empty {
+  display: none;
+}
+
+.custom-themes-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--panel-strong);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.custom-themes-list .custom-themes-list__remove {
+  padding: 4px 10px;
+  font-size: 12px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  background: var(--accent);
+  color: var(--ink);
+}
+
+.custom-themes-list .custom-themes-list__remove:hover {
+  background: var(--accent-hover);
+}
+
 /* Slider – track and thumb match panel/input design */
 .settings-slider-wrap {
   display: flex;

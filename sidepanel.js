@@ -183,11 +183,19 @@ const THEMES = {
   }
 };
 
-function applyTheme(themeId) {
+function applyTheme(themeId, customThemes) {
   const root = document.documentElement;
   if (!themeId || themeId === "system") {
     THEME_VARS.forEach((v) => root.style.removeProperty(v));
     root.style.removeProperty("color-scheme");
+    return;
+  }
+  if (themeId.startsWith("custom:")) {
+    const id = themeId.slice(7);
+    const theme = customThemes && customThemes[id];
+    if (!theme) return;
+    root.style.setProperty("color-scheme", theme.colorScheme);
+    Object.entries(theme.vars).forEach(([key, value]) => root.style.setProperty(key, value));
     return;
   }
   const theme = THEMES[themeId];
@@ -306,7 +314,7 @@ async function loadEditorSettings() {
   }
   applyPreviewVisibility(previewEnabled);
   applyFonts(editorSettings);
-  applyTheme(editorSettings.theme || "system");
+  applyTheme(editorSettings.theme || "system", editorSettings.customThemes);
   const pct = editorSettings.sourceWidthPercent;
   if (typeof pct === "number" && pct >= 10 && pct <= 90 && editorWrap) {
     editorWrap.style.setProperty("--source-width", pct + "%");
@@ -745,7 +753,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
     const s = changes[EDITOR_SETTINGS_KEY].newValue;
     applyPreviewVisibility(s.previewEnabled !== false);
     applyFonts(s);
-    applyTheme(s.theme || "system");
+    applyTheme(s.theme || "system", s.customThemes);
     if (editorFakeCaret) {
       if (s.caretStyle) {
         caretStyle = s.caretStyle;

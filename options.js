@@ -12,6 +12,22 @@ const FONT_PRESETS = [
 
 const THEME_VARS = ["--bg", "--panel", "--panel-strong", "--ink", "--muted", "--accent", "--accent-hover", "--overlay", "--shadow", "--shadow-modal"];
 
+const BUILT_IN_THEME_OPTIONS = [
+  { value: "system", label: "System" },
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+  { value: "oled", label: "OLED" },
+  { value: "cyberpunk", label: "Cyberpunk" },
+  { value: "sepia", label: "Sepia" },
+  { value: "nord", label: "Nord" },
+  { value: "dracula", label: "Dracula" },
+  { value: "tokyo-night", label: "Tokyo Night" },
+  { value: "blueberry", label: "Blueberry" },
+  { value: "monokai", label: "Monokai" }
+];
+
+let customThemesCache = {};
+
 const THEMES = {
   system: null,
   light: {
@@ -166,17 +182,108 @@ const THEMES = {
   }
 };
 
-function applyTheme(themeId) {
+function slugify(name) {
+  return String(name)
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-_]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "") || "custom-theme";
+}
+
+function parseCustomThemeConfig(json) {
+  const data = typeof json === "string" ? JSON.parse(json) : json;
+  if (!data || typeof data.name !== "string" || !data.name.trim()) {
+    throw new Error("Theme config must have a non-empty 'name' string.");
+  }
+  if (!data.colorScheme || !["light", "dark"].includes(data.colorScheme)) {
+    throw new Error("Theme config must have 'colorScheme' set to 'light' or 'dark'.");
+  }
+  const colors = data.colors;
+  if (!colors || typeof colors !== "object") {
+    throw new Error("Theme config must have a 'colors' object.");
+  }
+  const vars = {};
+  for (const key of THEME_VARS) {
+    if (colors[key] != null && String(colors[key]).trim() !== "") {
+      vars[key] = String(colors[key]).trim();
+    } else {
+      throw new Error(`Theme config 'colors' must include '${key}'.`);
+    }
+  }
+  return {
+    name: data.name.trim(),
+    colorScheme: data.colorScheme,
+    vars
+  };
+}
+
+function applyTheme(themeId, customThemes = customThemesCache) {
   const root = document.documentElement;
   if (!themeId || themeId === "system") {
     THEME_VARS.forEach((v) => root.style.removeProperty(v));
     root.style.removeProperty("color-scheme");
     return;
   }
+  if (themeId.startsWith("custom:")) {
+    const id = themeId.slice(7);
+    const theme = customThemes && customThemes[id];
+    if (!theme) return;
+    root.style.setProperty("color-scheme", theme.colorScheme);
+    Object.entries(theme.vars).forEach(([key, value]) => root.style.setProperty(key, value));
+    return;
+  }
   const theme = THEMES[themeId];
   if (!theme) return;
   root.style.setProperty("color-scheme", theme.colorScheme);
   Object.entries(theme.vars).forEach(([key, value]) => root.style.setProperty(key, value));
+}
+
+function refreshThemeSelect(customThemes) {
+  if (!themeSelect) return;
+  const wrap = themeSelect.closest(".custom-select-wrap");
+  if (wrap) {
+    wrap.parentNode.insertBefore(themeSelect, wrap);
+    wrap.remove();
+  }
+  themeSelect.querySelectorAll('option[value^="custom:"]').forEach((o) => o.remove());
+  if (customThemes && typeof customThemes === "object") {
+    Object.entries(customThemes).forEach(([id, t]) => {
+      themeSelect.appendChild(new Option(t.name, "custom:" + id));
+    });
+  }
+  initCustomSelect(themeSelect);
+}
+
+function renderCustomThemesList(customThemes) {
+  const list = document.getElementById("customThemesList");
+  if (!list) return;
+  list.innerHTML = "";
+  if (!customThemes || Object.keys(customThemes).length === 0) return;
+  Object.entries(customThemes).forEach(([id, t]) => {
+    const li = document.createElement("li");
+    li.textContent = t.name;
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "custom-themes-list__remove";
+    removeBtn.textContent = "Remove";
+    removeBtn.addEventListener("click", async () => {
+      const next = { ...customThemesCache };
+      delete next[id];
+      customThemesCache = next;
+      await saveSettings({ customThemes: next });
+      if (themeSelect && themeSelect.value === "custom:" + id) {
+        themeSelect.value = "system";
+        applyTheme("system");
+        saveSettings({ theme: "system" });
+      }
+      refreshThemeSelect(next);
+      renderCustomThemesList(next);
+    });
+    li.appendChild(removeBtn);
+    list.appendChild(li);
+  });
 }
 
 const previewToggle = document.getElementById("previewToggle");
@@ -339,7 +446,7 @@ function initCustomSelect(selectEl) {
   }
 
   function closeDropdown(e) {
-    if (e && !wrap.contains(e.target)) return;
+    if (e && wrap.contains(e.target)) return;
     dropdown.classList.remove("open");
     trigger.setAttribute("aria-expanded", "false");
     document.removeEventListener("click", closeDropdown);
@@ -375,9 +482,15 @@ function applyRadius(pixels) {
 async function loadSettings() {
   const data = await chrome.storage.sync.get(EDITOR_SETTINGS_KEY);
   const s = data[EDITOR_SETTINGS_KEY] || {};
+  customThemesCache = s.customThemes && typeof s.customThemes === "object" ? s.customThemes : {};
   if (themeSelect) {
+    themeSelect.querySelectorAll('option[value^="custom:"]').forEach((o) => o.remove());
+    Object.entries(customThemesCache).forEach(([id, t]) => {
+      themeSelect.appendChild(new Option(t.name, "custom:" + id));
+    });
     themeSelect.value = s.theme || "system";
-    applyTheme(s.theme || "system");
+    applyTheme(s.theme || "system", customThemesCache);
+    renderCustomThemesList(customThemesCache);
   }
   previewToggle.checked = s.previewEnabled !== false;
   const radius = typeof s.radiusPx === "number" && s.radiusPx >= 0 && s.radiusPx <= 24 ? s.radiusPx : 8;
@@ -420,8 +533,39 @@ previewToggle.addEventListener("change", () => {
 
 if (themeSelect) {
   themeSelect.addEventListener("change", () => {
-    applyTheme(themeSelect.value);
+    applyTheme(themeSelect.value, customThemesCache);
     saveSettings({ theme: themeSelect.value });
+  });
+}
+
+const themeFileInput = document.getElementById("themeFileInput");
+const importThemeBtn = document.getElementById("importThemeBtn");
+if (importThemeBtn && themeFileInput) {
+  importThemeBtn.addEventListener("click", () => themeFileInput.click());
+  themeFileInput.addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = parseCustomThemeConfig(text);
+      const id = slugify(parsed.name);
+      const customThemes = { ...customThemesCache, [id]: { id, name: parsed.name, colorScheme: parsed.colorScheme, vars: parsed.vars } };
+      customThemesCache = customThemes;
+      await saveSettings({ customThemes });
+      refreshThemeSelect(customThemes);
+      renderCustomThemesList(customThemes);
+      themeSelect.value = "custom:" + id;
+      const wrap = themeSelect.closest(".custom-select-wrap");
+      if (wrap) {
+        const trigger = wrap.querySelector(".custom-select-trigger");
+        if (trigger) trigger.textContent = themeSelect.options[themeSelect.selectedIndex]?.textContent || "";
+      }
+      applyTheme(themeSelect.value, customThemes);
+      await saveSettings({ theme: themeSelect.value });
+    } catch (err) {
+      alert("Invalid theme config: " + (err.message || String(err)));
+    }
   });
 }
 
