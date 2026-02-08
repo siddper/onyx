@@ -11,7 +11,8 @@ const FONT_PRESETS = [
 ];
 
 const previewToggle = document.getElementById("previewToggle");
-const cornersToggle = document.getElementById("cornersToggle");
+const radiusSlider = document.getElementById("radiusSlider");
+const radiusValue = document.getElementById("radiusValue");
 const interfaceFontSelect = document.getElementById("interfaceFontSelect");
 const interfaceFontCustom = document.getElementById("interfaceFontCustom");
 const interfaceFontUrl = document.getElementById("interfaceFontUrl");
@@ -43,7 +44,7 @@ const importObsidianFolder = document.getElementById("importObsidianFolder");
 function getSettingsFromForm() {
   return {
     previewEnabled: previewToggle.checked,
-    cornersRounded: cornersToggle.checked,
+    radiusPx: radiusSlider ? parseInt(radiusSlider.value, 10) : 8,
     caretStyle: caretStyleSelect.value,
     caretAnimation: caretAnimationSelect.value,
     caretMovement: caretMovementSelect.value,
@@ -192,12 +193,20 @@ function showHideCustomFields() {
   codeFontCustom.hidden = codeFontSelect.value !== "custom";
 }
 
+function applyRadius(pixels) {
+  const px = Math.max(0, Math.min(24, typeof pixels === "number" ? pixels : 8));
+  document.documentElement.style.setProperty("--radius", px + "px");
+  if (radiusSlider) radiusSlider.value = String(px);
+  if (radiusSlider) radiusSlider.setAttribute("aria-valuenow", px);
+  if (radiusValue) radiusValue.textContent = px + "px";
+}
+
 async function loadSettings() {
   const data = await chrome.storage.sync.get(EDITOR_SETTINGS_KEY);
   const s = data[EDITOR_SETTINGS_KEY] || {};
   previewToggle.checked = s.previewEnabled !== false;
-  cornersToggle.checked = s.cornersRounded !== false;
-  document.documentElement.classList.toggle("corners-sharp", !cornersToggle.checked);
+  const radius = typeof s.radiusPx === "number" && s.radiusPx >= 0 && s.radiusPx <= 24 ? s.radiusPx : 8;
+  applyRadius(radius);
   caretStyleSelect.value = s.caretStyle || "line";
   caretAnimationSelect.value = s.caretAnimation || "blink";
   caretMovementSelect.value = s.caretMovement || "instant";
@@ -234,10 +243,13 @@ previewToggle.addEventListener("change", () => {
   saveSettings({ previewEnabled: previewToggle.checked });
 });
 
-cornersToggle.addEventListener("change", () => {
-  document.documentElement.classList.toggle("corners-sharp", !cornersToggle.checked);
-  saveSettings({ cornersRounded: cornersToggle.checked });
-});
+if (radiusSlider) {
+  radiusSlider.addEventListener("input", () => {
+    const px = parseInt(radiusSlider.value, 10);
+    applyRadius(px);
+    saveSettings({ radiusPx: px });
+  });
+}
 
 caretStyleSelect.addEventListener("change", () => {
   saveSettings({ caretStyle: caretStyleSelect.value });

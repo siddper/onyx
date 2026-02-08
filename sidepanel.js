@@ -122,11 +122,6 @@ function applyFonts(settings = {}) {
   document.documentElement.style.setProperty("--font-code", codeFamily);
 }
 
-function applyCorners(settings) {
-  const rounded = settings?.cornersRounded !== false;
-  document.documentElement.classList.toggle("corners-sharp", !rounded);
-}
-
 async function loadEditorSettings() {
   const data = await chrome.storage.sync.get(EDITOR_SETTINGS_KEY);
   const editorSettings = data[EDITOR_SETTINGS_KEY] || {};
@@ -142,7 +137,6 @@ async function loadEditorSettings() {
   }
   applyPreviewVisibility(previewEnabled);
   applyFonts(editorSettings);
-  applyCorners(editorSettings);
   const pct = editorSettings.sourceWidthPercent;
   if (typeof pct === "number" && pct >= 10 && pct <= 90 && editorWrap) {
     editorWrap.style.setProperty("--source-width", pct + "%");
@@ -154,6 +148,12 @@ async function loadEditorSettings() {
     editorWrap.style.setProperty("--source-height", heightPct + "%");
   } else if (editorWrap) {
     editorWrap.style.removeProperty("--source-height");
+  }
+  const radiusPx = editorSettings.radiusPx;
+  if (typeof radiusPx === "number" && radiusPx >= 0 && radiusPx <= 24) {
+    document.documentElement.style.setProperty("--radius", radiusPx + "px");
+  } else {
+    document.documentElement.style.setProperty("--radius", "8px");
   }
 }
 
@@ -330,16 +330,6 @@ function showContextMenu(x, y) {
         const next = editorWrap.classList.contains("preview-hidden");
         await saveEditorSettings({ previewEnabled: next });
         applyPreviewVisibility(next);
-      }
-    },
-    {
-      id: "corners",
-      label: "Rounded corners",
-      getChecked: () => !document.documentElement.classList.contains("corners-sharp"),
-      onToggle: async () => {
-        const next = document.documentElement.classList.contains("corners-sharp");
-        await saveEditorSettings({ cornersRounded: next });
-        applyCorners({ cornersRounded: next });
       }
     },
     {
@@ -585,7 +575,6 @@ chrome.storage.onChanged.addListener((changes, area) => {
     const s = changes[EDITOR_SETTINGS_KEY].newValue;
     applyPreviewVisibility(s.previewEnabled !== false);
     applyFonts(s);
-    applyCorners(s);
     if (editorFakeCaret) {
       if (s.caretStyle) {
         caretStyle = s.caretStyle;
@@ -611,6 +600,11 @@ chrome.storage.onChanged.addListener((changes, area) => {
         const pct = Math.max(SOURCE_HEIGHT_MIN, Math.min(SOURCE_HEIGHT_MAX, s.sourceHeightPercent));
         editorWrap.style.setProperty("--source-height", pct + "%");
       }
+    }
+    if (typeof s.radiusPx === "number" && s.radiusPx >= 0 && s.radiusPx <= 24) {
+      document.documentElement.style.setProperty("--radius", s.radiusPx + "px");
+    } else {
+      document.documentElement.style.setProperty("--radius", "8px");
     }
   }
 });

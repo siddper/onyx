@@ -88,18 +88,17 @@
       </section>
 
       <section class="options-section">
-        <h2 class="options-heading">OTHER</h2>
+        <div class="settings-item">
+          <label class="settings-label" for="radiusSlider">Corner radius</label>
+          <div class="settings-slider-wrap">
+            <input id="radiusSlider" class="settings-slider" type="range" min="0" max="24" step="2" value="8" aria-valuemin="0" aria-valuemax="24" aria-valuenow="8" />
+            <span id="radiusValue" class="settings-slider-value" aria-live="polite">8px</span>
+          </div>
+        </div>
         <div class="settings-item">
           <label class="settings-label" for="previewToggle">Show preview in side panel</label>
           <label class="toggle-wrap" aria-label="Toggle preview">
             <input id="previewToggle" type="checkbox" checked />
-            <span class="toggle-track"></span>
-          </label>
-        </div>
-        <div class="settings-item">
-          <label class="settings-label" for="cornersToggle">Rounded corners</label>
-          <label class="toggle-wrap" aria-label="Toggle rounded corners">
-            <input id="cornersToggle" type="checkbox" checked />
             <span class="toggle-track"></span>
           </label>
         </div>

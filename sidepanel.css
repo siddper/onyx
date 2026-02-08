@@ -680,18 +680,3 @@ body {
 .context-menu-submenu .context-menu-option {
   border-radius: var(--radius);
 }
-
-/* Sharp corners: override all border-radius when preference is off */
-.corners-sharp,
-.corners-sharp * {
-  border-radius: 0 !important;
-}
-
-/* Keep toggles rounded regardless of corners preference */
-.corners-sharp .toggle-track {
-  border-radius: 10px !important;
-}
-
-.corners-sharp .toggle-track::after {
-  border-radius: 50% !important;
-}

@@ -90,6 +90,11 @@ html, body {
   margin-bottom: 0;
 }
 
+.settings-item .settings-slider-wrap {
+  width: 160px;
+  flex-shrink: 0;
+}
+
 .settings-label {
   font-size: 13px;
   color: var(--ink);
@@ -152,6 +157,67 @@ html, body {
 .settings-block .settings-label {
   display: block;
   margin-bottom: 8px;
+}
+
+/* Slider – track and thumb match panel/input design */
+.settings-slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-slider {
+  flex: 1;
+  min-width: 0;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--panel-strong);
+  border-radius: 3px;
+}
+
+.settings-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ink);
+  cursor: pointer;
+  margin-top: 0;
+  transition: transform 0.15s ease;
+}
+
+.settings-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.08);
+}
+
+.settings-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ink);
+  cursor: pointer;
+  border: none;
+  transition: transform 0.15s ease;
+}
+
+.settings-slider::-moz-range-thumb:hover {
+  transform: scale(1.08);
+}
+
+.settings-slider::-moz-range-track {
+  height: 6px;
+  background: var(--panel-strong);
+  border-radius: 3px;
+  border: none;
+}
+
+.settings-slider-value {
+  font-size: 13px;
+  color: var(--muted);
+  min-width: 2.5em;
+  text-align: right;
 }
 
 /* Custom select – matches context menu styling (panel, padding, radius, accent-hover) */
@@ -293,19 +359,4 @@ html, body {
 
 .settings-input::placeholder {
   color: var(--muted);
-}
-
-/* Sharp corners: override all border-radius when preference is off */
-.corners-sharp,
-.corners-sharp * {
-  border-radius: 0 !important;
-}
-
-/* Keep toggles rounded regardless of corners preference */
-.corners-sharp .toggle-track {
-  border-radius: 10px !important;
-}
-
-.corners-sharp .toggle-track::after {
-  border-radius: 50% !important;
 }
