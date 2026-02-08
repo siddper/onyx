@@ -173,6 +173,15 @@ body {
   color: var(--muted);
 }
 
+.pane-count {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: 0.35em;
+  font-size: 10px;
+  opacity: 0.85;
+}
+
 .editor-caret-wrap {
   position: relative;
   flex: 1;
@@ -315,6 +324,18 @@ body {
 
 .markdown-body em {
   font-style: italic;
+}
+
+.markdown-body del {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.markdown-body .markdown-wikilink {
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--muted);
+  cursor: default;
 }
 
 .markdown-body code {

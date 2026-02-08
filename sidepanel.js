@@ -12,8 +12,10 @@ const customFontsEl = document.getElementById("customFonts");
 const editorCaretWrap = document.querySelector(".editor-caret-wrap");
 const editorCaretMirror = document.getElementById("editorCaretMirror");
 const editorFakeCaret = document.getElementById("editorFakeCaret");
+const sourceCount = document.getElementById("sourceCount");
 
 const EDITOR_SETTINGS_KEY = "editorSettings";
+let countDisplay = "both";
 const CUSTOM_CSS_SCOPE = "body.custom-css-loaded.custom-css-scope ";
 let caretStyle = "line";
 let caretAnimation = "blink";
@@ -222,6 +224,27 @@ function flushSave() {
   return saveSettings();
 }
 
+function getWordCharCount(text) {
+  const t = (text || "").trim();
+  const words = t ? t.split(/\s+/).filter(Boolean).length : 0;
+  const chars = (text || "").length;
+  return { words, chars };
+}
+
+function updatePaneCounts() {
+  if (!sourceCount) return;
+  if (countDisplay === "none") {
+    sourceCount.textContent = "";
+    return;
+  }
+  const { words, chars } = getWordCharCount(markdownInput.value);
+  let str = "";
+  if (countDisplay === "both") str = words + " words · " + chars + " chars";
+  else if (countDisplay === "words") str = words + " words";
+  else if (countDisplay === "chars") str = chars + " chars";
+  sourceCount.textContent = str;
+}
+
 function updatePreview() {
   if (editorWrap.classList.contains("preview-hidden")) return;
   markdownPreview.innerHTML = typeof renderMarkdown === "function"
@@ -271,6 +294,10 @@ async function loadSettings() {
   titleInput.value = settings.title || "";
   folderInput.value = settings.folder || "";
   markdownInput.value = settings.content || "";
+  const ed = await chrome.storage.sync.get(EDITOR_SETTINGS_KEY);
+  const s = ed[EDITOR_SETTINGS_KEY] || {};
+  if (!vaultInput.value.trim() && s.defaultVault) vaultInput.value = (s.defaultVault || "").trim();
+  if (!folderInput.value.trim() && s.defaultFolder != null) folderInput.value = (s.defaultFolder || "").trim();
 }
 
 function normalizeFontUrl(input) {
@@ -308,6 +335,7 @@ async function loadEditorSettings() {
   caretAnimation = editorSettings.caretAnimation || "blink";
   caretMovement = editorSettings.caretMovement || "instant";
   editorFont = editorSettings.editorFont || "inter";
+  countDisplay = editorSettings.countDisplay || "both";
   if (editorFakeCaret) {
     editorFakeCaret.dataset.style = caretStyle;
     editorFakeCaret.dataset.animation = caretAnimation;
@@ -424,13 +452,14 @@ function scheduleCaretUpdate() {
 }
 
 function startCaretBlink() {
+  if (!editorFakeCaret) return;
   if (caretAnimation === "blink") {
     if (caretBlinkTimer) return;
     caretVisible = true;
     editorFakeCaret.style.opacity = "1";
     caretBlinkTimer = setInterval(() => {
       caretVisible = !caretVisible;
-      editorFakeCaret.style.opacity = caretVisible ? "1" : "0";
+      if (editorFakeCaret) editorFakeCaret.style.opacity = caretVisible ? "1" : "0";
     }, 530);
   } else {
     caretVisible = true;
@@ -447,8 +476,10 @@ function stopCaretBlink() {
     clearInterval(caretBlinkTimer);
     caretBlinkTimer = null;
   }
-  editorFakeCaret.style.opacity = "0";
-  editorFakeCaret.style.animation = "none";
+  if (editorFakeCaret) {
+    editorFakeCaret.style.opacity = "0";
+    editorFakeCaret.style.animation = "none";
+  }
 }
 
 function applyPreviewVisibility(enabled) {
@@ -749,6 +780,9 @@ async function saveSettings(extra = {}) {
   el.addEventListener("change", scheduleSave);
 });
 
+// Many browsers and Obsidian URI handlers limit URL length (~2k–8k). Warn if content is very long.
+const OBSIDIAN_URL_LENGTH_WARN = 1800;
+
 exportBtn.addEventListener("click", async () => {
   const vault = vaultInput.value.trim();
   if (!vault) {
@@ -763,6 +797,9 @@ exportBtn.addEventListener("click", async () => {
   const folder = folderInput.value.trim();
   const content = markdownInput.value;
   const obsidianUrl = buildObsidianUrl({ vault, title, content, folder });
+  if (obsidianUrl.length > OBSIDIAN_URL_LENGTH_WARN) {
+    setStatus("Note is very long; Obsidian may not open. Consider splitting.");
+  }
   chrome.tabs.create({ url: obsidianUrl });
 });
 
@@ -791,6 +828,10 @@ chrome.storage.onChanged.addListener((changes, area) => {
       }
       if (s.editorFont) editorFont = s.editorFont;
       scheduleCaretUpdate();
+    }
+    if (s.countDisplay) {
+      countDisplay = s.countDisplay;
+      updatePaneCounts();
     }
     if (editorWrap && !editorWrap.classList.contains("preview-hidden")) {
       if (typeof s.sourceWidthPercent === "number" && !isStackedLayout()) {
@@ -933,6 +974,7 @@ markdownInput.addEventListener("input", () => {
   updatePreview();
   scheduleSave();
   scheduleCaretUpdate();
+  updatePaneCounts();
 });
 markdownInput.addEventListener("click", scheduleCaretUpdate);
 markdownInput.addEventListener("keydown", scheduleCaretUpdate);
@@ -1035,8 +1077,10 @@ if (editorResizer && editorWrap) {
 
 loadSettings()
   .then(() => loadEditorSettings())
-  .then(() => {
+  .then(async () => {
     updatePreview();
-    applyPendingImport();
+    updatePaneCounts();
+    await applyPendingImport();
+    updatePaneCounts();
     scheduleCaretUpdate();
   });

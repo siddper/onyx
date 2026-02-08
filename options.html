@@ -16,6 +16,7 @@
 
       <section class="options-section">
         <h2 class="options-heading">Themes</h2>
+        <p class="options-hint">Choose a built-in theme or import a custom theme from a JSON file. Applies to the side panel editor.</p>
         <div class="settings-block">
           <label class="settings-label" for="themeSelect">Theme</label>
           <select id="themeSelect" class="settings-select">
@@ -33,8 +34,6 @@
           </select>
         </div>
         <div class="settings-block">
-          <label class="settings-label">Custom themes</label>
-          <p class="options-hint">Import a theme from a JSON config file. See <code>CUSTOM-THEMES.md</code> in the project root for the config format.</p>
           <input id="themeFileInput" type="file" accept=".json,application/json" hidden />
           <button type="button" id="importThemeBtn" class="settings-btn settings-btn--secondary">Import theme</button>
           <ul id="customThemesList" class="custom-themes-list" aria-label="Imported custom themes"></ul>
@@ -43,6 +42,7 @@
 
       <section class="options-section">
         <h2 class="options-heading">Caret</h2>
+        <p class="options-hint">Customize the cursor appearance and animation in the editor.</p>
         <div class="settings-block">
           <label class="settings-label" for="caretStyleSelect">Caret shape</label>
           <select id="caretStyleSelect" class="settings-select">
@@ -103,7 +103,7 @@
 
       <section class="options-section">
         <h2 class="options-heading">Import into Obsidian</h2>
-        <p class="options-hint">Defaults used when you use “Import selection to Obsidian” from the context menu.</p>
+        <p class="options-hint">Defaults used when you right-click selected text and choose “Import selection to Obsidian”. The note name and folder below are used for that action.</p>
         <div class="settings-block">
           <label class="settings-label" for="importObsidianNoteName">Import note name</label>
           <input id="importObsidianNoteName" class="settings-input" type="text" placeholder="Import From Markdown Editor" />
@@ -116,7 +116,7 @@
 
       <section class="options-section">
         <h2 class="options-heading">Custom CSS</h2>
-        <p class="options-hint">CSS applied only to the side panel (not this Settings page). Your selectors are automatically scoped so they override default styles (e.g. <code>input { border-radius: 0 }</code> works).</p>
+        <p class="options-hint">CSS applied only to the side panel (not this Settings page). Your selectors are automatically scoped so they override default styles.</p>
         <div class="settings-block">
           <label class="settings-label" for="customCssInput">Custom CSS</label>
           <textarea id="customCssInput" class="settings-textarea" rows="8" placeholder=".app { }" spellcheck="false"></textarea>
@@ -128,6 +128,24 @@
 
       <section class="options-section">
         <h2 class="options-heading">Other</h2>
+        <p class="options-hint">Default vault and folder pre-fill the side panel when empty. Source count shows words/chars in the Source pane header.</p>
+        <div class="settings-block">
+          <label class="settings-label" for="defaultVault">Default vault</label>
+          <input id="defaultVault" class="settings-input" type="text" placeholder="Pre-fill vault in side panel when empty" />
+        </div>
+        <div class="settings-block">
+          <label class="settings-label" for="defaultFolder">Default folder</label>
+          <input id="defaultFolder" class="settings-input" type="text" placeholder="Pre-fill folder in side panel when empty" />
+        </div>
+        <div class="settings-block">
+          <label class="settings-label" for="countDisplaySelect">Source pane count</label>
+          <select id="countDisplaySelect" class="settings-select">
+            <option value="both">Words and characters</option>
+            <option value="words">Words only</option>
+            <option value="chars">Characters only</option>
+            <option value="none">None</option>
+          </select>
+        </div>
         <div class="settings-item">
           <label class="settings-label" for="radiusSlider">Corner radius</label>
           <div class="settings-slider-wrap">

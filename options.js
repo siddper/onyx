@@ -315,6 +315,9 @@ const themeSelect = document.getElementById("themeSelect");
 const caretStyleSelect = document.getElementById("caretStyleSelect");
 const caretAnimationSelect = document.getElementById("caretAnimationSelect");
 const caretMovementSelect = document.getElementById("caretMovementSelect");
+const defaultVaultInput = document.getElementById("defaultVault");
+const defaultFolderInput = document.getElementById("defaultFolder");
+const countDisplaySelect = document.getElementById("countDisplaySelect");
 const importObsidianNoteName = document.getElementById("importObsidianNoteName");
 const importObsidianFolder = document.getElementById("importObsidianFolder");
 const customCssInput = document.getElementById("customCssInput");
@@ -336,6 +339,9 @@ function getSettingsFromForm() {
     editorFontFamily: editorFontFamily.value.trim(),
     codeFontUrl: codeFontUrl.value.trim(),
     codeFontFamily: codeFontFamily.value.trim(),
+    defaultVault: defaultVaultInput ? defaultVaultInput.value.trim() : "",
+    defaultFolder: defaultFolderInput ? defaultFolderInput.value.trim() : "",
+    countDisplay: countDisplaySelect ? countDisplaySelect.value : "both",
     importObsidianNoteName: importObsidianNoteName.value.trim(),
     importObsidianFolder: importObsidianFolder.value.trim(),
     customCss: customCssInput ? customCssInput.value.trim() : ""
@@ -500,6 +506,9 @@ async function loadSettings() {
   caretStyleSelect.value = s.caretStyle || "line";
   caretAnimationSelect.value = s.caretAnimation || "blink";
   caretMovementSelect.value = s.caretMovement || "instant";
+  if (defaultVaultInput) defaultVaultInput.value = s.defaultVault ?? "";
+  if (defaultFolderInput) defaultFolderInput.value = s.defaultFolder ?? "";
+  if (countDisplaySelect) countDisplaySelect.value = s.countDisplay || "both";
   importObsidianNoteName.value = s.importObsidianNoteName ?? "Import From Markdown Editor";
   importObsidianFolder.value = s.importObsidianFolder ?? "";
   interfaceFontSelect.value = s.interfaceFont || "inter";
@@ -610,9 +619,18 @@ caretMovementSelect.addEventListener("change", () => {
   saveSettings({ caretMovement: caretMovementSelect.value });
 });
 
-[importObsidianNoteName, importObsidianFolder].forEach((el) => {
+if (countDisplaySelect) {
+  countDisplaySelect.addEventListener("change", () => {
+    saveSettings({ countDisplay: countDisplaySelect.value });
+  });
+}
+
+[defaultVaultInput, defaultFolderInput, importObsidianNoteName, importObsidianFolder].forEach((el) => {
+  if (!el) return;
   el.addEventListener("blur", () => {
     saveSettings({
+      defaultVault: defaultVaultInput ? defaultVaultInput.value.trim() : "",
+      defaultFolder: defaultFolderInput ? defaultFolderInput.value.trim() : "",
       importObsidianNoteName: importObsidianNoteName.value.trim() || "Import From Markdown Editor",
       importObsidianFolder: importObsidianFolder.value.trim()
     });

@@ -15,7 +15,12 @@
       .replace(/__(.+?)__/g, "<strong>$1</strong>")
       .replace(/\*(.+?)\*/g, "<em>$1</em>")
       .replace(/_(.+?)_/g, "<em>$1</em>")
+      .replace(/~~(.+?)~~/g, "<del>$1</del>")
       .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/\[\[([^\]|]+)(?:\|([^\]]*))?\]\]/g, function (_, page, label) {
+        var display = (label && label.trim()) ? label.trim() : page;
+        return '<span class="markdown-wikilink" title="' + escapeHtml(page) + '">' + escapeHtml(display) + '</span>';
+      })
       .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
   }
 
