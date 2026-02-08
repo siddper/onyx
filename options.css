@@ -82,6 +82,11 @@ html, body {
   line-height: 1.5;
 }
 
+.options-hint--inline {
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
 .settings-item {
   display: flex;
   align-items: center;

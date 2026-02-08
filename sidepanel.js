@@ -339,6 +339,7 @@ async function loadEditorSettings() {
   editorFont = editorSettings.editorFont || "inter";
   countDisplay = editorSettings.countDisplay || "both";
   syncScrollEnabled = editorSettings.syncScroll === true;
+  document.body.classList.toggle("minimal-mode", editorSettings.minimalMode === true);
   if (editorFakeCaret) {
     editorFakeCaret.dataset.style = caretStyle;
     editorFakeCaret.dataset.animation = caretAnimation;
@@ -837,6 +838,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
       updatePaneCounts();
     }
     if (s.syncScroll !== undefined) syncScrollEnabled = s.syncScroll === true;
+    if (s.minimalMode !== undefined) document.body.classList.toggle("minimal-mode", s.minimalMode === true);
     if (editorWrap && !editorWrap.classList.contains("preview-hidden")) {
       if (typeof s.sourceWidthPercent === "number" && !isStackedLayout()) {
         const pct = Math.max(SOURCE_WIDTH_MIN, Math.min(SOURCE_WIDTH_MAX, s.sourceWidthPercent));

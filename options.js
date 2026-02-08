@@ -327,6 +327,7 @@ function getSettingsFromForm() {
     theme: themeSelect ? themeSelect.value : "system",
     previewEnabled: previewToggle.checked,
     syncScroll: document.getElementById("syncScrollToggle")?.checked ?? false,
+    minimalMode: document.getElementById("minimalModeToggle")?.checked ?? false,
     radiusPx: radiusSlider ? parseInt(radiusSlider.value, 10) : 8,
     caretStyle: caretStyleSelect.value,
     caretAnimation: caretAnimationSelect.value,
@@ -504,6 +505,8 @@ async function loadSettings() {
   previewToggle.checked = s.previewEnabled !== false;
   const syncScrollToggle = document.getElementById("syncScrollToggle");
   if (syncScrollToggle) syncScrollToggle.checked = s.syncScroll === true;
+  const minimalModeToggle = document.getElementById("minimalModeToggle");
+  if (minimalModeToggle) minimalModeToggle.checked = s.minimalMode === true;
   const radius = typeof s.radiusPx === "number" && s.radiusPx >= 0 && s.radiusPx <= 24 ? s.radiusPx : 8;
   applyRadius(radius);
   caretStyleSelect.value = s.caretStyle || "line";
@@ -550,6 +553,13 @@ const syncScrollToggle = document.getElementById("syncScrollToggle");
 if (syncScrollToggle) {
   syncScrollToggle.addEventListener("change", () => {
     saveSettings({ syncScroll: syncScrollToggle.checked });
+  });
+}
+
+const minimalModeToggle = document.getElementById("minimalModeToggle");
+if (minimalModeToggle) {
+  minimalModeToggle.addEventListener("change", () => {
+    saveSettings({ minimalMode: minimalModeToggle.checked });
   });
 }
 
