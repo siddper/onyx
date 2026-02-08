@@ -871,6 +871,14 @@ if (vaultDropdownTrigger && vaultDropdownList) {
   vaultDropdownList.addEventListener("click", (e) => e.stopPropagation());
 }
 
+function toggleToolbarVisibility() {
+  document.body.classList.toggle("toolbar-hidden");
+}
+
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg && msg.action === "toggleToolbar") toggleToolbarVisibility();
+});
+
 [vaultInput, titleInput, folderInput].forEach((el) => {
   if (!el) return;
   el.addEventListener("input", scheduleSave);

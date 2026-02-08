@@ -66,6 +66,21 @@ body {
   border-radius: var(--radius);
 }
 
+body.toolbar-hidden .toolbar {
+  display: none !important;
+}
+
+body.toolbar-hidden .app {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+body.toolbar-hidden .editor-wrap {
+  flex: 1;
+  min-height: 0;
+}
+
 .toolbar-row {
   display: grid;
   gap: 8px;
@@ -297,6 +312,9 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .pane-count {

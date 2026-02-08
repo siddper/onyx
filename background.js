@@ -1,3 +1,9 @@
+chrome.commands.onCommand.addListener((command) => {
+  if (command === "toggleToolbar") {
+    chrome.runtime.sendMessage({ action: "toggleToolbar" }).catch(() => {});
+  }
+});
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.action === "getActiveTab") {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {

@@ -8,5 +8,14 @@
   "background": { "service_worker": "background.js" },
   "side_panel": { "default_path": "sidepanel.html" },
   "options_ui": { "page": "options.html" },
+  "commands": {
+    "toggleToolbar": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+T",
+        "mac": "Command+Shift+T"
+      },
+      "description": "Toggle toolbar visibility"
+    }
+  },
   "icons": { "16": "icon.png", "48": "icon.png", "128": "icon.png" }
 }
