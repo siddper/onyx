@@ -7,10 +7,25 @@
   --muted: #9aa0a6;
   --accent: #2a2f33;
   --accent-hover: #262a2e;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   --radius: 8px;
   --font-interface: "Inter", sans-serif;
   --font-editor: "Inter", sans-serif;
   --font-code: "JetBrains Mono", monospace;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+    --bg: #f0f1f3;
+    --panel: #ffffff;
+    --panel-strong: #e8e9ec;
+    --ink: #1a1d21;
+    --muted: #5f6368;
+    --accent: #d4d6d9;
+    --accent-hover: #c2c4c8;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  }
 }
 
 * {
@@ -200,7 +215,7 @@ html, body {
   background: var(--panel);
   padding: 4px;
   border-radius: var(--radius);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow);
   max-height: 240px;
   overflow-y: auto;
   z-index: 10;
