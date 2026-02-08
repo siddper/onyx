@@ -1,3 +1,25 @@
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.action === "getActiveTab") {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (chrome.runtime.lastError) {
+        sendResponse({ error: chrome.runtime.lastError.message });
+        return;
+      }
+      const tab = tabs[0];
+      if (!tab || !tab.url) {
+        sendResponse({ error: "No tab or URL" });
+        return;
+      }
+      if (tab.url.startsWith("chrome://") || tab.url.startsWith("edge://") || tab.url.startsWith("about:")) {
+        sendResponse({ error: "Can't access this page" });
+        return;
+      }
+      sendResponse({ title: tab.title || tab.url, url: tab.url });
+    });
+    return true;
+  }
+});
+
 chrome.runtime.onInstalled.addListener(() => {
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 

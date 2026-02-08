@@ -4,6 +4,7 @@ const folderInput = document.getElementById("folderInput");
 const markdownInput = document.getElementById("markdownInput");
 const markdownPreview = document.getElementById("markdownPreview");
 const exportBtn = document.getElementById("exportBtn");
+const capturePageIconBtn = document.getElementById("capturePageIconBtn");
 const status = document.getElementById("status");
 const settingsBtn = document.getElementById("settingsBtn");
 const editorWrap = document.getElementById("editorWrap");
@@ -279,8 +280,10 @@ function encodeObsidianParam(value) {
 }
 
 function buildObsidianUrl({ vault, title, content, folder }) {
-  // Use "file" for path (folder/note); Obsidian requires / encoded as %2F
-  const filePath = folder ? `${folder.replace(/\/$/, "")}/${title}` : title;
+  // Obsidian: file = vault-relative path. Slashes in filename break; encode path so / becomes %2F.
+  const safeTitle = (title || "").replace(/[/\\:*?"<>|]/g, "-").trim() || "Untitled";
+  const safeFolder = (folder || "").replace(/\/$/, "").replace(/\\/g, "/").trim();
+  const filePath = safeFolder ? `${safeFolder}/${safeTitle}` : safeTitle;
   const params = [
     `vault=${encodeObsidianParam(vault)}`,
     `file=${encodeObsidianParam(filePath)}`,
@@ -806,6 +809,37 @@ exportBtn.addEventListener("click", async () => {
   }
   chrome.tabs.create({ url: obsidianUrl });
 });
+
+function escapeMarkdownLinkText(s) {
+  return String(s).replace(/\\/g, "\\\\").replace(/\]/g, "\\]");
+}
+
+if (capturePageIconBtn) {
+  capturePageIconBtn.addEventListener("click", () => {
+    chrome.runtime.sendMessage({ action: "getActiveTab" }, (response) => {
+      if (chrome.runtime.lastError) {
+        setStatus("Can't access this page.");
+        return;
+      }
+      if (response?.error || !response?.url) {
+        setStatus(response?.error === "Can't access this page" ? response.error : "Can't access this page.");
+        return;
+      }
+      const { title, url } = response;
+      const pageTitle = (title || url).trim() || url;
+      titleInput.value = pageTitle;
+      scheduleSave();
+      const safeTitle = escapeMarkdownLinkText(pageTitle);
+      const link = "[" + safeTitle + "](" + url + ")";
+      const start = markdownInput.selectionStart;
+      const end = markdownInput.selectionEnd;
+      const prefix = start > 0 && !markdownInput.value[start - 1].match(/\s/) ? "\n" : start > 0 ? "" : "";
+      const insertText = prefix + link + "\n\n";
+      const newCursor = start + insertText.length;
+      editorInsert(start, end, insertText, newCursor, newCursor);
+    });
+  });
+}
 
 settingsBtn.addEventListener("click", () => {
   chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
