@@ -896,10 +896,35 @@ function applyExportTemplate(template, { title, date, time }) {
     .replace(/\{\{time\}\}/g, time);
 }
 
+const EXPORT_BTN_LABEL = "Export to Obsidian";
+const CAPTURE_PAGE_BTN_LABEL = "Use current page title and add link";
+const FEEDBACK_RESET_MS = 2500;
+const CAPTURE_PAGE_ERROR_FLASH_MS = 1800;
+
+function showFeedbackOnButton(btn, message, restoreLabel) {
+  if (!btn) return;
+  if (btn === capturePageIconBtn) {
+    btn.setAttribute("aria-label", message);
+    btn.setAttribute("title", message);
+    btn.classList.add("toolbar-title-icon--error");
+    setTimeout(() => btn.classList.remove("toolbar-title-icon--error"), CAPTURE_PAGE_ERROR_FLASH_MS);
+  } else {
+    btn.textContent = message;
+  }
+  setTimeout(() => {
+    if (btn === capturePageIconBtn) {
+      btn.setAttribute("aria-label", restoreLabel);
+      btn.setAttribute("title", restoreLabel);
+    } else {
+      btn.textContent = restoreLabel;
+    }
+  }, FEEDBACK_RESET_MS);
+}
+
 exportBtn.addEventListener("click", async () => {
   const vault = vaultInput.value.trim();
   if (!vault) {
-    setStatus("Enter a vault name first.");
+    showFeedbackOnButton(exportBtn, "Enter vault first", EXPORT_BTN_LABEL);
     if (vaultDropdownTrigger) vaultDropdownTrigger.focus();
     return;
   }
@@ -923,7 +948,7 @@ exportBtn.addEventListener("click", async () => {
 
   const obsidianUrl = buildObsidianUrl({ vault, title, content, folder });
   if (obsidianUrl.length > OBSIDIAN_URL_LENGTH_WARN) {
-    setStatus("Note is very long; Obsidian may not open. Consider splitting.");
+    showFeedbackOnButton(exportBtn, "Note very long – check Obsidian", EXPORT_BTN_LABEL);
   }
   chrome.tabs.create({ url: obsidianUrl });
 });
@@ -936,11 +961,11 @@ if (capturePageIconBtn) {
   capturePageIconBtn.addEventListener("click", () => {
     chrome.runtime.sendMessage({ action: "getActiveTab" }, (response) => {
       if (chrome.runtime.lastError) {
-        setStatus("Can't access this page.");
+        showFeedbackOnButton(capturePageIconBtn, "Can't access this page", CAPTURE_PAGE_BTN_LABEL);
         return;
       }
       if (response?.error || !response?.url) {
-        setStatus(response?.error === "Can't access this page" ? response.error : "Can't access this page.");
+        showFeedbackOnButton(capturePageIconBtn, response?.error === "Can't access this page" ? response.error : "Can't access this page", CAPTURE_PAGE_BTN_LABEL);
         return;
       }
       const { title, url } = response;

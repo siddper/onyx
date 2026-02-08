@@ -244,6 +244,10 @@ body.toolbar-hidden .editor-wrap {
   color: var(--ink);
 }
 
+.toolbar-title-icon--error {
+  color: #e53935 !important;
+}
+
 .toolbar-title-icon svg {
   width: 18px;
   height: 18px;
