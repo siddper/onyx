@@ -16,6 +16,7 @@
       .replace(/\*(.+?)\*/g, "<em>$1</em>")
       .replace(/_(.+?)_/g, "<em>$1</em>")
       .replace(/~~(.+?)~~/g, "<del>$1</del>")
+      .replace(/==(.+?)==/g, "<mark>$1</mark>")
       .replace(/`([^`]+)`/g, "<code>$1</code>")
       .replace(/\[\[([^\]|]+)(?:\|([^\]]*))?\]\]/g, function (_, page, label) {
         var display = (label && label.trim()) ? label.trim() : page;

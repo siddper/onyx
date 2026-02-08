@@ -920,6 +920,14 @@ markdownInput.addEventListener("keydown", (e) => {
     return;
   }
 
+  // "=" with selection only: wrap with == on both sides (==highlight==)
+  if (hasSelection && e.key === "=") {
+    e.preventDefault();
+    const selected = value.slice(start, end);
+    editorInsert(start, end, "==" + selected + "==", start + 2, start + 2 + selected.length);
+    return;
+  }
+
   // Backspace: empty pair (open|close) -> delete both
   if (!hasSelection && e.key === "Backspace" && start > 0) {
     const charBefore = value[start - 1];
