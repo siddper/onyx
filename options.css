@@ -39,6 +39,11 @@
   scrollbar-width: none;
 }
 
+::selection {
+  background: var(--accent-hover);
+  color: var(--ink);
+}
+
 html, body {
   margin: 0;
   background: var(--bg);

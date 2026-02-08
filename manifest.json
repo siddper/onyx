@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Onyx",
+  "name": "Onyx - Markdown Notes for Obsidian",
   "version": "0.1.0",
   "description": "Markdown side panel editor – export notes to Obsidian.",
   "permissions": ["sidePanel", "storage", "contextMenus","tabs"],

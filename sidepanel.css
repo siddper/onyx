@@ -39,6 +39,11 @@
   scrollbar-width: none;
 }
 
+::selection {
+  background: var(--accent-hover);
+  color: var(--ink);
+}
+
 html,
 body {
   height: 100%;
@@ -144,6 +149,10 @@ body.toolbar-hidden .editor-wrap {
   cursor: pointer;
   appearance: none;
   transition: all 0.2s ease;
+}
+
+.vault-dropdown-trigger:hover {
+  background: var(--accent);
 }
 
 .vault-dropdown-list {
@@ -901,29 +910,37 @@ body.minimal-mode #status {
   font-size: 10px;
 }
 
-/* Export + Settings on one row */
+body.minimal-mode .toolbar-title-icon {
+  width: 26px;
+}
+
+body.minimal-mode .toolbar-title-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+body.minimal-mode .title-input-wrap input {
+  padding-right: 28px;
+}
+
+/* Export + Settings on one row (half width each) */
 body.minimal-mode .toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  flex-direction: row;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: end;
 }
 
 body.minimal-mode .toolbar-row:nth-child(1),
 body.minimal-mode .toolbar-row:nth-child(2) {
-  flex: 1 1 100%;
-  min-width: 0;
-}
-
-body.minimal-mode .toolbar-row:nth-child(3),
-body.minimal-mode .toolbar-row:nth-child(4) {
-  flex: 0 0 auto;
-  width: auto;
-  min-width: 0;
+  grid-column: 1 / -1;
 }
 
 body.minimal-mode .toolbar-row:nth-child(3) {
-  margin-right: 4px;
+  grid-column: 1;
+}
+
+body.minimal-mode .toolbar-row:nth-child(4) {
+  grid-column: 2;
 }
 
 body.minimal-mode .editor-pane,
