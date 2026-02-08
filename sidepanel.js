@@ -1,4 +1,6 @@
 const vaultInput = document.getElementById("vaultInput");
+const vaultDropdownTrigger = document.getElementById("vaultDropdownTrigger");
+const vaultDropdownList = document.getElementById("vaultDropdownList");
 const titleInput = document.getElementById("titleInput");
 const folderInput = document.getElementById("folderInput");
 const markdownInput = document.getElementById("markdownInput");
@@ -26,6 +28,7 @@ let caretMovement = "instant";
 let editorFont = "inter";
 let caretBlinkTimer = null;
 let caretVisible = true;
+let cachedSavedVaults = [];
 
 const FONT_PRESETS = [
   { id: "inter", label: "Inter", fontFamily: '"Inter", sans-serif' },
@@ -303,6 +306,10 @@ async function loadSettings() {
   const s = ed[EDITOR_SETTINGS_KEY] || {};
   if (!vaultInput.value.trim() && s.defaultVault) vaultInput.value = (s.defaultVault || "").trim();
   if (!folderInput.value.trim() && s.defaultFolder != null) folderInput.value = (s.defaultFolder || "").trim();
+  const savedVaults = Array.isArray(s.savedVaults) ? s.savedVaults : [];
+  cachedSavedVaults = savedVaults;
+  renderVaultDropdownList(savedVaults);
+  updateVaultTriggerText();
 }
 
 function normalizeFontUrl(input) {
@@ -782,7 +789,90 @@ async function saveSettings(extra = {}) {
   await chrome.storage.sync.set({ [STORAGE_KEY]: payload });
 }
 
+function updateVaultTriggerText() {
+  if (vaultDropdownTrigger) {
+    const v = (vaultInput && vaultInput.value || "").trim();
+    vaultDropdownTrigger.textContent = v || "MyVault";
+  }
+}
+
+function renderVaultDropdownList(savedVaults) {
+  if (!vaultDropdownList) return;
+  vaultDropdownList.innerHTML = "";
+  const currentVault = (vaultInput && vaultInput.value || "").trim();
+  (savedVaults || []).forEach((name) => {
+    const opt = document.createElement("button");
+    opt.type = "button";
+    opt.className = "vault-dropdown-option";
+    opt.role = "option";
+    opt.setAttribute("aria-selected", currentVault === name);
+    const label = document.createElement("span");
+    label.textContent = name;
+    label.style.flex = "1";
+    label.style.minWidth = "0";
+    label.style.textAlign = "left";
+    opt.appendChild(label);
+    const checkSlot = document.createElement("span");
+    checkSlot.className = "vault-dropdown-option__check";
+    checkSlot.setAttribute("aria-hidden", "true");
+    if (currentVault === name) {
+      checkSlot.innerHTML = CONTEXT_MENU_CHECK_SVG;
+      const svg = checkSlot.querySelector("svg");
+      if (svg) {
+        svg.style.width = "16px";
+        svg.style.height = "16px";
+        svg.style.fill = "currentColor";
+      }
+    }
+    opt.appendChild(checkSlot);
+    opt.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (vaultInput) vaultInput.value = name;
+      updateVaultTriggerText();
+      closeVaultDropdown();
+      scheduleSave();
+    });
+    vaultDropdownList.appendChild(opt);
+  });
+  const addOpt = document.createElement("button");
+  addOpt.type = "button";
+  addOpt.className = "vault-dropdown-option vault-dropdown-option--add";
+  addOpt.role = "option";
+  addOpt.textContent = "Manage vaults";
+  addOpt.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeVaultDropdown();
+    chrome.tabs.create({ url: chrome.runtime.getURL("options.html#section-saved-vaults") });
+  });
+  vaultDropdownList.appendChild(addOpt);
+}
+
+function closeVaultDropdown() {
+  if (vaultDropdownList) vaultDropdownList.hidden = true;
+  if (vaultDropdownTrigger) vaultDropdownTrigger.setAttribute("aria-expanded", "false");
+  document.removeEventListener("click", closeVaultDropdown);
+}
+
+function openVaultDropdown() {
+  if (!vaultDropdownList) return;
+  renderVaultDropdownList(cachedSavedVaults);
+  vaultDropdownList.hidden = false;
+  if (vaultDropdownTrigger) vaultDropdownTrigger.setAttribute("aria-expanded", "true");
+  setTimeout(() => document.addEventListener("click", closeVaultDropdown), 0);
+}
+
+if (vaultDropdownTrigger && vaultDropdownList) {
+  vaultDropdownTrigger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = vaultDropdownList.hidden === false;
+    if (isOpen) closeVaultDropdown();
+    else openVaultDropdown();
+  });
+  vaultDropdownList.addEventListener("click", (e) => e.stopPropagation());
+}
+
 [vaultInput, titleInput, folderInput].forEach((el) => {
+  if (!el) return;
   el.addEventListener("input", scheduleSave);
   el.addEventListener("change", scheduleSave);
 });
@@ -802,7 +892,7 @@ exportBtn.addEventListener("click", async () => {
   const vault = vaultInput.value.trim();
   if (!vault) {
     setStatus("Enter a vault name first.");
-    vaultInput.focus();
+    if (vaultDropdownTrigger) vaultDropdownTrigger.focus();
     return;
   }
 
@@ -893,6 +983,10 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
     if (s.syncScroll !== undefined) syncScrollEnabled = s.syncScroll === true;
     if (s.minimalMode !== undefined) document.body.classList.toggle("minimal-mode", s.minimalMode === true);
+    if (s.savedVaults !== undefined) {
+      cachedSavedVaults = Array.isArray(s.savedVaults) ? s.savedVaults : [];
+      renderVaultDropdownList(cachedSavedVaults);
+    }
     if (editorWrap && !editorWrap.classList.contains("preview-hidden")) {
       if (typeof s.sourceWidthPercent === "number" && !isStackedLayout()) {
         const pct = Math.max(SOURCE_WIDTH_MIN, Math.min(SOURCE_WIDTH_MAX, s.sourceWidthPercent));

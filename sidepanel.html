@@ -16,7 +16,11 @@
         <div class="toolbar-row toolbar-row--half">
           <label>
             Vault name
-            <input id="vaultInput" type="text" placeholder="MyVault" />
+            <div class="vault-dropdown" id="vaultDropdown">
+              <input type="hidden" id="vaultInput" />
+              <button type="button" id="vaultDropdownTrigger" class="vault-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Choose vault">MyVault</button>
+              <div id="vaultDropdownList" class="vault-dropdown-list" role="listbox" aria-label="Saved vaults" hidden></div>
+            </div>
           </label>
           <label>
             Folder in vault

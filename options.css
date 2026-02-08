@@ -194,6 +194,58 @@ html, body {
   margin-top: 10px;
 }
 
+.settings-inline-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-inline-row .settings-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.saved-vaults-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.saved-vaults-list:empty {
+  display: none;
+}
+
+.saved-vaults-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--panel-strong);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.saved-vaults-list .saved-vaults-list__remove {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  font-size: 12px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  background: var(--accent);
+  color: var(--ink);
+  transition: all 0.2s ease;
+}
+
+.saved-vaults-list .saved-vaults-list__remove:hover {
+  background: var(--accent-hover);
+}
+
 .custom-css-status {
   font-size: 12px;
   color: var(--muted);

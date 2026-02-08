@@ -322,6 +322,9 @@ const importObsidianNoteName = document.getElementById("importObsidianNoteName")
 const importObsidianFolder = document.getElementById("importObsidianFolder");
 const exportTemplateInput = document.getElementById("exportTemplateInput");
 const customCssInput = document.getElementById("customCssInput");
+const newVaultInput = document.getElementById("newVaultInput");
+const addVaultBtn = document.getElementById("addVaultBtn");
+const savedVaultsList = document.getElementById("savedVaultsList");
 
 function getSettingsFromForm() {
   return {
@@ -520,6 +523,7 @@ async function loadSettings() {
   importObsidianNoteName.value = s.importObsidianNoteName ?? "Import From Markdown Editor";
   importObsidianFolder.value = s.importObsidianFolder ?? "";
   if (exportTemplateInput) exportTemplateInput.value = s.exportTemplate ?? "";
+  renderSavedVaultsList(Array.isArray(s.savedVaults) ? s.savedVaults : []);
   interfaceFontSelect.value = s.interfaceFont || "inter";
   editorFontSelect.value = s.editorFont || "inter";
   codeFontSelect.value = s.codeFont || "jetbrains-mono";
@@ -538,6 +542,26 @@ async function saveSettings(partial) {
   const data = await chrome.storage.sync.get(EDITOR_SETTINGS_KEY);
   const current = data[EDITOR_SETTINGS_KEY] || {};
   await chrome.storage.sync.set({ [EDITOR_SETTINGS_KEY]: { ...current, ...partial } });
+}
+
+function renderSavedVaultsList(vaults) {
+  if (!savedVaultsList) return;
+  savedVaultsList.innerHTML = "";
+  (vaults || []).forEach((name) => {
+    const li = document.createElement("li");
+    li.textContent = name;
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "saved-vaults-list__remove";
+    removeBtn.textContent = "Remove";
+    removeBtn.addEventListener("click", async () => {
+      const next = vaults.filter((v) => v !== name);
+      await saveSettings({ savedVaults: next });
+      renderSavedVaultsList(next);
+    });
+    li.appendChild(removeBtn);
+    savedVaultsList.appendChild(li);
+  });
 }
 
 function syncAndSave() {
@@ -624,6 +648,24 @@ if (exportTemplateInput) {
   });
 }
 
+if (addVaultBtn && newVaultInput && savedVaultsList) {
+  addVaultBtn.addEventListener("click", async () => {
+    const name = newVaultInput.value.trim();
+    if (!name) return;
+    const data = await chrome.storage.sync.get(EDITOR_SETTINGS_KEY);
+    const current = data[EDITOR_SETTINGS_KEY] || {};
+    const list = Array.isArray(current.savedVaults) ? current.savedVaults : [];
+    if (list.includes(name)) return;
+    const next = [...list, name];
+    await saveSettings({ savedVaults: next });
+    renderSavedVaultsList(next);
+    newVaultInput.value = "";
+  });
+  newVaultInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") addVaultBtn.click();
+  });
+}
+
 if (customCssApplyBtn && customCssInput) {
   customCssApplyBtn.addEventListener("click", async () => {
     const css = customCssInput.value.trim();
@@ -683,5 +725,8 @@ loadSettings().then(() => {
   if (window.location.hash === "#section-fonts") {
     document.getElementById("section-fonts")?.scrollIntoView({ behavior: "smooth" });
     showHideCustomFields();
+  }
+  if (window.location.hash === "#section-saved-vaults") {
+    document.getElementById("section-saved-vaults")?.scrollIntoView({ behavior: "smooth" });
   }
 });
