@@ -8,6 +8,16 @@
     return String(s).replace(/[&<>"]/g, (c) => map[c]);
   }
 
+  function isSafeLinkUrl(url) {
+    const u = (url || "").trim();
+    if (!u) return false;
+    const lower = u.toLowerCase();
+    if (lower.startsWith("javascript:") || lower.startsWith("data:") || lower.startsWith("vbscript:")) return false;
+    if (lower.startsWith("http:") || lower.startsWith("https:") || lower.startsWith("mailto:") || u.startsWith("#")) return true;
+    if (!u.includes(":")) return true;
+    return false;
+  }
+
   function parseInline(text) {
     const safe = escapeHtml(text);
     return safe
@@ -22,7 +32,10 @@
         var display = (label && label.trim()) ? label.trim() : page;
         return '<span class="markdown-wikilink" title="' + escapeHtml(page) + '">' + escapeHtml(display) + '</span>';
       })
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (_, label, url) {
+        var href = isSafeLinkUrl(url) ? url : "#";
+        return '<a href="' + escapeHtml(href) + '" target="_blank" rel="noopener">' + label + '</a>';
+      });
   }
 
   function buildListTree(items) {

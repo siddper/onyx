@@ -266,10 +266,11 @@ function escapeHtml(s) {
 const STORAGE_KEY = "obsidianSettings";
 
 function setStatus(message) {
+  if (!status) return;
   status.textContent = message;
   if (!message) return;
   setTimeout(() => {
-    status.textContent = "";
+    if (status) status.textContent = "";
   }, 2500);
 }
 

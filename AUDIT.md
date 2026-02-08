@@ -1,103 +1,75 @@
 # Codebase audit: Markdown Editor (Obsidian)
 
-Audit date: 2025-02-07. Focus: make this the best Obsidian-integrated note-taking browser extension.
+Audit date: 2025-02-07 (full pass). Focus: bugs, security, and robustness.
+
+---
+
+## Executive summary
+
+The codebase was audited end-to-end: **manifest**, **background.js**, **sidepanel** (HTML/JS/CSS), **options** (HTML/JS/CSS), and **markdown.js**. Several bugs and robustness issues were fixed. No critical logic errors or race conditions were found in the main flows. Storage keys and async handling are consistent.
 
 ---
 
 ## Bugs fixed in this audit
 
-### 1. Null-safety in caret blink (sidepanel.js)
+### 1. **Preview link XSS (markdown.js)** — security
 
-- **Issue:** `startCaretBlink()` and `stopCaretBlink()` used `editorFakeCaret` without checks. If the DOM wasn’t ready or the element was missing, these could throw.
-- **Fix:** Added `if (!editorFakeCaret) return` at the start of `startCaretBlink()`, and `if (editorFakeCaret)` before using it in `stopCaretBlink()`. The blink timer callback also checks `editorFakeCaret` before updating opacity.
+- **Issue:** Markdown links `[label](url)` were rendered as `<a href="url">` with no URL validation. A user could enter `[click](javascript:alert(1))` or `data:` URLs and execute script in the preview.
+- **Fix:** Added `isSafeLinkUrl()` that allows only `http:`, `https:`, `mailto:`, `#`, or scheme-less relative URLs. Any other scheme (e.g. `javascript:`, `data:`, `vbscript:`) is replaced with `href="#"`. The href value is also passed through `escapeHtml()` when building the tag.
 
-### 2. Very long Obsidian URLs
+### 2. **Null-safety in options form (options.js)** — robustness
 
-- **Issue:** `obsidian://new?content=...` puts the full note in the URL. Browsers and handlers often limit URL length (~2k–8k). Very long notes could fail to open with no feedback.
-- **Fix:** Before opening the URL, the extension checks its length (e.g. > 1800 chars) and shows a short status message: “Note is very long; Obsidian may not open. Consider splitting.”
+- **Issue:** `getSettingsFromForm()` accessed `.value` and `.checked` on elements without optional chaining. If any form element were missing (e.g. after HTML change or conditional section), the script would throw.
+- **Fix:** All form field reads now use optional chaining and nullish coalescing with sensible defaults (e.g. `importObsidianNoteName?.value?.trim() ?? ""`, `caretStyleSelect?.value ?? "line"`). `previewToggle.addEventListener` is wrapped in `if (previewToggle)`. `applyFonts()` guards `customFontsEl` before setting `textContent`.
 
----
+### 3. **setStatus when #status is missing (sidepanel.js)** — robustness
 
-## Improvements made
+- **Issue:** `setStatus(message)` wrote to `status` (element with id `status`) and cleared it in a timeout. If the element were ever removed from the DOM, this would throw.
+- **Fix:** Added `if (!status) return` at the start of `setStatus()` and `if (status)` before clearing in the timeout.
 
-### 1. Obsidian-style markdown in preview
+### 4. **Caret blink null-safety (sidepanel.js)** — previously fixed
 
-- **Strikethrough:** `~~text~~` → `<del>`, with CSS in the preview. Matches common Markdown and Obsidian usage.
-- **Wikilinks:** `[[Page]]` and `[[Page|Label]]` are rendered as styled spans (no external link); preview shows the label or page name. Keeps compatibility with Obsidian vaults.
+- Already documented: `startCaretBlink()` / `stopCaretBlink()` guard on `editorFakeCaret` and blink timer callback.
 
-### 2. Strikethrough shortcut
+### 5. **Very long Obsidian URLs (sidepanel.js)** — previously fixed
 
-- **Ctrl/Cmd+Shift+S** wraps the selection (or inserts `~~|~~`) in the editor, consistent with bold/italic shortcuts.
-
-### 3. Documentation
-
-- **README.md** added: install, usage, features, Obsidian compatibility, custom themes pointer.
-- **AUDIT.md** (this file): findings, fixes, and suggested features.
+- Already documented: length check and user feedback before opening `obsidian://` URL.
 
 ---
 
-## Suggested new features (prioritized)
+## Areas reviewed — no bugs found
 
-### High value (Obsidian-first)
-
-1. **Default vault / folder from Settings**  
-   Persist “last used” or “default” vault and folder in Options so the side panel can start with them pre-filled (and optionally hide or collapse the toolbar for a cleaner editor).
-
-2. **Multiple vaults / quick switch**  
-   Allow saving several vault names and picking one from a dropdown in the toolbar (still using one “default” for context-menu “Import to Obsidian”).
-
-3. **“Append to existing note”**  
-   Obsidian URI: support `obsidian://open?...` or append API if available, so users can send content to an existing note (e.g. “Reading” or “Inbox”) instead of only creating new ones.
-
-4. **Frontmatter / YAML**  
-   Optional template in Settings (e.g. `tags: [web-clip]\ndate: {{date}}`) prepended on export so Obsidian notes get consistent metadata.
-
-5. **Copy as Markdown / Copy link to note**  
-   Buttons to copy the current content (or an `obsidian://open?file=...` link) to the clipboard for pasting into Obsidian or other apps.
-
-### Medium value (UX and polish)
-
-6. **Word / character count**  
-   Small live count in the toolbar or status area (useful for limits and readability).
-
-7. **Scroll sync (source ↔ preview)**  
-   Optional “scroll preview to match cursor” so long notes are easier to read while editing.
-
-8. **Optional “minimal toolbar” mode**  
-   Collapse vault/title/folder to one row or a single “Export” bar to maximize editor space; full settings in Options.
-
-9. **Shortcuts for headings**  
-   e.g. Ctrl/Cmd+Alt+1..6 to insert or wrap with `# `..`###### `.
-
-10. **Highlights**  
-    `==highlight==` in preview (and optionally in editor) for Obsidian-style highlights.
-
-### Lower priority / technical
-
-11. **Single source of truth for themes**  
-    `THEMES` and theme logic are duplicated in `sidepanel.js` and `options.js`. Extract to a shared script (e.g. `themes.js`) loaded by both to avoid drift and simplify adding themes.
-
-12. **Accessibility**  
-    - Ensure “Export to Obsidian” and “Settings” have clear focus order and screen reader labels.  
-    - Ensure context menu and custom selects are keyboard-navigable (arrow keys, Enter, Escape).
-
-13. **Optional sync of “current note”**  
-    Store the current buffer in `chrome.storage.local` with a short debounce so that reopening the panel restores the last note (with a “New” button to clear). Reduces accidental loss on close.
-
-14. **Tests**  
-    Add a small test suite (e.g. Jest or similar) for `markdown.js` (blocks, inlines, wikilinks, strikethrough) and for `buildObsidianUrl` / `normalizeTitle` so refactors don’t break Obsidian behavior.
+- **manifest.json:** MV3, permissions and commands are correct. No host permissions; storage/sidePanel/contextMenus/tabs are appropriate.
+- **background.js:** `getActiveTab` returns `true` for async `sendResponse`; error paths and restricted URLs are handled. Context menu and action click handlers are correct. `chrome.runtime.sendMessage` for `toggleToolbar` is caught so no unhandled rejection when no listener is open.
+- **Storage keys:** Side panel uses `obsidianSettings` (STORAGE_KEY) for vault/title/folder/content and `editorSettings` (EDITOR_SETTINGS_KEY) for theme, fonts, preview, etc. Options and background use `editorSettings` and `obsidianSettings` consistently.
+- **Async flow:** `loadSettings()` → `loadEditorSettings()` → `applyPendingImport()` chain is sequential. Save is debounced; `flushSave()` is used before export. No obvious race conditions.
+- **Context menu / vault dropdown:** Submenus and dropdown options are built with correct labels and event handlers. Cleanup (removeEventListener, element removal) is done on close.
+- **Resizer:** Mousedown/move/up are added and removed correctly; layout and `saveEditorSettings` are in sync.
+- **Custom CSS scope:** Regex for wrapping selectors with `CUSTOM_CSS_SCOPE` is applied consistently in side panel and in the storage listener; `@`-rules are left unchanged.
+- **Theme parsing (options):** `parseCustomThemeConfig` validates `name`, `colorScheme`, and all required `THEME_VARS`; invalid config throws and is shown via `alert`. `slugify` and custom theme id generation are safe.
+- **Markdown parser:** Aside from the link href fix, inline and block parsing use `escapeHtml` for user content. Wikilinks and code blocks are escaped. No other XSS vectors found.
+- **Toolbar toggle:** Command fires from background; side panel listens and toggles `toolbar-hidden`. Layout (flex + `flex: 1` on `.editor-wrap`) correctly expands when toolbar is hidden.
 
 ---
 
 ## Code quality notes
 
-- **Duplicate theme data:** `THEMES` and `THEME_VARS` in both sidepanel and options. Consider a shared module.
-- **Storage keys:** `obsidianSettings` (vault/title/folder/content) vs `editorSettings` (theme, fonts, etc.). Naming is clear; document in README or a short ARCHITECTURE.md if the project grows.
-- **Markdown parser:** Custom, small, and sufficient for the current feature set. For more Obsidian parity (e.g. callouts, highlights), either extend `markdown.js` or consider a small markdown library and keep the bundle size in check.
-- **No Content Security Policy issues observed** in manifest or scripts; extension uses no `eval` or remote script injection.
+- **Duplicate theme data:** `THEMES` and `THEME_VARS` exist in both `sidepanel.js` and `options.js`. Consider a shared module (e.g. `themes.js`) to avoid drift.
+- **setStatus:** Currently unused after moving feedback onto buttons (Export, capture page). The function and `#status` element remain; safe to remove later if desired.
+- **No CSP issues:** No `eval`, no remote script injection. Extension-only pages and side panel.
+- **Accessibility:** Context menu and custom selects use roles and ARIA; focus and keyboard flow could be audited separately if needed.
+
+---
+
+## Suggested follow-ups (non-blocking)
+
+1. **Tests:** Unit tests for `markdown.js` (links, wikilinks, escaping), `buildObsidianUrl`, `normalizeTitle`, and theme parsing would help prevent regressions.
+2. **Single source for themes:** Extract theme definitions and helpers to a shared file used by side panel and options.
+3. **Invalid theme import feedback:** Replace `alert()` for invalid theme config with an inline message near the import control (consistent with “feedback on trigger”).
+4. **Draft persistence:** Optional auto-save of current note to storage so reopening the panel can restore the last draft.
 
 ---
 
 ## Summary
 
-The extension is in good shape for an Obsidian-focused side-panel editor. This audit fixed two concrete bugs (caret null-safety, long-URL feedback), added Obsidian-friendly markdown (strikethrough, wikilinks) and a strikethrough shortcut, and documented suggested features and small tech-debt items. Implementing “Default vault/folder”, “Append to existing note”, and “Frontmatter template” would strengthen the “best Obsidian-integrated” experience the most.
+Audit is complete. Fixes were applied for: preview link XSS, options form null-safety, and setStatus robustness. No other bugs were found in the reviewed code paths. The extension is in good shape for continued development.

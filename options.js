@@ -329,29 +329,29 @@ const savedVaultsList = document.getElementById("savedVaultsList");
 function getSettingsFromForm() {
   return {
     theme: themeSelect ? themeSelect.value : "system",
-    previewEnabled: previewToggle.checked,
+    previewEnabled: previewToggle?.checked ?? true,
     syncScroll: document.getElementById("syncScrollToggle")?.checked ?? false,
     minimalMode: document.getElementById("minimalModeToggle")?.checked ?? false,
     radiusPx: radiusSlider ? parseInt(radiusSlider.value, 10) : 8,
-    caretStyle: caretStyleSelect.value,
-    caretAnimation: caretAnimationSelect.value,
-    caretMovement: caretMovementSelect.value,
-    interfaceFont: interfaceFontSelect.value,
-    editorFont: editorFontSelect.value,
-    codeFont: codeFontSelect.value,
-    interfaceFontUrl: interfaceFontUrl.value.trim(),
-    interfaceFontFamily: interfaceFontFamily.value.trim(),
-    editorFontUrl: editorFontUrl.value.trim(),
-    editorFontFamily: editorFontFamily.value.trim(),
-    codeFontUrl: codeFontUrl.value.trim(),
-    codeFontFamily: codeFontFamily.value.trim(),
-    defaultVault: defaultVaultInput ? defaultVaultInput.value.trim() : "",
-    defaultFolder: defaultFolderInput ? defaultFolderInput.value.trim() : "",
-    countDisplay: countDisplaySelect ? countDisplaySelect.value : "both",
-    importObsidianNoteName: importObsidianNoteName.value.trim(),
-    importObsidianFolder: importObsidianFolder.value.trim(),
-    exportTemplate: exportTemplateInput ? exportTemplateInput.value.trim() : "",
-    customCss: customCssInput ? customCssInput.value.trim() : ""
+    caretStyle: caretStyleSelect?.value ?? "line",
+    caretAnimation: caretAnimationSelect?.value ?? "blink",
+    caretMovement: caretMovementSelect?.value ?? "instant",
+    interfaceFont: interfaceFontSelect?.value ?? "inter",
+    editorFont: editorFontSelect?.value ?? "inter",
+    codeFont: codeFontSelect?.value ?? "jetbrains-mono",
+    interfaceFontUrl: interfaceFontUrl?.value?.trim() ?? "",
+    interfaceFontFamily: interfaceFontFamily?.value?.trim() ?? "",
+    editorFontUrl: editorFontUrl?.value?.trim() ?? "",
+    editorFontFamily: editorFontFamily?.value?.trim() ?? "",
+    codeFontUrl: codeFontUrl?.value?.trim() ?? "",
+    codeFontFamily: codeFontFamily?.value?.trim() ?? "",
+    defaultVault: defaultVaultInput?.value?.trim() ?? "",
+    defaultFolder: defaultFolderInput?.value?.trim() ?? "",
+    countDisplay: countDisplaySelect?.value ?? "both",
+    importObsidianNoteName: importObsidianNoteName?.value?.trim() ?? "",
+    importObsidianFolder: importObsidianFolder?.value?.trim() ?? "",
+    exportTemplate: exportTemplateInput?.value?.trim() ?? "",
+    customCss: customCssInput?.value?.trim() ?? ""
   };
 }
 
@@ -362,7 +362,7 @@ function applyFonts(settings) {
   if (s.editorFont === "custom" && s.editorFontUrl && s.editorFontUrl !== s.interfaceFontUrl) imports.push(normalizeFontUrl(s.editorFontUrl));
   const codeUrl = s.codeFontUrl?.trim();
   if (s.codeFont === "custom" && codeUrl && codeUrl !== s.interfaceFontUrl?.trim() && codeUrl !== s.editorFontUrl?.trim()) imports.push(normalizeFontUrl(s.codeFontUrl));
-  customFontsEl.textContent = imports.join("\n");
+  if (customFontsEl) customFontsEl.textContent = imports.join("\n");
 
   const ifPreset = FONT_PRESETS.find((p) => p.id === (s.interfaceFont || "inter"));
   const edPreset = FONT_PRESETS.find((p) => p.id === (s.editorFont || "inter"));
@@ -572,9 +572,11 @@ function syncAndSave() {
 
 populateFontSelects();
 
-previewToggle.addEventListener("change", () => {
-  saveSettings({ previewEnabled: previewToggle.checked });
-});
+if (previewToggle) {
+  previewToggle.addEventListener("change", () => {
+    saveSettings({ previewEnabled: previewToggle.checked });
+  });
+}
 
 const syncScrollToggle = document.getElementById("syncScrollToggle");
 if (syncScrollToggle) {
