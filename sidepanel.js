@@ -16,6 +16,8 @@ const sourceCount = document.getElementById("sourceCount");
 
 const EDITOR_SETTINGS_KEY = "editorSettings";
 let countDisplay = "both";
+let syncScrollEnabled = false;
+let syncScrollInProgress = false;
 const CUSTOM_CSS_SCOPE = "body.custom-css-loaded.custom-css-scope ";
 let caretStyle = "line";
 let caretAnimation = "blink";
@@ -336,6 +338,7 @@ async function loadEditorSettings() {
   caretMovement = editorSettings.caretMovement || "instant";
   editorFont = editorSettings.editorFont || "inter";
   countDisplay = editorSettings.countDisplay || "both";
+  syncScrollEnabled = editorSettings.syncScroll === true;
   if (editorFakeCaret) {
     editorFakeCaret.dataset.style = caretStyle;
     editorFakeCaret.dataset.animation = caretAnimation;
@@ -833,6 +836,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
       countDisplay = s.countDisplay;
       updatePaneCounts();
     }
+    if (s.syncScroll !== undefined) syncScrollEnabled = s.syncScroll === true;
     if (editorWrap && !editorWrap.classList.contains("preview-hidden")) {
       if (typeof s.sourceWidthPercent === "number" && !isStackedLayout()) {
         const pct = Math.max(SOURCE_WIDTH_MIN, Math.min(SOURCE_WIDTH_MAX, s.sourceWidthPercent));
@@ -996,6 +1000,29 @@ markdownInput.addEventListener("blur", () => {
   stopCaretBlink();
   if (editorFakeCaret) editorFakeCaret.style.opacity = "0";
 });
+
+function onSourceScrollSync() {
+  if (!syncScrollEnabled || syncScrollInProgress || !markdownPreview) return;
+  syncScrollInProgress = true;
+  const maxSource = markdownInput.scrollHeight - markdownInput.clientHeight;
+  const pct = maxSource > 0 ? markdownInput.scrollTop / maxSource : 0;
+  const maxPrev = markdownPreview.scrollHeight - markdownPreview.clientHeight;
+  markdownPreview.scrollTop = pct * maxPrev;
+  requestAnimationFrame(() => { syncScrollInProgress = false; });
+}
+
+function onPreviewScrollSync() {
+  if (!syncScrollEnabled || syncScrollInProgress || !markdownInput) return;
+  syncScrollInProgress = true;
+  const maxPrev = markdownPreview.scrollHeight - markdownPreview.clientHeight;
+  const pct = maxPrev > 0 ? markdownPreview.scrollTop / maxPrev : 0;
+  const maxSource = markdownInput.scrollHeight - markdownInput.clientHeight;
+  markdownInput.scrollTop = pct * maxSource;
+  requestAnimationFrame(() => { syncScrollInProgress = false; });
+}
+
+markdownInput.addEventListener("scroll", onSourceScrollSync);
+markdownPreview.addEventListener("scroll", onPreviewScrollSync);
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && changes.pendingImportToEditor?.newValue != null) {

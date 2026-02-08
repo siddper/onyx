@@ -326,6 +326,7 @@ function getSettingsFromForm() {
   return {
     theme: themeSelect ? themeSelect.value : "system",
     previewEnabled: previewToggle.checked,
+    syncScroll: document.getElementById("syncScrollToggle")?.checked ?? false,
     radiusPx: radiusSlider ? parseInt(radiusSlider.value, 10) : 8,
     caretStyle: caretStyleSelect.value,
     caretAnimation: caretAnimationSelect.value,
@@ -501,6 +502,8 @@ async function loadSettings() {
     renderCustomThemesList(customThemesCache);
   }
   previewToggle.checked = s.previewEnabled !== false;
+  const syncScrollToggle = document.getElementById("syncScrollToggle");
+  if (syncScrollToggle) syncScrollToggle.checked = s.syncScroll === true;
   const radius = typeof s.radiusPx === "number" && s.radiusPx >= 0 && s.radiusPx <= 24 ? s.radiusPx : 8;
   applyRadius(radius);
   caretStyleSelect.value = s.caretStyle || "line";
@@ -542,6 +545,13 @@ populateFontSelects();
 previewToggle.addEventListener("change", () => {
   saveSettings({ previewEnabled: previewToggle.checked });
 });
+
+const syncScrollToggle = document.getElementById("syncScrollToggle");
+if (syncScrollToggle) {
+  syncScrollToggle.addEventListener("change", () => {
+    saveSettings({ syncScroll: syncScrollToggle.checked });
+  });
+}
 
 if (themeSelect) {
   themeSelect.addEventListener("change", () => {
