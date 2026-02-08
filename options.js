@@ -320,6 +320,7 @@ const defaultFolderInput = document.getElementById("defaultFolder");
 const countDisplaySelect = document.getElementById("countDisplaySelect");
 const importObsidianNoteName = document.getElementById("importObsidianNoteName");
 const importObsidianFolder = document.getElementById("importObsidianFolder");
+const exportTemplateInput = document.getElementById("exportTemplateInput");
 const customCssInput = document.getElementById("customCssInput");
 
 function getSettingsFromForm() {
@@ -346,6 +347,7 @@ function getSettingsFromForm() {
     countDisplay: countDisplaySelect ? countDisplaySelect.value : "both",
     importObsidianNoteName: importObsidianNoteName.value.trim(),
     importObsidianFolder: importObsidianFolder.value.trim(),
+    exportTemplate: exportTemplateInput ? exportTemplateInput.value.trim() : "",
     customCss: customCssInput ? customCssInput.value.trim() : ""
   };
 }
@@ -517,6 +519,7 @@ async function loadSettings() {
   if (countDisplaySelect) countDisplaySelect.value = s.countDisplay || "both";
   importObsidianNoteName.value = s.importObsidianNoteName ?? "Import From Markdown Editor";
   importObsidianFolder.value = s.importObsidianFolder ?? "";
+  if (exportTemplateInput) exportTemplateInput.value = s.exportTemplate ?? "";
   interfaceFontSelect.value = s.interfaceFont || "inter";
   editorFontSelect.value = s.editorFont || "inter";
   codeFontSelect.value = s.codeFont || "jetbrains-mono";
@@ -615,6 +618,12 @@ if (customCssInput) {
     saveSettings({ customCss: customCssInput.value.trim() });
   });
 }
+if (exportTemplateInput) {
+  exportTemplateInput.addEventListener("blur", () => {
+    saveSettings({ exportTemplate: exportTemplateInput.value.trim() });
+  });
+}
+
 if (customCssApplyBtn && customCssInput) {
   customCssApplyBtn.addEventListener("click", async () => {
     const css = customCssInput.value.trim();

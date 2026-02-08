@@ -790,6 +790,14 @@ async function saveSettings(extra = {}) {
 // Many browsers and Obsidian URI handlers limit URL length (~2k–8k). Warn if content is very long.
 const OBSIDIAN_URL_LENGTH_WARN = 1800;
 
+function applyExportTemplate(template, { title, date, time }) {
+  if (!template || typeof template !== "string") return "";
+  return template
+    .replace(/\{\{title\}\}/g, title)
+    .replace(/\{\{date\}\}/g, date)
+    .replace(/\{\{time\}\}/g, time);
+}
+
 exportBtn.addEventListener("click", async () => {
   const vault = vaultInput.value.trim();
   if (!vault) {
@@ -802,7 +810,19 @@ exportBtn.addEventListener("click", async () => {
 
   const title = normalizeTitle(titleInput.value);
   const folder = folderInput.value.trim();
-  const content = markdownInput.value;
+  const body = markdownInput.value;
+
+  const now = new Date();
+  const dateStr = now.toISOString().slice(0, 10);
+  const timeStr = now.toTimeString().slice(0, 5);
+
+  const ed = await chrome.storage.sync.get(EDITOR_SETTINGS_KEY);
+  const exportTemplate = (ed[EDITOR_SETTINGS_KEY] || {}).exportTemplate || "";
+  const templateBlock = exportTemplate
+    ? applyExportTemplate(exportTemplate, { title, date: dateStr, time: timeStr }) + "\n\n"
+    : "";
+  const content = templateBlock + body;
+
   const obsidianUrl = buildObsidianUrl({ vault, title, content, folder });
   if (obsidianUrl.length > OBSIDIAN_URL_LENGTH_WARN) {
     setStatus("Note is very long; Obsidian may not open. Consider splitting.");

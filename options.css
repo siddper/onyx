@@ -232,6 +232,7 @@ html, body {
   cursor: pointer;
   background: var(--accent);
   color: var(--ink);
+  transition: all 0.2s ease;
 }
 
 .custom-themes-list .custom-themes-list__remove:hover {

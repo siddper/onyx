@@ -115,6 +115,15 @@
       </section>
 
       <section class="options-section">
+        <h2 class="options-heading">Export template</h2>
+        <p class="options-hint">Prepended to the note when you click “Export to Obsidian”. Use <code>{{date}}</code>, <code>{{time}}</code>, and <code>{{title}}</code>; they are replaced with the export date, time, and note title. Leave blank for no template.</p>
+        <div class="settings-block">
+          <label class="settings-label" for="exportTemplateInput">Template</label>
+          <textarea id="exportTemplateInput" class="settings-textarea" rows="6" placeholder="---&#10;tags: [web-clip]&#10;date: {{date}}&#10;---&#10;&#10;" spellcheck="false"></textarea>
+        </div>
+      </section>
+
+      <section class="options-section">
         <h2 class="options-heading">Custom CSS</h2>
         <p class="options-hint">CSS applied only to the side panel (not this Settings page). Your selectors are automatically scoped so they override default styles.</p>
         <div class="settings-block">
