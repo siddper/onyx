@@ -120,6 +120,66 @@ const THEMES = {
       "--shadow": "0 4px 20px rgba(0, 0, 0, 0.35)",
       "--shadow-modal": "0 8px 32px rgba(0, 0, 0, 0.45)"
     }
+  },
+  dracula: {
+    colorScheme: "dark",
+    vars: {
+      "--bg": "#282a36",
+      "--panel": "#21222c",
+      "--panel-strong": "#44475a",
+      "--ink": "#f8f8f2",
+      "--muted": "#6272a4",
+      "--accent": "#44475a",
+      "--accent-hover": "#bd93f9",
+      "--overlay": "rgba(40, 42, 54, 0.9)",
+      "--shadow": "0 4px 20px rgba(0, 0, 0, 0.4)",
+      "--shadow-modal": "0 8px 32px rgba(0, 0, 0, 0.5)"
+    }
+  },
+  "tokyo-night": {
+    colorScheme: "dark",
+    vars: {
+      "--bg": "#1a1b26",
+      "--panel": "#16161e",
+      "--panel-strong": "#24283b",
+      "--ink": "#a9b1d6",
+      "--muted": "#565f89",
+      "--accent": "#24283b",
+      "--accent-hover": "#343b58",
+      "--overlay": "rgba(26, 27, 38, 0.92)",
+      "--shadow": "0 4px 20px rgba(0, 0, 0, 0.45)",
+      "--shadow-modal": "0 8px 32px rgba(0, 0, 0, 0.55)"
+    }
+  },
+  blueberry: {
+    colorScheme: "dark",
+    vars: {
+      "--bg": "#1e1d2a",
+      "--panel": "#252436",
+      "--panel-strong": "#2d2b42",
+      "--ink": "#d8d6e8",
+      "--muted": "#8b88a8",
+      "--accent": "#3d3a5c",
+      "--accent-hover": "#4a4669",
+      "--overlay": "rgba(30, 29, 42, 0.92)",
+      "--shadow": "0 4px 20px rgba(0, 0, 0, 0.4)",
+      "--shadow-modal": "0 8px 32px rgba(0, 0, 0, 0.5)"
+    }
+  },
+  monokai: {
+    colorScheme: "dark",
+    vars: {
+      "--bg": "#272822",
+      "--panel": "#1e1f1c",
+      "--panel-strong": "#3e3d32",
+      "--ink": "#f8f8f2",
+      "--muted": "#75715e",
+      "--accent": "#3e3d32",
+      "--accent-hover": "#504945",
+      "--overlay": "rgba(39, 40, 34, 0.92)",
+      "--shadow": "0 4px 20px rgba(0, 0, 0, 0.45)",
+      "--shadow-modal": "0 8px 32px rgba(0, 0, 0, 0.55)"
+    }
   }
 };
 
