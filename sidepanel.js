@@ -27,6 +27,115 @@ const FONT_PRESETS = [
   { id: "geist-mono", label: "Geist Mono", fontFamily: '"Geist Mono", monospace' }
 ];
 
+const THEME_VARS = ["--bg", "--panel", "--panel-strong", "--ink", "--muted", "--accent", "--accent-hover", "--overlay", "--shadow", "--shadow-modal"];
+
+const THEMES = {
+  system: null,
+  light: {
+    colorScheme: "light",
+    vars: {
+      "--bg": "#f2f3f5",
+      "--panel": "#ffffff",
+      "--panel-strong": "#eceef1",
+      "--ink": "#1a1d21",
+      "--muted": "#5f6368",
+      "--accent": "#e2e4e8",
+      "--accent-hover": "#d6d9de",
+      "--overlay": "rgba(0, 0, 0, 0.2)",
+      "--shadow": "0 4px 20px rgba(0, 0, 0, 0.1)",
+      "--shadow-modal": "0 8px 32px rgba(0, 0, 0, 0.12)"
+    }
+  },
+  dark: {
+    colorScheme: "dark",
+    vars: {
+      "--bg": "#0e0f10",
+      "--panel": "#141618",
+      "--panel-strong": "#1a1d20",
+      "--ink": "#e8e8e8",
+      "--muted": "#9aa0a6",
+      "--accent": "#2a2f33",
+      "--accent-hover": "#262a2e",
+      "--overlay": "rgba(0, 0, 0, 0.5)",
+      "--shadow": "0 4px 20px rgba(0, 0, 0, 0.4)",
+      "--shadow-modal": "0 8px 32px rgba(0, 0, 0, 0.4)"
+    }
+  },
+  oled: {
+    colorScheme: "dark",
+    vars: {
+      "--bg": "#000000",
+      "--panel": "#0a0a0a",
+      "--panel-strong": "#111111",
+      "--ink": "#e8e8e8",
+      "--muted": "#6b7280",
+      "--accent": "#1c1c1e",
+      "--accent-hover": "#2c2c2e",
+      "--overlay": "rgba(0, 0, 0, 0.75)",
+      "--shadow": "0 4px 20px rgba(0, 0, 0, 0.6)",
+      "--shadow-modal": "0 8px 32px rgba(0, 0, 0, 0.7)"
+    }
+  },
+  cyberpunk: {
+    colorScheme: "dark",
+    vars: {
+      "--bg": "#070611",
+      "--panel": "#191622",
+      "--panel-strong": "#21283d",
+      "--ink": "#ffffff",
+      "--muted": "#06d4c4",
+      "--accent": "#ff43ec",
+      "--accent-hover": "#d91ed9",
+      "--overlay": "rgba(7, 6, 17, 0.92)",
+      "--shadow": "0 4px 20px rgba(0, 0, 0, 0.55)",
+      "--shadow-modal": "0 8px 32px rgba(0, 0, 0, 0.7)"
+    }
+  },
+  sepia: {
+    colorScheme: "light",
+    vars: {
+      "--bg": "#f4f1ea",
+      "--panel": "#faf8f3",
+      "--panel-strong": "#ebe6dc",
+      "--ink": "#2c2825",
+      "--muted": "#6b5b4f",
+      "--accent": "#ddd6c8",
+      "--accent-hover": "#cfc7b8",
+      "--overlay": "rgba(44, 40, 37, 0.25)",
+      "--shadow": "0 4px 20px rgba(0, 0, 0, 0.08)",
+      "--shadow-modal": "0 8px 32px rgba(0, 0, 0, 0.12)"
+    }
+  },
+  nord: {
+    colorScheme: "dark",
+    vars: {
+      "--bg": "#2e3440",
+      "--panel": "#3b4252",
+      "--panel-strong": "#434c5e",
+      "--ink": "#eceff4",
+      "--muted": "#d8dee9",
+      "--accent": "#4c566a",
+      "--accent-hover": "#5e6779",
+      "--overlay": "rgba(0, 0, 0, 0.45)",
+      "--shadow": "0 4px 20px rgba(0, 0, 0, 0.35)",
+      "--shadow-modal": "0 8px 32px rgba(0, 0, 0, 0.45)"
+    }
+  }
+};
+
+function applyTheme(themeId) {
+  const root = document.documentElement;
+  if (!themeId || themeId === "system") {
+    THEME_VARS.forEach((v) => root.style.removeProperty(v));
+    root.style.removeProperty("color-scheme");
+    return;
+  }
+  const theme = THEMES[themeId];
+  if (!theme) return;
+  root.style.setProperty("color-scheme", theme.colorScheme);
+  Object.entries(theme.vars).forEach(([key, value]) => root.style.setProperty(key, value));
+}
+
 const SAVE_DELAY_MS = 800;
 let saveTimeout = null;
 
@@ -137,6 +246,7 @@ async function loadEditorSettings() {
   }
   applyPreviewVisibility(previewEnabled);
   applyFonts(editorSettings);
+  applyTheme(editorSettings.theme || "system");
   const pct = editorSettings.sourceWidthPercent;
   if (typeof pct === "number" && pct >= 10 && pct <= 90 && editorWrap) {
     editorWrap.style.setProperty("--source-width", pct + "%");
@@ -575,6 +685,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
     const s = changes[EDITOR_SETTINGS_KEY].newValue;
     applyPreviewVisibility(s.previewEnabled !== false);
     applyFonts(s);
+    applyTheme(s.theme || "system");
     if (editorFakeCaret) {
       if (s.caretStyle) {
         caretStyle = s.caretStyle;

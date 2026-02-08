@@ -7,7 +7,9 @@
   --muted: #9aa0a6;
   --accent: #2a2f33;
   --accent-hover: #262a2e;
+  --overlay: rgba(0, 0, 0, 0.5);
   --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.4);
   --radius: 8px;
   --font-interface: "Inter", sans-serif;
   --font-editor: "Inter", sans-serif;
@@ -24,7 +26,9 @@
     --muted: #5f6368;
     --accent: #d4d6d9;
     --accent-hover: #c2c4c8;
+    --overlay: rgba(0, 0, 0, 0.2);
     --shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.15);
   }
 }
 
