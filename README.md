@@ -1,4 +1,4 @@
-# Markdown Editor (Obsidian Side Panel)
+# Onyx
 
 A Chrome/browser extension that adds a **side panel** markdown editor and exports notes directly to **Obsidian** via the `obsidian://` URI scheme. Built for the best Obsidian-integrated note-taking experience in the browser.
 
@@ -16,7 +16,7 @@ A Chrome/browser extension that adds a **side panel** markdown editor and export
 
 1. Clone or download this repo.
 2. Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and select the `text-editor` folder.
-3. Pin the extension and click the icon (or use the side panel) to open the editor.
+3. Pin the extension and click the icon (or use the side panel) to open Onyx.
 
 ## Usage
 

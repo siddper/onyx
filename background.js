@@ -60,7 +60,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       chrome.storage.sync.get("editorSettings")
     ]);
     const vault = obsidian.obsidianSettings?.vault?.trim() || "";
-    const noteName = (editor.editorSettings?.importObsidianNoteName ?? "").trim() || "Import From Markdown Editor";
+    const noteName = (editor.editorSettings?.importObsidianNoteName ?? "").trim() || "Import From Onyx";
     const folder = (editor.editorSettings?.importObsidianFolder || "").trim();
     const filePath = folder ? `${folder.replace(/\/$/, "")}/${noteName}` : noteName;
     const params = [

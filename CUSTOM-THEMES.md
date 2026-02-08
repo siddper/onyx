@@ -1,6 +1,6 @@
 # Custom Themes
 
-You can add your own themes to the Markdown Editor by importing a **theme config JSON file**. Custom themes are stored in your browser’s sync storage and appear in the **Theme** dropdown in Settings alongside the built-in themes.
+You can add your own themes to Onyx by importing a **theme config JSON file**. Custom themes are stored in your browser’s sync storage and appear in the **Theme** dropdown in Settings alongside the built-in themes.
 
 ## How to add a custom theme
 

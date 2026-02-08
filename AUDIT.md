@@ -1,4 +1,4 @@
-# Codebase audit: Markdown Editor (Obsidian)
+# Codebase audit: Onyx
 
 Audit date: 2025-02-07 (full pass). Focus: bugs, security, and robustness.
 

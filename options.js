@@ -520,7 +520,7 @@ async function loadSettings() {
   if (defaultVaultInput) defaultVaultInput.value = s.defaultVault ?? "";
   if (defaultFolderInput) defaultFolderInput.value = s.defaultFolder ?? "";
   if (countDisplaySelect) countDisplaySelect.value = s.countDisplay || "both";
-  importObsidianNoteName.value = s.importObsidianNoteName ?? "Import From Markdown Editor";
+  importObsidianNoteName.value = s.importObsidianNoteName ?? "Import From Onyx";
   importObsidianFolder.value = s.importObsidianFolder ?? "";
   if (exportTemplateInput) exportTemplateInput.value = s.exportTemplate ?? "";
   renderSavedVaultsList(Array.isArray(s.savedVaults) ? s.savedVaults : []);
@@ -704,7 +704,7 @@ if (countDisplaySelect) {
     saveSettings({
       defaultVault: defaultVaultInput ? defaultVaultInput.value.trim() : "",
       defaultFolder: defaultFolderInput ? defaultFolderInput.value.trim() : "",
-      importObsidianNoteName: importObsidianNoteName.value.trim() || "Import From Markdown Editor",
+      importObsidianNoteName: importObsidianNoteName.value.trim() || "Import From Onyx",
       importObsidianFolder: importObsidianFolder.value.trim()
     });
   });

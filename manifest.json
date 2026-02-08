@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Markdown Editor",
+  "name": "Onyx",
   "version": "0.1.0",
-  "description": "Open a side panel markdown editor and export to Obsidian.",
+  "description": "Markdown side panel editor – export notes to Obsidian.",
   "permissions": ["sidePanel", "storage", "contextMenus","tabs"],
-  "action": { "default_title": "Open Markdown Side Panel" },
+  "action": { "default_title": "Open Onyx" },
   "background": { "service_worker": "background.js" },
   "side_panel": { "default_path": "sidepanel.html" },
   "options_ui": { "page": "options.html" },
