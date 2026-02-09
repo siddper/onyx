@@ -35,7 +35,7 @@ export default function Fonts() {
               Select <strong className="text-ink">Custom</strong> from the dropdown for the font you want to change (Interface, Editor, or Monospace / code).
             </li>
             <li>
-              If you want to use a Google Font (or another web font), paste an <code className="text-ink/80 bg-panel-strong px-1 rounded">@import url(...)</code> or Google Fonts link in the first field.
+              If you want to use a <a href="https://fonts.google.com/" target="_blank" className="text-ink">Google Font</a> (or another web font), paste an <code className="text-ink/80 bg-panel-strong px-1 rounded">@import url(...)</code> or Google Fonts link in the first field.
               If you prefer to use a system font (like Arial, Georgia, etc.), you can leave this field blank.
             </li>
             <li>

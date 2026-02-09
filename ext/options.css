@@ -61,6 +61,10 @@ a {
   padding: 32px 24px;
 }
 
+input {
+  border-radius: var(--radius) !important;
+}
+
 .options-title {
   font-size: 22px;
   font-weight: 600;
