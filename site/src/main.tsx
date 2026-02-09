@@ -11,6 +11,7 @@ import Themes from './pages/docs/Themes'
 import Fonts from './pages/docs/Fonts'
 import ExportTemplate from './pages/docs/ExportTemplate'
 import CustomCss from './pages/docs/CustomCss'
+import Privacy from './pages/Privacy'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -18,6 +19,7 @@ createRoot(document.getElementById('root')!).render(
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<Landing />} />
+          <Route path="privacy" element={<Privacy />} />
           <Route path="docs" element={<DocsLayout />}>
             <Route index element={<Navigate to="get-started" replace />} />
             <Route path="get-started" element={<GetStarted />} />
