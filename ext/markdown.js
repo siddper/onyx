@@ -1,7 +1,3 @@
-/**
- * Lightweight markdown-to-HTML parser for the side panel.
- * Handles common markdown: headers, bold, italic, code, blocks, links, lists, blockquotes.
- */
 (function (global) {
   function escapeHtml(s) {
     const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" };
@@ -71,14 +67,12 @@
 
     let match;
 
-    // ATX headers (# ## ### ...)
     if ((match = trimmed.match(/^(#{1,6})\s+(.+)$/))) {
       const level = match[1].length;
       output.push(`<h${level}>${parseInline(match[2].trim())}</h${level}>`);
       return 0;
     }
 
-    // Fenced code block ```
     if (trimmed.startsWith("```")) {
       const lang = trimmed.slice(3).trim() || "";
       const codeLines = [];
@@ -95,7 +89,6 @@
       return i;
     }
 
-    // Unordered list (with nesting by indentation)
     if ((match = trimmed.match(/^[-*+]\s+(.+)$/))) {
       const getIndent = (raw) => (raw.match(/^[\s]*/)[0].replace(/\t/g, "    ").length);
       const items = [{ indent: getIndent(line), content: match[1] }];
@@ -110,7 +103,6 @@
       return j;
     }
 
-    // Ordered list (with nesting by indentation)
     if ((match = trimmed.match(/^\d+\.\s+(.+)$/))) {
       const getIndent = (raw) => (raw.match(/^[\s]*/)[0].replace(/\t/g, "    ").length);
       const items = [{ indent: getIndent(line), content: match[1] }];
@@ -125,7 +117,6 @@
       return j;
     }
 
-    // Blockquote
     if (trimmed.startsWith(">")) {
       const quoteLines = [trimmed.replace(/^>\s?/, "")];
       let j = 0;
@@ -137,13 +128,11 @@
       return j;
     }
 
-    // Horizontal rule
     if (/^[-*_]\s{0,2}[-*_]\s{0,2}[-*_](\s*[-*_])*$/.test(trimmed)) {
       output.push("<hr>");
       return 0;
     }
 
-    // Table (| col1 | col2 |)
     if (trimmed.startsWith("|") && trimmed.includes("|", 1)) {
       const rows = [];
       let j = 0;
@@ -186,7 +175,6 @@
       return j;
     }
 
-    // Paragraph
     output.push("<p>" + parseInline(trimmed) + "</p>");
     return 0;
   }

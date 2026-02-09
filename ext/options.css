@@ -300,7 +300,6 @@ a {
   background: var(--accent-hover);
 }
 
-/* Slider – track and thumb match panel/input design */
 .settings-slider-wrap {
   display: flex;
   align-items: center;
@@ -361,7 +360,6 @@ a {
   text-align: right;
 }
 
-/* Custom select – matches context menu styling (panel, padding, radius, accent-hover) */
 .custom-select-wrap {
   position: relative;
   width: 100%;

@@ -279,12 +279,10 @@ function normalizeTitle(title) {
 }
 
 function encodeObsidianParam(value) {
-  // Obsidian expects percent-encoding; "+" is treated literally.
   return encodeURIComponent(value);
 }
 
 function buildObsidianUrl({ vault, title, content, folder }) {
-  // Obsidian: file = vault-relative path. Slashes in filename break; encode path so / becomes %2F.
   const safeTitle = (title || "").replace(/[/\\:*?"<>|]/g, "-").trim() || "Untitled";
   const safeFolder = (folder || "").replace(/\/$/, "").replace(/\\/g, "/").trim();
   const filePath = safeFolder ? `${safeFolder}/${safeTitle}` : safeTitle;
@@ -457,7 +455,6 @@ function updateFakeCaret() {
   } else if (caretAnimation === "solid") {
     editorFakeCaret.style.opacity = "1";
   }
-  /* phase / expand: opacity and animation from CSS */
 }
 
 function scheduleCaretUpdate() {
@@ -886,7 +883,6 @@ chrome.runtime.onMessage.addListener((msg) => {
   el.addEventListener("change", scheduleSave);
 });
 
-// Many browsers and Obsidian URI handlers limit URL length (~2k–8k). Warn if content is very long.
 const OBSIDIAN_URL_LENGTH_WARN = 1800;
 
 function applyExportTemplate(template, { title, date, time }) {
@@ -1068,12 +1064,10 @@ window.addEventListener("pagehide", () => {
   flushSave();
 });
 
-// Wrap selection with char (open before, close after). Same char both sides except () [] {}
 const WRAP_CLOSE = { "`": "`", "*": "*", "(": ")", "{": "}", "[": "]", "~": "~" };
-const WRAP_OPEN = { Backquote: "`" }; // some keyboards report ` as "Backquote"
+const WRAP_OPEN = { Backquote: "`" };
 const CLOSE_TO_OPEN = { "`": "`", "*": "*", ")": "(", "}": "{", "]": "[", "~": "~" };
 
-// Use execCommand so edits participate in browser undo/redo (Cmd+Z / Ctrl+Z)
 function editorInsert(replaceStart, replaceEnd, text, cursorStart, cursorEnd) {
   markdownInput.focus();
   markdownInput.setSelectionRange(replaceStart, replaceEnd);
@@ -1092,7 +1086,6 @@ markdownInput.addEventListener("keydown", (e) => {
   const openChar = WRAP_OPEN[e.key] ?? e.key;
   const closeChar = WRAP_CLOSE[openChar] ?? WRAP_CLOSE[e.key];
 
-  // Cmd+B / Ctrl+B: bold (**)
   if ((e.metaKey || e.ctrlKey) && e.key === "b") {
     e.preventDefault();
     const selected = value.slice(start, end);
@@ -1100,7 +1093,6 @@ markdownInput.addEventListener("keydown", (e) => {
     return;
   }
 
-  // Cmd+I / Ctrl+I: italic (*)
   if ((e.metaKey || e.ctrlKey) && e.key === "i") {
     e.preventDefault();
     const selected = value.slice(start, end);
@@ -1108,7 +1100,6 @@ markdownInput.addEventListener("keydown", (e) => {
     return;
   }
 
-  // "=" with selection only: wrap with == on both sides (==highlight==)
   if (hasSelection && e.key === "=") {
     e.preventDefault();
     const selected = value.slice(start, end);
@@ -1116,7 +1107,6 @@ markdownInput.addEventListener("keydown", (e) => {
     return;
   }
 
-  // Backspace: empty pair (open|close) -> delete both
   if (!hasSelection && e.key === "Backspace" && start > 0) {
     const charBefore = value[start - 1];
     const charAfter = value[start];
@@ -1128,7 +1118,6 @@ markdownInput.addEventListener("keydown", (e) => {
     }
   }
 
-  // Delete: empty pair (open|close) -> delete both
   if (!hasSelection && e.key === "Delete" && start > 0 && start < value.length) {
     const charBefore = value[start - 1];
     const charAfter = value[start];
@@ -1153,7 +1142,6 @@ markdownInput.addEventListener("keydown", (e) => {
     return;
   }
 
-  // No selection: insert pair and put cursor in between (* -> *|*, [ -> [|])
   if (!hasSelection && closeChar) {
     e.preventDefault();
     editorInsert(start, end, openChar + closeChar, start + openChar.length, start + openChar.length);

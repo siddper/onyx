@@ -28,8 +28,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
-
-  // Editor first (above), then Obsidian
   chrome.contextMenus.create({
     id: "importToEditor",
     title: "Import selection to Editor",

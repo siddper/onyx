@@ -1,15 +1,33 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import App from './Landing.tsx'
-import { BrowserRouter } from 'react-router'
-import { Route, Routes } from 'react-router'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
+import Layout from './components/Layout'
+import Landing from './Landing'
+import DocsLayout from './pages/DocsLayout'
+import GetStarted from './pages/docs/GetStarted'
+import Editor from './pages/docs/Editor'
+import Themes from './pages/docs/Themes'
+import Fonts from './pages/docs/Fonts'
+import ExportTemplate from './pages/docs/ExportTemplate'
+import CustomCss from './pages/docs/CustomCss'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<App />} />
+        <Route element={<Layout />}>
+          <Route index element={<Landing />} />
+          <Route path="docs" element={<DocsLayout />}>
+            <Route index element={<Navigate to="get-started" replace />} />
+            <Route path="get-started" element={<GetStarted />} />
+            <Route path="editor" element={<Editor />} />
+            <Route path="themes" element={<Themes />} />
+            <Route path="fonts" element={<Fonts />} />
+            <Route path="export-template" element={<ExportTemplate />} />
+            <Route path="custom-css" element={<CustomCss />} />
+          </Route>
+        </Route>
       </Routes>
     </BrowserRouter>
   </StrictMode>,

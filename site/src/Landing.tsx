@@ -1,11 +1,8 @@
-import Nav from "../components/Nav";
+import { Link } from "react-router";
 
-function App() {
+export default function Landing() {
   return (
-    <div className="bg-bg min-h-screen text-ink">
-      <Nav />
-
-      <main className="pt-40 px-6 pb-24 max-w-3/4 mx-auto">
+    <main className="pt-40 px-6 pb-24 max-w-3/4 mx-auto">
         {/* Hero */}
         <section className="text-center">
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
@@ -162,12 +159,12 @@ function App() {
             >
               GitHub
             </a>
-            <a
-              href="/docs"
+            <Link
+              to="/docs"
               className="text-ink hover:text-muted font-medium transition-colors ml-2"
             >
               Documentation
-            </a>
+            </Link>
             <a
               href="https://chromewebstore.google.com"
               target="_blank"
@@ -177,9 +174,6 @@ function App() {
             </a>
           </div>
         </footer>
-      </main>
-    </div>
+    </main>
   );
 }
-
-export default App;
