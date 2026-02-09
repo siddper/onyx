@@ -24,7 +24,7 @@ function Nav() {
           Documentation
         </Link>
         <a
-          href="https://chromewebstore.google.com"
+          href="https://chromewebstore.google.com/detail/onyx-markdown-notes-for-o/dnondieboejpiebkebiclbldblhapeaf?authuser=2&hl=en"
           target="_blank"
           rel="noopener noreferrer"
           className="text-ink hover:text-muted transition-colors duration-300"

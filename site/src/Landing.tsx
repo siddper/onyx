@@ -23,7 +23,7 @@ export default function Landing() {
               Learn More
             </a>
             <a
-              href="https://chromewebstore.google.com"
+              href="https://chromewebstore.google.com/detail/onyx-markdown-notes-for-o/dnondieboejpiebkebiclbldblhapeaf?authuser=2&hl=en"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block px-6 py-3 rounded-lg bg-panel-strong hover:bg-accent text-ink text-sm font-medium transition-colors"
@@ -140,7 +140,7 @@ export default function Landing() {
             Open the extension from the puzzle icon and start writing.
           </p>
           <a
-            href="https://chromewebstore.google.com"
+            href="https://chromewebstore.google.com/detail/onyx-markdown-notes-for-o/dnondieboejpiebkebiclbldblhapeaf?authuser=2&hl=en"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block px-6 py-3 rounded-lg bg-panel-strong hover:bg-accent text-ink text-sm font-medium transition-colors"
@@ -172,7 +172,7 @@ export default function Landing() {
               Documentation
             </Link>
             <a
-              href="https://chromewebstore.google.com"
+              href="https://chromewebstore.google.com/detail/onyx-markdown-notes-for-o/dnondieboejpiebkebiclbldblhapeaf?authuser=2&hl=en"
               target="_blank"
               rel="noopener noreferrer"
               className="text-ink hover:text-muted font-medium transition-colors ml-2"
