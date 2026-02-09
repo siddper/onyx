@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
+/* eslint-disable react-refresh/only-export-components -- context + hook + DocPage live together */
 export type TocItem = { id: string; label: string; children?: TocItem[] };
 
 type TocContextValue = {

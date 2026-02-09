@@ -11,6 +11,7 @@ function Nav() {
         <a
           href="https://github.com/siddper/onyx"
           target="_blank"
+          rel="noopener noreferrer"
           className="text-ink hover:text-muted transition-colors duration-300"
         >
           GitHub
@@ -25,6 +26,7 @@ function Nav() {
         <a
           href="https://chromewebstore.google.com"
           target="_blank"
+          rel="noopener noreferrer"
           className="text-ink hover:text-muted transition-colors duration-300"
         >
           Download

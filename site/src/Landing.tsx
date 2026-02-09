@@ -25,6 +25,7 @@ export default function Landing() {
             <a
               href="https://chromewebstore.google.com"
               target="_blank"
+              rel="noopener noreferrer"
               className="inline-block px-6 py-3 rounded-lg bg-panel-strong hover:bg-accent text-ink text-sm font-medium transition-colors"
             >
               Download for Chrome
@@ -33,12 +34,15 @@ export default function Landing() {
         </section>
 
         <video
-          src="/onyx-demo.mov"
           autoPlay
           muted
           loop
+          playsInline
           className="w-full mx-auto object-cover rounded-xl mt-24 bg-panel-strong p-1.5"
-        />
+        >
+          <source src="/onyx-demo.mp4" type="video/mp4" />
+          <source src="/onyx-demo.mov" type="video/quicktime" />
+        </video>
 
         {/* Features */}
         <section id="features" className="mt-48">
@@ -138,6 +142,7 @@ export default function Landing() {
           <a
             href="https://chromewebstore.google.com"
             target="_blank"
+            rel="noopener noreferrer"
             className="inline-block px-6 py-3 rounded-lg bg-panel-strong hover:bg-accent text-ink text-sm font-medium transition-colors"
           >
             Get Onyx (Chrome)
@@ -155,6 +160,7 @@ export default function Landing() {
             <a
               href="https://github.com/siddper/onyx"
               target="_blank"
+              rel="noopener noreferrer"
               className="text-ink hover:text-muted font-medium transition-colors ml-2"
             >
               GitHub
@@ -168,6 +174,7 @@ export default function Landing() {
             <a
               href="https://chromewebstore.google.com"
               target="_blank"
+              rel="noopener noreferrer"
               className="text-ink hover:text-muted font-medium transition-colors ml-2"
             >
               Download
