@@ -741,6 +741,10 @@ body.toolbar-hidden .editor-wrap {
   border-radius: 8px;
 }
 
+input::placeholder {
+  color: var(--muted);
+}
+
 .settings-input::placeholder {
   color: var(--muted);
 }
