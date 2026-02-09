@@ -5,13 +5,15 @@ function App() {
     <div className="bg-bg min-h-screen text-ink">
       <Nav />
 
-      <main className="pt-48 px-6 pb-24 max-w-2/3 mx-auto">
+      <main className="pt-40 px-6 pb-24 max-w-3/4 mx-auto">
         {/* Hero */}
         <section className="text-center">
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-            Save Your Thoughts Instantly
+            Secure the Web With Onyx
           </h1>
-          <p className="text-muted mt-4 text-lg">One click to Obsidian.</p>
+          <p className="text-muted mt-4 text-lg">
+            A powerful Markdown editor for Chrome. Seamlessly customize your notes and export directly to Obsidian. No account, no friction.
+          </p>
         </section>
 
         {/* Actions */}
@@ -33,6 +35,14 @@ function App() {
           </div>
         </section>
 
+        <video
+          src="/onyx-demo.mov"
+          autoPlay
+          muted
+          loop
+          className="w-full mx-auto object-cover rounded-xl mt-24 bg-panel-strong p-1.5"
+        />
+
         {/* Features */}
         <section id="features" className="mt-48">
           <h2 className="text-muted text-xs font-medium uppercase tracking-wider mb-8">
@@ -42,7 +52,8 @@ function App() {
             <li>
               <h3 className="font-semibold text-ink">Side panel editor</h3>
               <p className="text-muted text-sm mt-1">
-                Write in Markdown next to any tab. See a preview of your note as you type.
+                Write in Markdown next to any tab. See a preview of your note as
+                you type.
               </p>
             </li>
             <li>
@@ -65,25 +76,39 @@ function App() {
             <li>
               <h3 className="font-semibold text-ink">Selection imports</h3>
               <p className="text-muted text-sm mt-1">
-                Right-click selected text: “Import selection to Editor” or “Import selection to Obsidian”.
+                Right-click selected text: “Import selection to Editor” or
+                “Import selection to Obsidian”.
               </p>
             </li>
             <li>
               <h3 className="font-semibold text-ink">Themes</h3>
               <p className="text-muted text-sm mt-1">
-                Built‑in themes (dark, light, OLED, Nord, Dracula, etc.) and custom themes.
+                Built‑in themes (dark, light, OLED, Nord, Dracula, etc.) and
+                custom themes.
               </p>
             </li>
             <li>
               <h3 className="font-semibold text-ink">Keyboard shortcuts</h3>
               <p className="text-muted text-sm mt-1">
-                <code className="text-ink/80 bg-panel-strong px-1 rounded">Ctrl/Cmd+B</code> bold, <code className="text-ink/80 bg-panel-strong px-1 rounded">Ctrl/Cmd+I</code> italic, <code className="text-ink/80 bg-panel-strong px-1 rounded">Tab</code> for 4 spaces.
+                <code className="text-ink/80 bg-panel-strong px-1 rounded">
+                  Ctrl/Cmd+B
+                </code>{" "}
+                bold,{" "}
+                <code className="text-ink/80 bg-panel-strong px-1 rounded">
+                  Ctrl/Cmd+I
+                </code>{" "}
+                italic,{" "}
+                <code className="text-ink/80 bg-panel-strong px-1 rounded">
+                  Tab
+                </code>{" "}
+                for 4 spaces.
               </p>
             </li>
             <li>
               <h3 className="font-semibold text-ink">Maximum customization</h3>
               <p className="text-muted text-sm mt-1">
-                Fonts (interface, editor, code), caret shape/animation, corner radius, and custom CSS for the side panel.
+                Fonts (interface, editor, code), caret shape/animation, corner
+                radius, and custom CSS for the side panel.
               </p>
             </li>
             <li>
@@ -98,9 +123,7 @@ function App() {
                 Compact mode for more editor space.
               </p>
             </li>
-            <p className="text-muted text-sm mt-1">
-              And so much more...
-            </p>
+            <p className="text-muted text-sm mt-1">And so much more...</p>
           </ul>
         </section>
 
@@ -116,17 +139,43 @@ function App() {
             Open the extension from the puzzle icon and start writing.
           </p>
           <a
-            href="#"
+            href="https://chromewebstore.google.com"
+            target="_blank"
             className="inline-block px-6 py-3 rounded-lg bg-panel-strong hover:bg-accent text-ink text-sm font-medium transition-colors"
           >
             Get Onyx (Chrome)
           </a>
         </section>
 
-        <footer className="mt-48 pt-8 text-muted text-xs flex gap-2">
-          <img src="/icon.png" alt="Onyx" className="w-4 h-4" />
-          Onyx - Markdown notes for Obsidian. No account, no sync—notes go to
-          your vault.
+        <footer className="mt-48 pt-8 text-muted text-xs flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <div className="flex items-center gap-2">
+            <img src="/icon.png" alt="Onyx" className="w-4 h-4" />
+            <span>
+              Onyx - Markdown notes for Obsidian. No account, no friction.
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <a
+              href="/docs"
+              className="text-ink hover:text-muted font-medium transition-colors ml-2"
+            >
+              Documentation
+            </a>
+            <a
+              href="https://github.com/siddpeng/onyx"
+              target="_blank"
+              className="text-ink hover:text-muted font-medium transition-colors ml-2"
+            >
+              GitHub
+            </a>
+            <a
+              href="https://chromewebstore.google.com"
+              target="_blank"
+              className="text-ink hover:text-muted font-medium transition-colors ml-2"
+            >
+              Download
+            </a>
+          </div>
         </footer>
       </main>
     </div>
