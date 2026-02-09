@@ -1,0 +1,25 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0e0f10;
+  --color-panel: #141618;
+  --color-panel-strong: #1a1d20;
+  --color-ink: #e8e8e8;
+  --color-muted: #9aa0a6;
+  --color-accent: #2a2f33;
+  --color-accent-hover: #262a2e;
+  --color-overlay: rgba(0, 0, 0, 0.5);
+  --color-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --color-shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --radius: 8px;
+}
+
+* {
+  font-family: 'Geist Mono', monospace;
+  scrollbar-width: none;
+}
+
+::selection {
+    background: var(--color-accent-hover);
+}

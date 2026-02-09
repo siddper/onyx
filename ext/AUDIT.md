@@ -6,7 +6,7 @@ Audit date: 2025-02-07 (full pass). Focus: bugs, security, and robustness.
 
 ## Executive summary
 
-The codebase was audited end-to-end: **manifest**, **background.js**, **sidepanel** (HTML/JS/CSS), **options** (HTML/JS/CSS), and **markdown.js**. Several bugs and robustness issues were fixed. No critical logic errors or race conditions were found in the main flows. Storage keys and async handling are consistent.
+The codebase was audited end-to-end: **manifest**, **background.js**, **sidepanel** (HTML/JS/CSS), **options** (HTML/   JS/CSS), and **markdown.js**. Several bugs and robustness issues were fixed. No critical logic errors or race conditions were found in the main flows. Storage keys and async handling are consistent.
 
 ---
 
