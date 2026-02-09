@@ -16,7 +16,7 @@
 
       <section class="options-section">
         <h2 class="options-heading">Themes</h2>
-        <p class="options-hint">Choose a built-in theme or import a custom theme from a JSON file. Applies to the side panel editor.</p>
+        <p class="options-hint">Choose a built-in theme or import a custom theme from a JSON file. Docs are available <a href="https://tryonyx.vercel.app/docs" target="_blank">here</a>.</p>
         <div class="settings-block">
           <label class="settings-label" for="themeSelect">Theme</label>
           <select id="themeSelect" class="settings-select">
@@ -42,7 +42,7 @@
 
       <section class="options-section">
         <h2 class="options-heading">Caret</h2>
-        <p class="options-hint">Customize the cursor appearance and animation in the editor.</p>
+        <p class="options-hint">Customize the caret's appearance in the editor.</p>
         <div class="settings-block">
           <label class="settings-label" for="caretStyleSelect">Caret shape</label>
           <select id="caretStyleSelect" class="settings-select">
@@ -71,7 +71,7 @@
 
       <section id="section-fonts" class="options-section">
         <h2 class="options-heading">Fonts</h2>
-        <p class="options-hint">Choose a preset or select “Custom” to paste a Google Fonts (or other) @import URL and font family name.</p>
+        <p class="options-hint">Choose a preset or select “Custom” to paste an @import URL and/or provide a font family name.</p>
 
         <div class="settings-block">
           <label class="settings-label" for="interfaceFontSelect">Interface font</label>
@@ -103,7 +103,7 @@
 
       <section class="options-section">
         <h2 class="options-heading">Import into Obsidian</h2>
-        <p class="options-hint">Defaults used when you right-click selected text and choose “Import selection to Obsidian”. The note name and folder below are used for that action.</p>
+        <p class="options-hint">Defaults used when you right-click selected text and choose “Import selection to Obsidian”.</p>
         <div class="settings-block">
           <label class="settings-label" for="importObsidianNoteName">Import note name</label>
           <input id="importObsidianNoteName" class="settings-input" type="text" placeholder="Import From Onyx" />
@@ -129,7 +129,7 @@
 
       <section class="options-section">
         <h2 class="options-heading">Export template</h2>
-        <p class="options-hint">Prepended to the note when you click “Export to Obsidian”. Use <code>{{date}}</code>, <code>{{time}}</code>, and <code>{{title}}</code>; they are replaced with the export date, time, and note title. Leave blank for no template.</p>
+        <p class="options-hint">Prepended to the note when you click “Export to Obsidian”. Use <code>{{date}}</code>, <code>{{time}}</code>, and <code>{{title}}</code> as paremeters.</p>
         <div class="settings-block">
           <label class="settings-label" for="exportTemplateInput">Template</label>
           <textarea id="exportTemplateInput" class="settings-textarea" rows="6" placeholder="---&#10;tags: [web-clip]&#10;date: {{date}}&#10;---&#10;&#10;" spellcheck="false"></textarea>
@@ -138,7 +138,7 @@
 
       <section class="options-section">
         <h2 class="options-heading">Custom CSS</h2>
-        <p class="options-hint">CSS applied only to the side panel (not this Settings page). Your selectors are automatically scoped so they override default styles.</p>
+        <p class="options-hint">CSS applied only to the side panel (not this Settings page).</p>
         <div class="settings-block">
           <label class="settings-label" for="customCssInput">Custom CSS</label>
           <textarea id="customCssInput" class="settings-textarea" rows="8" placeholder=".app { }" spellcheck="false"></textarea>
@@ -150,7 +150,7 @@
 
       <section class="options-section">
         <h2 class="options-heading">Other</h2>
-        <p class="options-hint">Default vault and folder pre-fill the side panel when empty. Source count shows words/chars in the Source pane header.</p>
+        <p class="options-hint">Miscellanous settings for a better experience.</p>
         <div class="settings-block">
           <label class="settings-label" for="defaultVault">Default vault</label>
           <input id="defaultVault" class="settings-input" type="text" placeholder="Pre-fill vault in side panel when empty" />

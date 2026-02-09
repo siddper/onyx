@@ -156,17 +156,17 @@ function App() {
           </div>
           <div className="flex items-center gap-4">
             <a
-              href="/docs"
-              className="text-ink hover:text-muted font-medium transition-colors ml-2"
-            >
-              Documentation
-            </a>
-            <a
-              href="https://github.com/siddpeng/onyx"
+              href="https://github.com/siddper/onyx"
               target="_blank"
               className="text-ink hover:text-muted font-medium transition-colors ml-2"
             >
               GitHub
+            </a>
+            <a
+              href="/docs"
+              className="text-ink hover:text-muted font-medium transition-colors ml-2"
+            >
+              Documentation
             </a>
             <a
               href="https://chromewebstore.google.com"
