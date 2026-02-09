@@ -1,5 +1,4 @@
 import { Link } from "react-router";
-import React from "react";
 
 function Nav() {
   return (
