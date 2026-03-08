@@ -994,3 +994,22 @@ body.minimal-mode .pane-count {
 body.minimal-mode #markdownPreview {
     padding: 8px 8px 8px 0;
 }
+
+/* Keep the embedded editor tab full-height and flush to edges. */
+body.embedded-editor-mode,
+body.embedded-editor-mode .app {
+    height: 100%;
+}
+
+body.embedded-editor-mode .app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    padding: 0;
+    gap: 0;
+}
+
+body.embedded-editor-mode .editor-wrap {
+    flex: 1;
+    min-height: 0;
+}

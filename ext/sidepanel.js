@@ -19,6 +19,9 @@ const sourceCount = document.getElementById("sourceCount");
 
 const EDITOR_SETTINGS_KEY = "editorSettings";
 const TOOLBAR_HIDDEN_KEY = "toolbarHidden";
+const sidepanelUrlParams = new URLSearchParams(window.location.search);
+const DISABLE_CUSTOM_CSS = sidepanelUrlParams.get("disableCustomCss") === "1";
+const EMBEDDED_EDITOR_MODE = sidepanelUrlParams.get("editorMode") === "1";
 let countDisplay = "both";
 let syncScrollEnabled = false;
 let syncScrollInProgress = false;
@@ -30,6 +33,10 @@ let editorFont = "inter";
 let caretBlinkTimer = null;
 let caretVisible = true;
 let cachedSavedVaults = [];
+
+if (EMBEDDED_EDITOR_MODE) {
+  document.body.classList.add("embedded-editor-mode");
+}
 
 const FONT_PRESETS = [
   { id: "inter", label: "Inter", fontFamily: '"Inter", sans-serif' },
@@ -298,10 +305,7 @@ function buildObsidianUrl({ vault, title, content, folder }) {
 async function loadSettings() {
   const data = await chrome.storage.sync.get(STORAGE_KEY);
   const settings = data[STORAGE_KEY] || {};
-  vaultInput.value = settings.vault || "";
-  titleInput.value = settings.title || "";
-  folderInput.value = settings.folder || "";
-  markdownInput.value = settings.content || "";
+  applyStoredNoteSettings(settings);
   const ed = await chrome.storage.sync.get(EDITOR_SETTINGS_KEY);
   const s = ed[EDITOR_SETTINGS_KEY] || {};
   if (!vaultInput.value.trim() && s.defaultVault) vaultInput.value = (s.defaultVault || "").trim();
@@ -310,6 +314,35 @@ async function loadSettings() {
   cachedSavedVaults = savedVaults;
   renderVaultDropdownList(savedVaults);
   updateVaultTriggerText();
+}
+
+function applyStoredNoteSettings(settings = {}) {
+  const nextVault = settings.vault || "";
+  const nextTitle = settings.title || "";
+  const nextFolder = settings.folder || "";
+  const nextContent = settings.content || "";
+
+  if (vaultInput.value !== nextVault) vaultInput.value = nextVault;
+  if (titleInput.value !== nextTitle) titleInput.value = nextTitle;
+  if (folderInput.value !== nextFolder) folderInput.value = nextFolder;
+
+  if (markdownInput.value !== nextContent) {
+    const active = document.activeElement === markdownInput;
+    const start = markdownInput.selectionStart;
+    const end = markdownInput.selectionEnd;
+    markdownInput.value = nextContent;
+    if (active && typeof start === "number" && typeof end === "number") {
+      markdownInput.setSelectionRange(
+        Math.min(start, nextContent.length),
+        Math.min(end, nextContent.length)
+      );
+    }
+    scheduleCaretUpdate();
+  }
+
+  updateVaultTriggerText();
+  updatePreview();
+  updatePaneCounts();
 }
 
 function normalizeFontUrl(input) {
@@ -378,7 +411,7 @@ async function loadEditorSettings() {
   } else {
     document.documentElement.style.setProperty("--radius", "8px");
   }
-  const rawCss = typeof editorSettings.customCss === "string" ? editorSettings.customCss : "";
+  const rawCss = !DISABLE_CUSTOM_CSS && typeof editorSettings.customCss === "string" ? editorSettings.customCss : "";
   if (rawCss) {
     document.body.classList.add("custom-css-loaded", "custom-css-scope");
     const wrapped = rawCss.replace(/([^{]+)\{/g, (_, selectors) => {
@@ -1074,6 +1107,9 @@ settingsBtn.addEventListener("click", () => {
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "sync" && changes[STORAGE_KEY]?.newValue) {
+    applyStoredNoteSettings(changes[STORAGE_KEY].newValue || {});
+  }
   if (area === "sync" && changes[EDITOR_SETTINGS_KEY]?.newValue) {
     const s = changes[EDITOR_SETTINGS_KEY].newValue;
     if (s.sourceEnabled !== undefined || s.previewEnabled !== undefined) {
@@ -1127,7 +1163,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
     } else {
       document.documentElement.style.setProperty("--radius", "8px");
     }
-    const rawCss = typeof s.customCss === "string" ? s.customCss : "";
+    const rawCss = !DISABLE_CUSTOM_CSS && typeof s.customCss === "string" ? s.customCss : "";
     if (rawCss) {
       document.body.classList.add("custom-css-loaded", "custom-css-scope");
       const wrapped = rawCss.replace(/([^{]+)\{/g, (_, selectors) => {

@@ -1,4 +1,5 @@
 const EDITOR_SETTINGS_KEY = "editorSettings";
+const STORAGE_KEY = "obsidianSettings";
 
 const CUSTOM_SELECT_CHECK_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" class="custom-select-option__check"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>';
@@ -326,6 +327,500 @@ const customCssInput = document.getElementById("customCssInput");
 const newVaultInput = document.getElementById("newVaultInput");
 const addVaultBtn = document.getElementById("addVaultBtn");
 const savedVaultsList = document.getElementById("savedVaultsList");
+const settingsTabBtn = document.getElementById("settingsTabBtn");
+const editorTabBtn = document.getElementById("editorTabBtn");
+const settingsTabPanel = document.getElementById("settingsTabPanel");
+const editorTabPanel = document.getElementById("editorTabPanel");
+const optionsEditorRoot = document.getElementById("optionsEditorRoot");
+const optionsEditorWrap = document.getElementById("optionsEditorWrap");
+const optionsEditorResizer = document.getElementById("optionsEditorResizer");
+const optionsMarkdownInput = document.getElementById("optionsMarkdownInput");
+const optionsMarkdownPreview = document.getElementById("optionsMarkdownPreview");
+const optionsSourceCount = document.getElementById("optionsSourceCount");
+const optionsCaretMirror = document.getElementById("optionsCaretMirror");
+const optionsFakeCaret = document.getElementById("optionsFakeCaret");
+
+function setActiveTab(tabId, { updateHash = true } = {}) {
+  const showEditor = tabId === "editor";
+  if (settingsTabBtn) {
+    settingsTabBtn.classList.toggle("is-active", !showEditor);
+    settingsTabBtn.setAttribute("aria-selected", String(!showEditor));
+  }
+  if (editorTabBtn) {
+    editorTabBtn.classList.toggle("is-active", showEditor);
+    editorTabBtn.setAttribute("aria-selected", String(showEditor));
+  }
+  if (settingsTabPanel) settingsTabPanel.hidden = showEditor;
+  if (editorTabPanel) editorTabPanel.hidden = !showEditor;
+
+  if (updateHash) {
+    const hash = showEditor ? "#editor" : "#settings";
+    history.replaceState(null, "", hash);
+  }
+}
+
+function initTabs() {
+  const startOnEditor = window.location.hash === "#editor";
+  setActiveTab(startOnEditor ? "editor" : "settings", { updateHash: false });
+  if (settingsTabBtn) settingsTabBtn.addEventListener("click", () => setActiveTab("settings"));
+  if (editorTabBtn) editorTabBtn.addEventListener("click", () => setActiveTab("editor"));
+}
+
+let optionsCountDisplay = "both";
+let optionsSyncScrollEnabled = false;
+let optionsSyncScrollInProgress = false;
+let optionsNoteSaveTimeout = null;
+let optionsCaretStyle = "line";
+let optionsCaretAnimation = "blink";
+let optionsCaretMovement = "instant";
+let optionsCaretBlinkTimer = null;
+let optionsCaretVisible = true;
+
+function optionsNormalizePaneVisibility(sourceEnabled, previewEnabled) {
+  const source = sourceEnabled !== false;
+  const preview = previewEnabled !== false;
+  if (!source && !preview) return { sourceEnabled: true, previewEnabled: false };
+  return { sourceEnabled: source, previewEnabled: preview };
+}
+
+function optionsApplyPaneVisibility(sourceEnabled, previewEnabled) {
+  if (!optionsEditorWrap) return;
+  const resolved = optionsNormalizePaneVisibility(sourceEnabled, previewEnabled);
+  optionsEditorWrap.classList.toggle("source-hidden", !resolved.sourceEnabled);
+  optionsEditorWrap.classList.toggle("preview-hidden", !resolved.previewEnabled);
+  if (resolved.previewEnabled) optionsUpdatePreview();
+}
+
+function optionsGetPaneVisibility() {
+  return {
+    sourceEnabled: !optionsEditorWrap?.classList.contains("source-hidden"),
+    previewEnabled: !optionsEditorWrap?.classList.contains("preview-hidden")
+  };
+}
+
+function optionsApplyHeaderVisibility(showPaneHeaders) {
+  if (!optionsEditorRoot) return;
+  optionsEditorRoot.classList.toggle("pane-headers-hidden", showPaneHeaders === false);
+}
+
+function optionsGetWordCharCount(text) {
+  const t = (text || "").trim();
+  const words = t ? t.split(/\s+/).filter(Boolean).length : 0;
+  const chars = (text || "").length;
+  return { words, chars };
+}
+
+function optionsUpdateCounts() {
+  if (!optionsSourceCount || !optionsMarkdownInput) return;
+  if (optionsCountDisplay === "none") {
+    optionsSourceCount.textContent = "";
+    return;
+  }
+  const { words, chars } = optionsGetWordCharCount(optionsMarkdownInput.value);
+  if (optionsCountDisplay === "both") optionsSourceCount.textContent = `${words} words · ${chars} chars`;
+  else if (optionsCountDisplay === "words") optionsSourceCount.textContent = `${words} words`;
+  else if (optionsCountDisplay === "chars") optionsSourceCount.textContent = `${chars} chars`;
+}
+
+function optionsUpdatePreview() {
+  if (!optionsMarkdownPreview || !optionsMarkdownInput || !optionsEditorWrap) return;
+  if (optionsEditorWrap.classList.contains("preview-hidden")) return;
+  optionsMarkdownPreview.innerHTML = typeof renderMarkdown === "function"
+    ? renderMarkdown(optionsMarkdownInput.value)
+    : optionsMarkdownInput.value.replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m]));
+}
+
+function optionsEscapeHtml(s) {
+  const div = document.createElement("div");
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+function optionsGetCaretCoordinates() {
+  if (!optionsCaretMirror || !optionsMarkdownInput) return null;
+  const text = optionsMarkdownInput.value;
+  const pos = optionsMarkdownInput.selectionEnd;
+  const before = text.substring(0, pos);
+  const after = text.substring(pos);
+  const cs = getComputedStyle(optionsMarkdownInput);
+  optionsCaretMirror.style.fontFamily = cs.fontFamily;
+  optionsCaretMirror.style.fontSize = cs.fontSize;
+  optionsCaretMirror.style.lineHeight = cs.lineHeight;
+  const padL = parseFloat(cs.paddingLeft) || 0;
+  const padT = parseFloat(cs.paddingTop) || 0;
+  optionsCaretMirror.style.width = (optionsMarkdownInput.clientWidth - padL - (parseFloat(cs.paddingRight) || 0)) + "px";
+  optionsCaretMirror.style.padding = "0";
+  optionsCaretMirror.style.boxSizing = "border-box";
+  optionsCaretMirror.innerHTML = optionsEscapeHtml(before) + '<span data-caret-pos>\u200b</span><span data-char-width>M</span>' + optionsEscapeHtml(after);
+  const span = optionsCaretMirror.querySelector("[data-caret-pos]");
+  const charSpan = optionsCaretMirror.querySelector("[data-char-width]");
+  if (!span) return null;
+  const left = span.offsetLeft - optionsMarkdownInput.scrollLeft + padL;
+  const top = span.offsetTop - optionsMarkdownInput.scrollTop + padT;
+  const height = span.offsetHeight;
+  const raw = charSpan ? charSpan.offsetLeft - span.offsetLeft : 8;
+  const charWidth = Math.max(8, Math.round(raw * 1));
+  return { left, top, height, bottom: top + height, charWidth };
+}
+
+function optionsUpdateFakeCaret() {
+  if (!optionsFakeCaret || document.activeElement !== optionsMarkdownInput) {
+    if (optionsFakeCaret) optionsFakeCaret.style.opacity = "0";
+    return;
+  }
+  const coords = optionsGetCaretCoordinates();
+  if (!coords) {
+    optionsFakeCaret.style.opacity = "0";
+    return;
+  }
+  optionsFakeCaret.style.left = coords.left + "px";
+  if (optionsCaretStyle === "underline") {
+    optionsFakeCaret.style.width = (coords.charWidth ?? 8) + "px";
+    optionsFakeCaret.style.height = "2px";
+    optionsFakeCaret.style.top = coords.bottom - 2 + "px";
+  } else if (optionsCaretStyle === "block") {
+    optionsFakeCaret.style.width = (coords.charWidth ?? 8) + "px";
+    optionsFakeCaret.style.top = coords.top + "px";
+    optionsFakeCaret.style.height = coords.height + "px";
+  } else {
+    optionsFakeCaret.style.width = "2px";
+    optionsFakeCaret.style.top = coords.top + "px";
+    optionsFakeCaret.style.height = coords.height + "px";
+  }
+  if (optionsCaretAnimation === "blink") {
+    optionsFakeCaret.style.opacity = optionsCaretVisible ? "1" : "0";
+  } else if (optionsCaretAnimation === "solid") {
+    optionsFakeCaret.style.opacity = "1";
+  }
+}
+
+function optionsScheduleCaretUpdate() {
+  requestAnimationFrame(() => optionsUpdateFakeCaret());
+}
+
+function optionsStartCaretBlink() {
+  if (!optionsFakeCaret) return;
+  if (optionsCaretAnimation === "blink") {
+    if (optionsCaretBlinkTimer) return;
+    optionsCaretVisible = true;
+    optionsFakeCaret.style.opacity = "1";
+    optionsCaretBlinkTimer = setInterval(() => {
+      optionsCaretVisible = !optionsCaretVisible;
+      if (optionsFakeCaret) optionsFakeCaret.style.opacity = optionsCaretVisible ? "1" : "0";
+    }, 530);
+  } else {
+    optionsCaretVisible = true;
+    if (optionsCaretAnimation === "solid") optionsFakeCaret.style.opacity = "1";
+    if (optionsCaretAnimation === "phase" || optionsCaretAnimation === "expand") {
+      optionsFakeCaret.style.animation = "";
+      optionsFakeCaret.style.opacity = "";
+    }
+  }
+}
+
+function optionsStopCaretBlink() {
+  if (optionsCaretBlinkTimer) {
+    clearInterval(optionsCaretBlinkTimer);
+    optionsCaretBlinkTimer = null;
+  }
+  if (optionsFakeCaret) {
+    optionsFakeCaret.style.opacity = "0";
+    optionsFakeCaret.style.animation = "none";
+  }
+}
+
+const OPTIONS_WRAP_CLOSE = { "`": "`", "*": "*", "(": ")", "{": "}", "[": "]", "~": "~" };
+const OPTIONS_WRAP_OPEN = { Backquote: "`" };
+const OPTIONS_CLOSE_TO_OPEN = { "`": "`", "*": "*", ")": "(", "}": "{", "]": "[", "~": "~" };
+const OPTIONS_SOFT_TAB = "    ";
+
+function optionsEditorInsert(replaceStart, replaceEnd, text, cursorStart, cursorEnd) {
+  optionsMarkdownInput.focus();
+  optionsMarkdownInput.setSelectionRange(replaceStart, replaceEnd);
+  document.execCommand("insertText", false, text);
+  optionsMarkdownInput.setSelectionRange(cursorStart, cursorEnd ?? cursorStart);
+  optionsUpdatePreview();
+  optionsUpdateCounts();
+  optionsScheduleSave();
+  optionsScheduleCaretUpdate();
+}
+
+function optionsToggleAsteriskWrap(marker) {
+  const start = optionsMarkdownInput.selectionStart;
+  const end = optionsMarkdownInput.selectionEnd;
+  const value = optionsMarkdownInput.value;
+  const markerLen = marker.length;
+  const hasSelection = start !== end;
+
+  if (hasSelection) {
+    const selected = value.slice(start, end);
+    if (
+      selected.length >= markerLen * 2 &&
+      selected.startsWith(marker) &&
+      selected.endsWith(marker)
+    ) {
+      const unwrapped = selected.slice(markerLen, selected.length - markerLen);
+      optionsEditorInsert(start, end, unwrapped, start, start + unwrapped.length);
+      return;
+    }
+    const hasOuterWrap =
+      start >= markerLen &&
+      value.slice(start - markerLen, start) === marker &&
+      value.slice(end, end + markerLen) === marker;
+    if (hasOuterWrap) {
+      optionsEditorInsert(start - markerLen, end + markerLen, selected, start - markerLen, end - markerLen);
+      return;
+    }
+    optionsEditorInsert(start, end, marker + selected + marker, start + markerLen, end + markerLen);
+    return;
+  }
+
+  const hasOuterWrap =
+    start >= markerLen &&
+    value.slice(start - markerLen, start) === marker &&
+    value.slice(start, start + markerLen) === marker;
+  if (hasOuterWrap) {
+    optionsEditorInsert(start - markerLen, start + markerLen, "", start - markerLen, start - markerLen);
+    return;
+  }
+
+  optionsEditorInsert(start, end, marker + marker, start + markerLen, start + markerLen);
+}
+
+function optionsHandleEditorKeydown(e) {
+  const start = optionsMarkdownInput.selectionStart;
+  const end = optionsMarkdownInput.selectionEnd;
+  const hasSelection = start !== end;
+  const value = optionsMarkdownInput.value;
+  const openChar = OPTIONS_WRAP_OPEN[e.key] ?? e.key;
+  const closeChar = OPTIONS_WRAP_CLOSE[openChar] ?? OPTIONS_WRAP_CLOSE[e.key];
+
+  if ((e.metaKey || e.ctrlKey) && e.key === "b") {
+    e.preventDefault();
+    optionsToggleAsteriskWrap("**");
+    return;
+  }
+
+  if ((e.metaKey || e.ctrlKey) && e.key === "i") {
+    e.preventDefault();
+    optionsToggleAsteriskWrap("*");
+    return;
+  }
+
+  if (hasSelection && e.key === "=") {
+    e.preventDefault();
+    const selected = value.slice(start, end);
+    optionsEditorInsert(start, end, "==" + selected + "==", start + 2, start + 2 + selected.length);
+    return;
+  }
+
+  if (!hasSelection && e.key === "Backspace" && start > 0) {
+    if (start >= OPTIONS_SOFT_TAB.length && value.slice(start - OPTIONS_SOFT_TAB.length, start) === OPTIONS_SOFT_TAB) {
+      e.preventDefault();
+      optionsEditorInsert(start - OPTIONS_SOFT_TAB.length, start, "", start - OPTIONS_SOFT_TAB.length, start - OPTIONS_SOFT_TAB.length);
+      return;
+    }
+    const charBefore = value[start - 1];
+    const charAfter = value[start];
+    const expectedClose = OPTIONS_WRAP_CLOSE[charBefore];
+    if (expectedClose !== undefined && charAfter === expectedClose) {
+      e.preventDefault();
+      optionsEditorInsert(start - 1, start + 1, "", start - 1, start - 1);
+      return;
+    }
+  }
+
+  if (!hasSelection && e.key === "Delete" && start > 0 && start < value.length) {
+    if (value.slice(start, start + OPTIONS_SOFT_TAB.length) === OPTIONS_SOFT_TAB) {
+      e.preventDefault();
+      optionsEditorInsert(start, start + OPTIONS_SOFT_TAB.length, "", start, start);
+      return;
+    }
+    const charBefore = value[start - 1];
+    const charAfter = value[start];
+    const expectedOpen = OPTIONS_CLOSE_TO_OPEN[charAfter];
+    if (expectedOpen !== undefined && charBefore === expectedOpen) {
+      e.preventDefault();
+      optionsEditorInsert(start - 1, start + 1, "", start - 1, start - 1);
+      return;
+    }
+  }
+
+  if (hasSelection && closeChar) {
+    e.preventDefault();
+    const selected = value.slice(start, end);
+    optionsEditorInsert(start, end, openChar + selected + closeChar, start + openChar.length, start + openChar.length + selected.length);
+    return;
+  }
+
+  if (!hasSelection && closeChar) {
+    e.preventDefault();
+    optionsEditorInsert(start, end, openChar + closeChar, start + openChar.length, start + openChar.length);
+    return;
+  }
+
+  if (e.key === "Tab") {
+    e.preventDefault();
+    optionsEditorInsert(start, end, OPTIONS_SOFT_TAB, start + OPTIONS_SOFT_TAB.length, start + OPTIONS_SOFT_TAB.length);
+  }
+}
+
+async function optionsSaveNoteContent() {
+  if (!optionsMarkdownInput) return;
+  const data = await chrome.storage.sync.get(STORAGE_KEY);
+  const current = data[STORAGE_KEY] || {};
+  await chrome.storage.sync.set({ [STORAGE_KEY]: { ...current, content: optionsMarkdownInput.value } });
+}
+
+function optionsScheduleSave() {
+  clearTimeout(optionsNoteSaveTimeout);
+  optionsNoteSaveTimeout = setTimeout(() => {
+    optionsNoteSaveTimeout = null;
+    optionsSaveNoteContent();
+  }, 300);
+}
+
+function optionsApplyStoredNoteSettings(settings = {}) {
+  if (!optionsMarkdownInput) return;
+  const nextContent = settings.content || "";
+  if (optionsMarkdownInput.value === nextContent) return;
+  const active = document.activeElement === optionsMarkdownInput;
+  const start = optionsMarkdownInput.selectionStart;
+  const end = optionsMarkdownInput.selectionEnd;
+  optionsMarkdownInput.value = nextContent;
+  if (active && typeof start === "number" && typeof end === "number") {
+    optionsMarkdownInput.setSelectionRange(
+      Math.min(start, nextContent.length),
+      Math.min(end, nextContent.length)
+    );
+  }
+  optionsUpdatePreview();
+  optionsUpdateCounts();
+}
+
+function optionsOnSourceScrollSync() {
+  if (!optionsSyncScrollEnabled || optionsSyncScrollInProgress || !optionsMarkdownPreview || !optionsMarkdownInput) return;
+  optionsSyncScrollInProgress = true;
+  const maxSource = optionsMarkdownInput.scrollHeight - optionsMarkdownInput.clientHeight;
+  const pct = maxSource > 0 ? optionsMarkdownInput.scrollTop / maxSource : 0;
+  const maxPrev = optionsMarkdownPreview.scrollHeight - optionsMarkdownPreview.clientHeight;
+  optionsMarkdownPreview.scrollTop = pct * maxPrev;
+  requestAnimationFrame(() => { optionsSyncScrollInProgress = false; });
+}
+
+function optionsOnPreviewScrollSync() {
+  if (!optionsSyncScrollEnabled || optionsSyncScrollInProgress || !optionsMarkdownPreview || !optionsMarkdownInput) return;
+  optionsSyncScrollInProgress = true;
+  const maxPrev = optionsMarkdownPreview.scrollHeight - optionsMarkdownPreview.clientHeight;
+  const pct = maxPrev > 0 ? optionsMarkdownPreview.scrollTop / maxPrev : 0;
+  const maxSource = optionsMarkdownInput.scrollHeight - optionsMarkdownInput.clientHeight;
+  optionsMarkdownInput.scrollTop = pct * maxSource;
+  requestAnimationFrame(() => { optionsSyncScrollInProgress = false; });
+}
+
+function optionsIsStackedLayout() {
+  return window.matchMedia("(max-width: 860px)").matches;
+}
+
+function initOptionsEditorResizer() {
+  if (!optionsEditorResizer || !optionsEditorWrap) return;
+  optionsEditorResizer.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const wrapRect = () => optionsEditorWrap.getBoundingClientRect();
+    const stacked = optionsIsStackedLayout();
+
+    if (stacked) {
+      const update = (clientY) => {
+        const r = wrapRect();
+        let pct = Math.round(((clientY - r.top) / r.height) * 100);
+        pct = Math.max(10, Math.min(90, pct));
+        optionsEditorWrap.style.setProperty("--options-source-height", pct + "%");
+      };
+      const onMove = (ev) => update(ev.clientY);
+      const onUp = () => {
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      };
+      document.body.style.cursor = "row-resize";
+      document.body.style.userSelect = "none";
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+      update(e.clientY);
+      return;
+    }
+
+    const update = (clientX) => {
+      const r = wrapRect();
+      let pct = Math.round(((clientX - r.left) / r.width) * 100);
+      pct = Math.max(10, Math.min(90, pct));
+      optionsEditorWrap.style.setProperty("--options-source-width", pct + "%");
+    };
+    const onMove = (ev) => update(ev.clientX);
+    const onUp = () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+    update(e.clientX);
+  });
+}
+
+async function initOptionsEditor() {
+  if (!optionsMarkdownInput || !optionsMarkdownPreview) return;
+  const [noteData, editorData] = await Promise.all([
+    chrome.storage.sync.get(STORAGE_KEY),
+    chrome.storage.sync.get(EDITOR_SETTINGS_KEY)
+  ]);
+  const note = noteData[STORAGE_KEY] || {};
+  const editorSettings = editorData[EDITOR_SETTINGS_KEY] || {};
+
+  optionsMarkdownInput.value = note.content || "";
+  optionsCountDisplay = editorSettings.countDisplay || "both";
+  optionsSyncScrollEnabled = editorSettings.syncScroll === true;
+  optionsCaretStyle = editorSettings.caretStyle || "line";
+  optionsCaretAnimation = editorSettings.caretAnimation || "blink";
+  optionsCaretMovement = editorSettings.caretMovement || "instant";
+  if (optionsFakeCaret) {
+    optionsFakeCaret.dataset.style = optionsCaretStyle;
+    optionsFakeCaret.dataset.animation = optionsCaretAnimation;
+    optionsFakeCaret.dataset.movement = optionsCaretMovement;
+  }
+  optionsApplyPaneVisibility(editorSettings.sourceEnabled, editorSettings.previewEnabled);
+  optionsApplyHeaderVisibility(editorSettings.showPaneHeaders !== false);
+  optionsUpdatePreview();
+  optionsUpdateCounts();
+
+  optionsMarkdownInput.addEventListener("input", () => {
+    optionsUpdatePreview();
+    optionsUpdateCounts();
+    optionsScheduleSave();
+    optionsScheduleCaretUpdate();
+  });
+  optionsMarkdownInput.addEventListener("keydown", optionsHandleEditorKeydown);
+  optionsMarkdownInput.addEventListener("click", optionsScheduleCaretUpdate);
+  optionsMarkdownInput.addEventListener("keydown", optionsScheduleCaretUpdate);
+  optionsMarkdownInput.addEventListener("keyup", optionsScheduleCaretUpdate);
+  optionsMarkdownInput.addEventListener("focus", () => {
+    optionsStartCaretBlink();
+    optionsScheduleCaretUpdate();
+  });
+  optionsMarkdownInput.addEventListener("blur", () => {
+    optionsStopCaretBlink();
+    if (optionsFakeCaret) optionsFakeCaret.style.opacity = "0";
+  });
+  optionsMarkdownInput.addEventListener("scroll", optionsOnSourceScrollSync);
+  optionsMarkdownInput.addEventListener("scroll", optionsScheduleCaretUpdate);
+  optionsMarkdownPreview.addEventListener("scroll", optionsOnPreviewScrollSync);
+  initOptionsEditorResizer();
+}
 
 function getSettingsFromForm() {
   return {
@@ -578,12 +1073,15 @@ populateFontSelects();
 if (previewToggle) {
   previewToggle.addEventListener("change", () => {
     saveSettings({ previewEnabled: previewToggle.checked });
+    const current = optionsGetPaneVisibility();
+    optionsApplyPaneVisibility(current.sourceEnabled, previewToggle.checked);
   });
 }
 
 if (showPaneHeadersToggle) {
   showPaneHeadersToggle.addEventListener("change", () => {
     saveSettings({ showPaneHeaders: showPaneHeadersToggle.checked });
+    optionsApplyHeaderVisibility(showPaneHeadersToggle.checked);
   });
 }
 
@@ -591,6 +1089,7 @@ const syncScrollToggle = document.getElementById("syncScrollToggle");
 if (syncScrollToggle) {
   syncScrollToggle.addEventListener("change", () => {
     saveSettings({ syncScroll: syncScrollToggle.checked });
+    optionsSyncScrollEnabled = syncScrollToggle.checked;
   });
 }
 
@@ -691,19 +1190,30 @@ if (customCssApplyBtn && customCssInput) {
 
 caretStyleSelect.addEventListener("change", () => {
   saveSettings({ caretStyle: caretStyleSelect.value });
+  optionsCaretStyle = caretStyleSelect.value;
+  if (optionsFakeCaret) optionsFakeCaret.dataset.style = optionsCaretStyle;
+  optionsScheduleCaretUpdate();
 });
 
 caretAnimationSelect.addEventListener("change", () => {
   saveSettings({ caretAnimation: caretAnimationSelect.value });
+  optionsCaretAnimation = caretAnimationSelect.value;
+  if (optionsFakeCaret) optionsFakeCaret.dataset.animation = optionsCaretAnimation;
+  optionsScheduleCaretUpdate();
 });
 
 caretMovementSelect.addEventListener("change", () => {
   saveSettings({ caretMovement: caretMovementSelect.value });
+  optionsCaretMovement = caretMovementSelect.value;
+  if (optionsFakeCaret) optionsFakeCaret.dataset.movement = optionsCaretMovement;
+  optionsScheduleCaretUpdate();
 });
 
 if (countDisplaySelect) {
   countDisplaySelect.addEventListener("change", () => {
     saveSettings({ countDisplay: countDisplaySelect.value });
+    optionsCountDisplay = countDisplaySelect.value;
+    optionsUpdateCounts();
   });
 }
 
@@ -731,13 +1241,55 @@ if (countDisplaySelect) {
   el.addEventListener("blur", syncAndSave);
 });
 
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "sync") return;
+
+  if (changes[STORAGE_KEY]?.newValue) {
+    optionsApplyStoredNoteSettings(changes[STORAGE_KEY].newValue || {});
+  }
+
+  if (changes[EDITOR_SETTINGS_KEY]?.newValue) {
+    const s = changes[EDITOR_SETTINGS_KEY].newValue || {};
+    if (s.sourceEnabled !== undefined || s.previewEnabled !== undefined) {
+      const current = optionsGetPaneVisibility();
+      optionsApplyPaneVisibility(
+        s.sourceEnabled !== undefined ? s.sourceEnabled : current.sourceEnabled,
+        s.previewEnabled !== undefined ? s.previewEnabled : current.previewEnabled
+      );
+    }
+    if (s.showPaneHeaders !== undefined) optionsApplyHeaderVisibility(s.showPaneHeaders !== false);
+    if (s.countDisplay !== undefined) {
+      optionsCountDisplay = s.countDisplay || "both";
+      optionsUpdateCounts();
+    }
+    if (s.syncScroll !== undefined) optionsSyncScrollEnabled = s.syncScroll === true;
+    if (s.caretStyle) {
+      optionsCaretStyle = s.caretStyle;
+      if (optionsFakeCaret) optionsFakeCaret.dataset.style = optionsCaretStyle;
+    }
+    if (s.caretAnimation) {
+      optionsCaretAnimation = s.caretAnimation;
+      if (optionsFakeCaret) optionsFakeCaret.dataset.animation = optionsCaretAnimation;
+    }
+    if (s.caretMovement) {
+      optionsCaretMovement = s.caretMovement;
+      if (optionsFakeCaret) optionsFakeCaret.dataset.movement = optionsCaretMovement;
+    }
+    optionsScheduleCaretUpdate();
+  }
+});
+
 loadSettings().then(() => {
+  initOptionsEditor();
+  initTabs();
   initCustomSelects();
   if (window.location.hash === "#section-fonts") {
+    setActiveTab("settings", { updateHash: false });
     document.getElementById("section-fonts")?.scrollIntoView({ behavior: "smooth" });
     showHideCustomFields();
   }
   if (window.location.hash === "#section-saved-vaults") {
+    setActiveTab("settings", { updateHash: false });
     document.getElementById("section-saved-vaults")?.scrollIntoView({ behavior: "smooth" });
   }
 });

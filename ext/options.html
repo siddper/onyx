@@ -6,205 +6,462 @@
     <title>Onyx – Settings</title>
     <link rel="stylesheet" href="options.css" />
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+      @import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap");
     </style>
     <style id="customFonts"></style>
   </head>
   <body>
     <div class="options-page">
       <h1 class="options-title">Onyx Settings</h1>
+      <div class="options-layout">
+        <div class="options-tabs" role="tablist" aria-label="Settings tabs">
+          <button
+            id="settingsTabBtn"
+            class="options-tab is-active"
+            type="button"
+            role="tab"
+            aria-controls="settingsTabPanel"
+            aria-selected="true"
+          >
+            Settings
+          </button>
+          <button
+            id="editorTabBtn"
+            class="options-tab"
+            type="button"
+            role="tab"
+            aria-controls="editorTabPanel"
+            aria-selected="false"
+          >
+            Editor
+          </button>
+        </div>
 
-      <section class="options-section">
-        <h2 class="options-heading">Themes</h2>
-        <p class="options-hint">Choose a built-in theme or import a custom theme from a JSON file. Docs are available <a href="https://tryonyx.vercel.app/docs/themes" target="_blank">here</a>.</p>
-        <div class="settings-block">
-          <label class="settings-label" for="themeSelect">Theme</label>
-          <select id="themeSelect" class="settings-select">
-            <option value="system">System</option>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-            <option value="oled">OLED</option>
-            <option value="cyberpunk">Cyberpunk</option>
-            <option value="sepia">Sepia</option>
-            <option value="nord">Nord</option>
-            <option value="dracula">Dracula</option>
-            <option value="tokyo-night">Tokyo Night</option>
-            <option value="blueberry">Blueberry</option>
-            <option value="monokai">Monokai</option>
-          </select>
-        </div>
-        <div class="settings-block">
-          <input id="themeFileInput" type="file" accept=".json,application/json" hidden />
-          <button type="button" id="importThemeBtn" class="settings-btn settings-btn--secondary">Import theme</button>
-          <ul id="customThemesList" class="custom-themes-list" aria-label="Imported custom themes"></ul>
-        </div>
-      </section>
+        <div
+          id="settingsTabPanel"
+          class="options-tab-panel"
+          role="tabpanel"
+          aria-labelledby="settingsTabBtn"
+        >
+          <section class="options-section">
+            <h2 class="options-heading">Themes</h2>
+            <p class="options-hint">
+              Choose a built-in theme or import a custom theme from a JSON file.
+              Docs are available
+              <a href="https://tryonyx.vercel.app/docs/themes" target="_blank"
+                >here</a
+              >.
+            </p>
+            <div class="settings-block">
+              <label class="settings-label" for="themeSelect">Theme</label>
+              <select id="themeSelect" class="settings-select">
+                <option value="system">System</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="oled">OLED</option>
+                <option value="cyberpunk">Cyberpunk</option>
+                <option value="sepia">Sepia</option>
+                <option value="nord">Nord</option>
+                <option value="dracula">Dracula</option>
+                <option value="tokyo-night">Tokyo Night</option>
+                <option value="blueberry">Blueberry</option>
+                <option value="monokai">Monokai</option>
+              </select>
+            </div>
+            <div class="settings-block">
+              <input
+                id="themeFileInput"
+                type="file"
+                accept=".json,application/json"
+                hidden
+              />
+              <button
+                type="button"
+                id="importThemeBtn"
+                class="settings-btn settings-btn--secondary"
+              >
+                Import theme
+              </button>
+              <ul
+                id="customThemesList"
+                class="custom-themes-list"
+                aria-label="Imported custom themes"
+              ></ul>
+            </div>
+          </section>
 
-      <section class="options-section">
-        <h2 class="options-heading">Caret</h2>
-        <p class="options-hint">Customize the caret's appearance in the editor.</p>
-        <div class="settings-block">
-          <label class="settings-label" for="caretStyleSelect">Caret shape</label>
-          <select id="caretStyleSelect" class="settings-select">
-            <option value="line">Line</option>
-            <option value="block">Block</option>
-            <option value="underline">Underline</option>
-          </select>
-        </div>
-        <div class="settings-block">
-          <label class="settings-label" for="caretAnimationSelect">Caret animation</label>
-          <select id="caretAnimationSelect" class="settings-select">
-            <option value="solid">Solid</option>
-            <option value="blink">Blink</option>
-            <option value="phase">Phase</option>
-            <option value="expand">Expand</option>
-          </select>
-        </div>
-        <div class="settings-block">
-          <label class="settings-label" for="caretMovementSelect">Caret movement</label>
-          <select id="caretMovementSelect" class="settings-select">
-            <option value="instant">Instant</option>
-            <option value="smooth">Smooth</option>
-          </select>
-        </div>
-      </section>
+          <section class="options-section">
+            <h2 class="options-heading">Caret</h2>
+            <p class="options-hint">
+              Customize the caret's appearance in the editor.
+            </p>
+            <div class="settings-block">
+              <label class="settings-label" for="caretStyleSelect"
+                >Caret shape</label
+              >
+              <select id="caretStyleSelect" class="settings-select">
+                <option value="line">Line</option>
+                <option value="block">Block</option>
+                <option value="underline">Underline</option>
+              </select>
+            </div>
+            <div class="settings-block">
+              <label class="settings-label" for="caretAnimationSelect"
+                >Caret animation</label
+              >
+              <select id="caretAnimationSelect" class="settings-select">
+                <option value="solid">Solid</option>
+                <option value="blink">Blink</option>
+                <option value="phase">Phase</option>
+                <option value="expand">Expand</option>
+              </select>
+            </div>
+            <div class="settings-block">
+              <label class="settings-label" for="caretMovementSelect"
+                >Caret movement</label
+              >
+              <select id="caretMovementSelect" class="settings-select">
+                <option value="instant">Instant</option>
+                <option value="smooth">Smooth</option>
+              </select>
+            </div>
+          </section>
 
-      <section id="section-fonts" class="options-section">
-        <h2 class="options-heading">Fonts</h2>
-        <p class="options-hint">Choose a preset or select “Custom” to paste an @import URL and/or provide a font family name.</p>
+          <section id="section-fonts" class="options-section">
+            <h2 class="options-heading">Fonts</h2>
+            <p class="options-hint">
+              Choose a preset or select “Custom” to paste an @import URL and/or
+              provide a font family name.
+            </p>
 
-        <div class="settings-block">
-          <label class="settings-label" for="interfaceFontSelect">Interface font</label>
-          <select id="interfaceFontSelect" class="settings-select"></select>
-          <div id="interfaceFontCustom" class="settings-font-custom" hidden>
-            <input id="interfaceFontUrl" class="settings-input" type="text" placeholder="Paste @import url(...) or Google Fonts link" />
-            <input id="interfaceFontFamily" class="settings-input" type="text" placeholder="Font family name (e.g. Inter, Roboto)" />
+            <div class="settings-block">
+              <label class="settings-label" for="interfaceFontSelect"
+                >Interface font</label
+              >
+              <select id="interfaceFontSelect" class="settings-select"></select>
+              <div id="interfaceFontCustom" class="settings-font-custom" hidden>
+                <input
+                  id="interfaceFontUrl"
+                  class="settings-input"
+                  type="text"
+                  placeholder="Paste @import url(...) or Google Fonts link"
+                />
+                <input
+                  id="interfaceFontFamily"
+                  class="settings-input"
+                  type="text"
+                  placeholder="Font family name (e.g. Inter, Roboto)"
+                />
+              </div>
+            </div>
+
+            <div class="settings-block">
+              <label class="settings-label" for="editorFontSelect"
+                >Editor font</label
+              >
+              <select id="editorFontSelect" class="settings-select"></select>
+              <div id="editorFontCustom" class="settings-font-custom" hidden>
+                <input
+                  id="editorFontUrl"
+                  class="settings-input"
+                  type="text"
+                  placeholder="Paste @import url(...) or Google Fonts link"
+                />
+                <input
+                  id="editorFontFamily"
+                  class="settings-input"
+                  type="text"
+                  placeholder="Font family name (e.g. JetBrains Mono)"
+                />
+              </div>
+            </div>
+
+            <div class="settings-block">
+              <label class="settings-label" for="codeFontSelect"
+                >Monospace / code font</label
+              >
+              <select id="codeFontSelect" class="settings-select"></select>
+              <div id="codeFontCustom" class="settings-font-custom" hidden>
+                <input
+                  id="codeFontUrl"
+                  class="settings-input"
+                  type="text"
+                  placeholder="Paste @import url(...) or Google Fonts link"
+                />
+                <input
+                  id="codeFontFamily"
+                  class="settings-input"
+                  type="text"
+                  placeholder="Font family name (e.g. Fira Code)"
+                />
+              </div>
+            </div>
+          </section>
+
+          <section class="options-section">
+            <h2 class="options-heading">Import into Obsidian</h2>
+            <p class="options-hint">
+              Defaults used when you right-click selected text and choose
+              “Import selection to Obsidian”.
+            </p>
+            <div class="settings-block">
+              <label class="settings-label" for="importObsidianNoteName"
+                >Import note name</label
+              >
+              <input
+                id="importObsidianNoteName"
+                class="settings-input"
+                type="text"
+                placeholder="Import From Onyx"
+              />
+            </div>
+            <div class="settings-block">
+              <label class="settings-label" for="importObsidianFolder"
+                >Folder</label
+              >
+              <input
+                id="importObsidianFolder"
+                class="settings-input"
+                type="text"
+                placeholder="Root (blank for vault root)"
+              />
+            </div>
+          </section>
+
+          <section id="section-saved-vaults" class="options-section">
+            <h2 class="options-heading">Saved vaults</h2>
+            <p class="options-hint">
+              Vaults you add here appear in the side panel dropdown. Choose one
+              when exporting to Obsidian.
+            </p>
+            <div class="settings-block">
+              <label class="settings-label" for="newVaultInput"
+                >Add vault</label
+              >
+              <div class="settings-inline-row">
+                <input
+                  id="newVaultInput"
+                  class="settings-input"
+                  type="text"
+                  placeholder="Vault name"
+                />
+                <button type="button" id="addVaultBtn" class="settings-btn">
+                  Add
+                </button>
+              </div>
+            </div>
+            <ul
+              id="savedVaultsList"
+              class="saved-vaults-list"
+              aria-label="Saved vaults"
+            ></ul>
+          </section>
+
+          <section class="options-section">
+            <h2 class="options-heading">Export template</h2>
+            <p class="options-hint">
+              Prepended to the note when you click “Export to Obsidian”. Use
+              <code>{{date}}</code>, <code>{{time}}</code>, and
+              <code>{{title}}</code> as paremeters.
+            </p>
+            <div class="settings-block">
+              <label class="settings-label" for="exportTemplateInput"
+                >Template</label
+              >
+              <textarea
+                id="exportTemplateInput"
+                class="settings-textarea"
+                rows="6"
+                placeholder="---&#10;tags: [web-clip]&#10;date: {{date}}&#10;---&#10;&#10;"
+                spellcheck="false"
+              ></textarea>
+            </div>
+          </section>
+
+          <section class="options-section">
+            <h2 class="options-heading">Custom CSS</h2>
+            <p class="options-hint">
+              CSS applied only to the side panel (not this Settings page).
+            </p>
+            <div class="settings-block">
+              <label class="settings-label" for="customCssInput"
+                >Custom CSS</label
+              >
+              <textarea
+                id="customCssInput"
+                class="settings-textarea"
+                rows="8"
+                placeholder=".app { }"
+                spellcheck="false"
+              ></textarea>
+              <div class="settings-apply-row">
+                <button
+                  type="button"
+                  id="customCssApplyBtn"
+                  class="settings-btn"
+                >
+                  Apply CSS
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section class="options-section">
+            <h2 class="options-heading">Other</h2>
+            <p class="options-hint">
+              Miscellanous settings for a better experience.
+            </p>
+            <div class="settings-block">
+              <label class="settings-label" for="defaultVault"
+                >Default vault</label
+              >
+              <input
+                id="defaultVault"
+                class="settings-input"
+                type="text"
+                placeholder="Pre-fill vault in side panel when empty"
+              />
+            </div>
+            <div class="settings-block">
+              <label class="settings-label" for="defaultFolder"
+                >Default folder</label
+              >
+              <input
+                id="defaultFolder"
+                class="settings-input"
+                type="text"
+                placeholder="Pre-fill folder in side panel when empty"
+              />
+            </div>
+            <div class="settings-block">
+              <label class="settings-label" for="countDisplaySelect"
+                >Source pane count</label
+              >
+              <select id="countDisplaySelect" class="settings-select">
+                <option value="both">Words and characters</option>
+                <option value="words">Words only</option>
+                <option value="chars">Characters only</option>
+                <option value="none">None</option>
+              </select>
+            </div>
+            <div class="settings-item">
+              <label class="settings-label" for="radiusSlider"
+                >Corner radius</label
+              >
+              <div class="settings-slider-wrap">
+                <input
+                  id="radiusSlider"
+                  class="settings-slider"
+                  type="range"
+                  min="0"
+                  max="24"
+                  step="2"
+                  value="8"
+                  aria-valuemin="0"
+                  aria-valuemax="24"
+                  aria-valuenow="8"
+                />
+                <span
+                  id="radiusValue"
+                  class="settings-slider-value"
+                  aria-live="polite"
+                  >8px</span
+                >
+              </div>
+            </div>
+            <div class="settings-item">
+              <label class="settings-label" for="previewToggle"
+                >Show preview</label
+              >
+              <label class="toggle-wrap" aria-label="Toggle preview">
+                <input id="previewToggle" type="checkbox" checked />
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+            <div class="settings-item">
+              <label class="settings-label" for="syncScrollToggle"
+                >Sync source and preview scrolling</label
+              >
+              <label class="toggle-wrap" aria-label="Sync scrolling">
+                <input id="syncScrollToggle" type="checkbox" />
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+            <div class="settings-item">
+              <label class="settings-label" for="minimalModeToggle"
+                >Compact mode</label
+              >
+              <label class="toggle-wrap" aria-label="Minimal mode">
+                <input id="minimalModeToggle" type="checkbox" />
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+            <div class="settings-item">
+              <label class="settings-label" for="showPaneHeadersToggle"
+                >Show source and preview headers</label
+              >
+              <label class="toggle-wrap" aria-label="Show pane headers">
+                <input id="showPaneHeadersToggle" type="checkbox" checked />
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+          </section>
+        </div>
+
+        <div
+          id="editorTabPanel"
+          class="options-tab-panel options-tab-panel--editor"
+          role="tabpanel"
+          aria-labelledby="editorTabBtn"
+          hidden
+        >
+          <div id="optionsEditorRoot" class="options-editor-root">
+            <div id="optionsEditorWrap" class="options-editor-wrap">
+              <div class="options-editor-pane">
+                <label class="options-pane-label" for="optionsMarkdownInput"
+                  >Source
+                  <span
+                    id="optionsSourceCount"
+                    class="options-pane-count"
+                    aria-live="polite"
+                  ></span
+                ></label>
+                <div class="options-editor-caret-wrap">
+                  <textarea
+                    id="optionsMarkdownInput"
+                    placeholder="# Start writing markdown..."
+                    spellcheck="true"
+                  ></textarea>
+                  <div
+                    id="optionsCaretMirror"
+                    class="options-editor-caret-mirror"
+                    aria-hidden="true"
+                  ></div>
+                  <div
+                    id="optionsFakeCaret"
+                    class="options-editor-fake-caret"
+                    aria-hidden="true"
+                  ></div>
+                </div>
+              </div>
+              <div
+                id="optionsEditorResizer"
+                class="options-editor-resizer"
+              ></div>
+              <div class="options-preview-pane">
+                <span class="options-pane-label">Preview</span>
+                <div
+                  id="optionsMarkdownPreview"
+                  class="markdown-body"
+                  aria-live="polite"
+                ></div>
+              </div>
+            </div>
           </div>
         </div>
-
-        <div class="settings-block">
-          <label class="settings-label" for="editorFontSelect">Editor font</label>
-          <select id="editorFontSelect" class="settings-select"></select>
-          <div id="editorFontCustom" class="settings-font-custom" hidden>
-            <input id="editorFontUrl" class="settings-input" type="text" placeholder="Paste @import url(...) or Google Fonts link" />
-            <input id="editorFontFamily" class="settings-input" type="text" placeholder="Font family name (e.g. JetBrains Mono)" />
-          </div>
-        </div>
-
-        <div class="settings-block">
-          <label class="settings-label" for="codeFontSelect">Monospace / code font</label>
-          <select id="codeFontSelect" class="settings-select"></select>
-          <div id="codeFontCustom" class="settings-font-custom" hidden>
-            <input id="codeFontUrl" class="settings-input" type="text" placeholder="Paste @import url(...) or Google Fonts link" />
-            <input id="codeFontFamily" class="settings-input" type="text" placeholder="Font family name (e.g. Fira Code)" />
-          </div>
-        </div>
-      </section>
-
-      <section class="options-section">
-        <h2 class="options-heading">Import into Obsidian</h2>
-        <p class="options-hint">Defaults used when you right-click selected text and choose “Import selection to Obsidian”.</p>
-        <div class="settings-block">
-          <label class="settings-label" for="importObsidianNoteName">Import note name</label>
-          <input id="importObsidianNoteName" class="settings-input" type="text" placeholder="Import From Onyx" />
-        </div>
-        <div class="settings-block">
-          <label class="settings-label" for="importObsidianFolder">Folder</label>
-          <input id="importObsidianFolder" class="settings-input" type="text" placeholder="Root (blank for vault root)" />
-        </div>
-      </section>
-
-      <section id="section-saved-vaults" class="options-section">
-        <h2 class="options-heading">Saved vaults</h2>
-        <p class="options-hint">Vaults you add here appear in the side panel dropdown. Choose one when exporting to Obsidian.</p>
-        <div class="settings-block">
-          <label class="settings-label" for="newVaultInput">Add vault</label>
-          <div class="settings-inline-row">
-            <input id="newVaultInput" class="settings-input" type="text" placeholder="Vault name" />
-            <button type="button" id="addVaultBtn" class="settings-btn">Add</button>
-          </div>
-        </div>
-        <ul id="savedVaultsList" class="saved-vaults-list" aria-label="Saved vaults"></ul>
-      </section>
-
-      <section class="options-section">
-        <h2 class="options-heading">Export template</h2>
-        <p class="options-hint">Prepended to the note when you click “Export to Obsidian”. Use <code>{{date}}</code>, <code>{{time}}</code>, and <code>{{title}}</code> as paremeters.</p>
-        <div class="settings-block">
-          <label class="settings-label" for="exportTemplateInput">Template</label>
-          <textarea id="exportTemplateInput" class="settings-textarea" rows="6" placeholder="---&#10;tags: [web-clip]&#10;date: {{date}}&#10;---&#10;&#10;" spellcheck="false"></textarea>
-        </div>
-      </section>
-
-      <section class="options-section">
-        <h2 class="options-heading">Custom CSS</h2>
-        <p class="options-hint">CSS applied only to the side panel (not this Settings page).</p>
-        <div class="settings-block">
-          <label class="settings-label" for="customCssInput">Custom CSS</label>
-          <textarea id="customCssInput" class="settings-textarea" rows="8" placeholder=".app { }" spellcheck="false"></textarea>
-          <div class="settings-apply-row">
-            <button type="button" id="customCssApplyBtn" class="settings-btn">Apply CSS</button>
-          </div>
-        </div>
-      </section>
-
-      <section class="options-section">
-        <h2 class="options-heading">Other</h2>
-        <p class="options-hint">Miscellanous settings for a better experience.</p>
-        <div class="settings-block">
-          <label class="settings-label" for="defaultVault">Default vault</label>
-          <input id="defaultVault" class="settings-input" type="text" placeholder="Pre-fill vault in side panel when empty" />
-        </div>
-        <div class="settings-block">
-          <label class="settings-label" for="defaultFolder">Default folder</label>
-          <input id="defaultFolder" class="settings-input" type="text" placeholder="Pre-fill folder in side panel when empty" />
-        </div>
-        <div class="settings-block">
-          <label class="settings-label" for="countDisplaySelect">Source pane count</label>
-          <select id="countDisplaySelect" class="settings-select">
-            <option value="both">Words and characters</option>
-            <option value="words">Words only</option>
-            <option value="chars">Characters only</option>
-            <option value="none">None</option>
-          </select>
-        </div>
-        <div class="settings-item">
-          <label class="settings-label" for="radiusSlider">Corner radius</label>
-          <div class="settings-slider-wrap">
-            <input id="radiusSlider" class="settings-slider" type="range" min="0" max="24" step="2" value="8" aria-valuemin="0" aria-valuemax="24" aria-valuenow="8" />
-            <span id="radiusValue" class="settings-slider-value" aria-live="polite">8px</span>
-          </div>
-        </div>
-        <div class="settings-item">
-          <label class="settings-label" for="previewToggle">Show preview in side panel</label>
-          <label class="toggle-wrap" aria-label="Toggle preview">
-            <input id="previewToggle" type="checkbox" checked />
-            <span class="toggle-track"></span>
-          </label>
-        </div>
-        <div class="settings-item">
-          <label class="settings-label" for="syncScrollToggle">Sync source and preview scrolling</label>
-          <label class="toggle-wrap" aria-label="Sync scrolling">
-            <input id="syncScrollToggle" type="checkbox" />
-            <span class="toggle-track"></span>
-          </label>
-        </div>
-        <div class="settings-item">
-          <label class="settings-label" for="minimalModeToggle">Compact mode</label>
-          <label class="toggle-wrap" aria-label="Minimal mode">
-            <input id="minimalModeToggle" type="checkbox" />
-            <span class="toggle-track"></span>
-          </label>
-        </div>
-        <div class="settings-item">
-          <label class="settings-label" for="showPaneHeadersToggle">Show source and preview headers</label>
-          <label class="toggle-wrap" aria-label="Show pane headers">
-            <input id="showPaneHeadersToggle" type="checkbox" checked />
-            <span class="toggle-track"></span>
-          </label>
-        </div>
-      </section>
+      </div>
     </div>
+    <script src="markdown.js"></script>
     <script src="options.js"></script>
   </body>
 </html>
