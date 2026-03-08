@@ -722,6 +722,301 @@ function optionsIsStackedLayout() {
   return window.matchMedia("(max-width: 860px)").matches;
 }
 
+async function optionsSavePaneVisibility({ sourceEnabled, previewEnabled }) {
+  const resolved = optionsNormalizePaneVisibility(sourceEnabled, previewEnabled);
+  await saveSettings(resolved);
+  optionsApplyPaneVisibility(resolved.sourceEnabled, resolved.previewEnabled);
+}
+
+const OPTIONS_CONTEXT_MENU_CHECK_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" class="context-menu-option__check"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>';
+
+const OPTIONS_CONTEXT_MENU_ARROW_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" class="context-menu-option__arrow"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></svg>';
+
+let optionsContextMenuEl = null;
+let optionsContextSubmenuEl = null;
+let optionsContextSubmenuCloseTimer = null;
+
+function optionsHideSubmenu() {
+  if (optionsContextSubmenuCloseTimer) {
+    clearTimeout(optionsContextSubmenuCloseTimer);
+    optionsContextSubmenuCloseTimer = null;
+  }
+  if (optionsContextSubmenuEl) {
+    optionsContextSubmenuEl.remove();
+    optionsContextSubmenuEl = null;
+  }
+}
+
+function optionsCloseContextMenu() {
+  optionsHideSubmenu();
+  if (optionsContextMenuEl) {
+    optionsContextMenuEl.remove();
+    optionsContextMenuEl = null;
+  }
+  document.removeEventListener("click", optionsCloseContextMenu);
+  document.removeEventListener("scroll", optionsCloseContextMenu, true);
+}
+
+function showOptionsContextMenu(x, y) {
+  optionsCloseContextMenu();
+  const paneVisibility = optionsGetPaneVisibility();
+  const sourceOnly = paneVisibility.sourceEnabled && !paneVisibility.previewEnabled;
+  const previewOnly = !paneVisibility.sourceEnabled && paneVisibility.previewEnabled;
+
+  const caretSubmenu = [
+    { id: "line", label: "Line", getChecked: () => optionsCaretStyle === "line", value: "line" },
+    { id: "block", label: "Block", getChecked: () => optionsCaretStyle === "block", value: "block" },
+    { id: "underline", label: "Underline", getChecked: () => optionsCaretStyle === "underline", value: "underline" }
+  ];
+
+  const caretAnimationSubmenu = [
+    { id: "solid", label: "Solid", getChecked: () => optionsCaretAnimation === "solid", value: "solid" },
+    { id: "blink", label: "Blink", getChecked: () => optionsCaretAnimation === "blink", value: "blink" },
+    { id: "phase", label: "Phase", getChecked: () => optionsCaretAnimation === "phase", value: "phase" },
+    { id: "expand", label: "Expand", getChecked: () => optionsCaretAnimation === "expand", value: "expand" }
+  ];
+
+  const caretMovementSubmenu = [
+    { id: "instant", label: "Instant", getChecked: () => optionsCaretMovement === "instant", value: "instant" },
+    { id: "smooth", label: "Smooth", getChecked: () => optionsCaretMovement === "smooth", value: "smooth" }
+  ];
+
+  const currentEditorFont = editorFontSelect?.value || "inter";
+  const fontSubmenu = [
+    { id: "inter", label: "Inter", getChecked: () => currentEditorFont === "inter", value: "inter" },
+    { id: "jetbrains-mono", label: "JetBrains Mono", getChecked: () => currentEditorFont === "jetbrains-mono", value: "jetbrains-mono" },
+    { id: "geist-mono", label: "Geist Mono", getChecked: () => currentEditorFont === "geist-mono", value: "geist-mono" },
+    { id: "custom", label: "Custom", getChecked: () => currentEditorFont === "custom", value: "custom" }
+  ];
+
+  const options = [];
+  if (!sourceOnly) {
+    options.push({
+      id: "source",
+      label: "Show source",
+      getChecked: () => !optionsEditorWrap.classList.contains("source-hidden"),
+      onToggle: async () => {
+        const current = optionsGetPaneVisibility();
+        await optionsSavePaneVisibility({ sourceEnabled: !current.sourceEnabled, previewEnabled: current.previewEnabled });
+      }
+    });
+  }
+  if (!previewOnly) {
+    options.push({
+      id: "preview",
+      label: "Show preview",
+      getChecked: () => !optionsEditorWrap.classList.contains("preview-hidden"),
+      onToggle: async () => {
+        const current = optionsGetPaneVisibility();
+        await optionsSavePaneVisibility({ sourceEnabled: current.sourceEnabled, previewEnabled: !current.previewEnabled });
+      }
+    });
+  }
+
+  options.push({
+    id: "pane-headers",
+    label: "Show headers",
+    getChecked: () => !optionsEditorRoot.classList.contains("pane-headers-hidden"),
+    onToggle: async () => {
+      const next = optionsEditorRoot.classList.contains("pane-headers-hidden");
+      optionsApplyHeaderVisibility(next);
+      if (showPaneHeadersToggle) showPaneHeadersToggle.checked = next;
+      await saveSettings({ showPaneHeaders: next });
+    }
+  });
+
+  options.push(
+    {
+      id: "caret-shape",
+      label: "Caret shape",
+      submenu: caretSubmenu,
+      onSelectItem: async (item) => {
+        optionsCaretStyle = item.value;
+        if (optionsFakeCaret) optionsFakeCaret.dataset.style = optionsCaretStyle;
+        if (caretStyleSelect) caretStyleSelect.value = item.value;
+        optionsScheduleCaretUpdate();
+        await saveSettings({ caretStyle: item.value });
+      }
+    },
+    {
+      id: "caret-animation",
+      label: "Caret animation",
+      submenu: caretAnimationSubmenu,
+      onSelectItem: async (item) => {
+        optionsCaretAnimation = item.value;
+        if (optionsFakeCaret) optionsFakeCaret.dataset.animation = optionsCaretAnimation;
+        if (caretAnimationSelect) caretAnimationSelect.value = item.value;
+        optionsScheduleCaretUpdate();
+        await saveSettings({ caretAnimation: item.value });
+      }
+    },
+    {
+      id: "caret-movement",
+      label: "Caret movement",
+      submenu: caretMovementSubmenu,
+      onSelectItem: async (item) => {
+        optionsCaretMovement = item.value;
+        if (optionsFakeCaret) optionsFakeCaret.dataset.movement = optionsCaretMovement;
+        if (caretMovementSelect) caretMovementSelect.value = item.value;
+        optionsScheduleCaretUpdate();
+        await saveSettings({ caretMovement: item.value });
+      }
+    },
+    {
+      id: "font",
+      label: "Font",
+      submenu: fontSubmenu,
+      onSelectItem: async (item) => {
+        if (editorFontSelect) editorFontSelect.value = item.value;
+        showHideCustomFields();
+        await saveSettings({ editorFont: item.value });
+        if (item.value === "custom") {
+          setActiveTab("settings");
+          document.getElementById("section-fonts")?.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+    }
+  );
+
+  options.push({
+    id: "open-settings",
+    label: "Open settings",
+    getChecked: () => false,
+    onToggle: async () => {
+      setActiveTab("settings");
+    }
+  });
+
+  function appendCheckOrSpacer(row, checked) {
+    if (checked) {
+      const checkWrap = document.createElement("span");
+      checkWrap.className = "context-menu-option__check";
+      checkWrap.innerHTML = OPTIONS_CONTEXT_MENU_CHECK_SVG;
+      const svg = checkWrap.querySelector("svg");
+      if (svg) {
+        svg.style.width = "16px";
+        svg.style.height = "16px";
+        svg.style.fill = "currentColor";
+      }
+      row.appendChild(checkWrap);
+    } else {
+      const spacer = document.createElement("span");
+      spacer.className = "context-menu-option__check";
+      spacer.setAttribute("aria-hidden", "true");
+      row.appendChild(spacer);
+    }
+  }
+
+  function showSubmenuAt(rowEl, opt) {
+    if (optionsContextSubmenuCloseTimer) {
+      clearTimeout(optionsContextSubmenuCloseTimer);
+      optionsContextSubmenuCloseTimer = null;
+    }
+    optionsHideSubmenu();
+    const submenu = document.createElement("div");
+    submenu.className = "context-menu-submenu";
+    submenu.setAttribute("role", "menu");
+    opt.submenu.forEach((item) => {
+      const subRow = document.createElement("div");
+      subRow.className = "context-menu-option";
+      subRow.setAttribute("role", "menuitemradio");
+      subRow.setAttribute("aria-checked", item.getChecked());
+      subRow.textContent = item.label;
+      appendCheckOrSpacer(subRow, item.getChecked());
+      subRow.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        await opt.onSelectItem(item);
+        optionsCloseContextMenu();
+      });
+      subRow.addEventListener("mouseenter", () => {
+        if (optionsContextSubmenuCloseTimer) {
+          clearTimeout(optionsContextSubmenuCloseTimer);
+          optionsContextSubmenuCloseTimer = null;
+        }
+      });
+      subRow.addEventListener("mouseleave", () => {
+        optionsContextSubmenuCloseTimer = setTimeout(optionsHideSubmenu, 150);
+      });
+      submenu.appendChild(subRow);
+    });
+    document.body.appendChild(submenu);
+    optionsContextSubmenuEl = submenu;
+    submenu.addEventListener("mouseenter", () => {
+      if (optionsContextSubmenuCloseTimer) {
+        clearTimeout(optionsContextSubmenuCloseTimer);
+        optionsContextSubmenuCloseTimer = null;
+      }
+    });
+    submenu.addEventListener("mouseleave", () => {
+      optionsContextSubmenuCloseTimer = setTimeout(optionsHideSubmenu, 150);
+    });
+    const rowRect = rowEl.getBoundingClientRect();
+    const subRect = submenu.getBoundingClientRect();
+    const pad = 8;
+    let left = rowRect.right + 4;
+    let top = rowRect.top;
+    if (left + subRect.width > window.innerWidth - pad) left = Math.max(pad, window.innerWidth - subRect.width - pad);
+    if (top + subRect.height > window.innerHeight - pad) top = window.innerHeight - subRect.height - pad;
+    if (top < pad) top = pad;
+    submenu.style.left = left + "px";
+    submenu.style.top = top + "px";
+  }
+
+  const container = document.createElement("div");
+  container.className = "context-menu";
+  container.setAttribute("role", "menu");
+  options.forEach((opt) => {
+    const row = document.createElement("div");
+    row.className = "context-menu-option";
+    if (opt.submenu) row.classList.add("context-menu-option--submenu-trigger");
+    row.setAttribute("role", opt.submenu ? "menuitem" : "menuitemcheckbox");
+    if (!opt.submenu) row.setAttribute("aria-checked", opt.getChecked());
+    row.textContent = opt.label;
+    if (opt.submenu) {
+      const arrowWrap = document.createElement("span");
+      arrowWrap.className = "context-menu-option__arrow";
+      arrowWrap.innerHTML = OPTIONS_CONTEXT_MENU_ARROW_SVG;
+      const svg = arrowWrap.querySelector("svg");
+      if (svg) {
+        svg.style.width = "16px";
+        svg.style.height = "16px";
+        svg.style.fill = "currentColor";
+      }
+      row.appendChild(arrowWrap);
+      row.addEventListener("mouseenter", () => showSubmenuAt(row, opt));
+      row.addEventListener("mouseleave", () => {
+        optionsContextSubmenuCloseTimer = setTimeout(optionsHideSubmenu, 150);
+      });
+    } else {
+      appendCheckOrSpacer(row, opt.getChecked());
+      row.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        await opt.onToggle();
+        optionsCloseContextMenu();
+      });
+    }
+    container.appendChild(row);
+  });
+  document.body.appendChild(container);
+  optionsContextMenuEl = container;
+  const rect = container.getBoundingClientRect();
+  const pad = 8;
+  let left = x;
+  let top = y;
+  if (left + rect.width > window.innerWidth - pad) left = window.innerWidth - rect.width - pad;
+  if (top + rect.height > window.innerHeight - pad) top = window.innerHeight - rect.height - pad;
+  if (left < pad) left = pad;
+  if (top < pad) top = pad;
+  container.style.left = left + "px";
+  container.style.top = top + "px";
+  setTimeout(() => {
+    document.addEventListener("click", optionsCloseContextMenu);
+    document.addEventListener("scroll", optionsCloseContextMenu, true);
+  }, 0);
+}
+
 function initOptionsEditorResizer() {
   if (!optionsEditorResizer || !optionsEditorWrap) return;
   optionsEditorResizer.addEventListener("mousedown", (e) => {
@@ -819,6 +1114,17 @@ async function initOptionsEditor() {
   optionsMarkdownInput.addEventListener("scroll", optionsOnSourceScrollSync);
   optionsMarkdownInput.addEventListener("scroll", optionsScheduleCaretUpdate);
   optionsMarkdownPreview.addEventListener("scroll", optionsOnPreviewScrollSync);
+
+  const optionsEditorPane = document.querySelector(".options-editor-pane");
+  const optionsPreviewPane = document.querySelector(".options-preview-pane");
+  [optionsEditorPane, optionsPreviewPane, optionsEditorWrap].forEach((el) => {
+    if (!el) return;
+    el.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      showOptionsContextMenu(e.clientX, e.clientY);
+    });
+  });
   initOptionsEditorResizer();
 }
 

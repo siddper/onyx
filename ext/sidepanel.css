@@ -453,6 +453,7 @@ body.pane-headers-hidden .preview-pane {
 
 #markdownPreview {
     flex: 1;
+    padding: 2px;
     min-height: 120px;
     overflow: auto;
     font-size: 14px;
