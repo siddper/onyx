@@ -445,6 +445,7 @@ input {
   cursor: pointer;
   border-radius: var(--radius);
   gap: 12px;
+  transition: background 0.2s ease;
 }
 
 .custom-select-option:hover {

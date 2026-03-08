@@ -287,6 +287,7 @@ function renderCustomThemesList(customThemes) {
 }
 
 const previewToggle = document.getElementById("previewToggle");
+const showPaneHeadersToggle = document.getElementById("showPaneHeadersToggle");
 const radiusSlider = document.getElementById("radiusSlider");
 const radiusValue = document.getElementById("radiusValue");
 const interfaceFontSelect = document.getElementById("interfaceFontSelect");
@@ -330,6 +331,7 @@ function getSettingsFromForm() {
   return {
     theme: themeSelect ? themeSelect.value : "system",
     previewEnabled: previewToggle?.checked ?? true,
+    showPaneHeaders: showPaneHeadersToggle?.checked ?? true,
     syncScroll: document.getElementById("syncScrollToggle")?.checked ?? false,
     minimalMode: document.getElementById("minimalModeToggle")?.checked ?? false,
     radiusPx: radiusSlider ? parseInt(radiusSlider.value, 10) : 8,
@@ -508,6 +510,7 @@ async function loadSettings() {
     renderCustomThemesList(customThemesCache);
   }
   previewToggle.checked = s.previewEnabled !== false;
+  if (showPaneHeadersToggle) showPaneHeadersToggle.checked = s.showPaneHeaders !== false;
   const syncScrollToggle = document.getElementById("syncScrollToggle");
   if (syncScrollToggle) syncScrollToggle.checked = s.syncScroll === true;
   const minimalModeToggle = document.getElementById("minimalModeToggle");
@@ -575,6 +578,12 @@ populateFontSelects();
 if (previewToggle) {
   previewToggle.addEventListener("change", () => {
     saveSettings({ previewEnabled: previewToggle.checked });
+  });
+}
+
+if (showPaneHeadersToggle) {
+  showPaneHeadersToggle.addEventListener("change", () => {
+    saveSettings({ showPaneHeaders: showPaneHeadersToggle.checked });
   });
 }
 

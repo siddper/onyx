@@ -18,6 +18,7 @@ const editorFakeCaret = document.getElementById("editorFakeCaret");
 const sourceCount = document.getElementById("sourceCount");
 
 const EDITOR_SETTINGS_KEY = "editorSettings";
+const TOOLBAR_HIDDEN_KEY = "toolbarHidden";
 let countDisplay = "both";
 let syncScrollEnabled = false;
 let syncScrollInProgress = false;
@@ -341,6 +342,7 @@ function applyFonts(settings = {}) {
 async function loadEditorSettings() {
   const data = await chrome.storage.sync.get(EDITOR_SETTINGS_KEY);
   const editorSettings = data[EDITOR_SETTINGS_KEY] || {};
+  const sourceEnabled = editorSettings.sourceEnabled !== false;
   const previewEnabled = editorSettings.previewEnabled !== false;
   caretStyle = editorSettings.caretStyle || "line";
   caretAnimation = editorSettings.caretAnimation || "blink";
@@ -349,12 +351,13 @@ async function loadEditorSettings() {
   countDisplay = editorSettings.countDisplay || "both";
   syncScrollEnabled = editorSettings.syncScroll === true;
   document.body.classList.toggle("minimal-mode", editorSettings.minimalMode === true);
+  document.body.classList.toggle("pane-headers-hidden", editorSettings.showPaneHeaders === false);
   if (editorFakeCaret) {
     editorFakeCaret.dataset.style = caretStyle;
     editorFakeCaret.dataset.animation = caretAnimation;
     editorFakeCaret.dataset.movement = caretMovement;
   }
-  applyPreviewVisibility(previewEnabled);
+  applyPaneVisibility({ sourceEnabled, previewEnabled });
   applyFonts(editorSettings);
   applyTheme(editorSettings.theme || "system", editorSettings.customThemes);
   const pct = editorSettings.sourceWidthPercent;
@@ -494,9 +497,31 @@ function stopCaretBlink() {
   }
 }
 
-function applyPreviewVisibility(enabled) {
-  editorWrap.classList.toggle("preview-hidden", !enabled);
-  if (enabled) updatePreview();
+function normalizePaneVisibility(sourceEnabled, previewEnabled) {
+  const source = sourceEnabled !== false;
+  const preview = previewEnabled !== false;
+  if (!source && !preview) return { sourceEnabled: true, previewEnabled: false };
+  return { sourceEnabled: source, previewEnabled: preview };
+}
+
+function getPaneVisibility() {
+  return {
+    sourceEnabled: !editorWrap.classList.contains("source-hidden"),
+    previewEnabled: !editorWrap.classList.contains("preview-hidden")
+  };
+}
+
+function applyPaneVisibility({ sourceEnabled, previewEnabled }) {
+  const resolved = normalizePaneVisibility(sourceEnabled, previewEnabled);
+  editorWrap.classList.toggle("source-hidden", !resolved.sourceEnabled);
+  editorWrap.classList.toggle("preview-hidden", !resolved.previewEnabled);
+  if (resolved.previewEnabled) updatePreview();
+}
+
+async function savePaneVisibility({ sourceEnabled, previewEnabled }) {
+  const resolved = normalizePaneVisibility(sourceEnabled, previewEnabled);
+  await saveEditorSettings(resolved);
+  applyPaneVisibility(resolved);
 }
 
 async function saveEditorSettings(partial) {
@@ -538,6 +563,9 @@ function closeContextMenu() {
 
 function showContextMenu(x, y) {
   closeContextMenu();
+  const paneVisibility = getPaneVisibility();
+  const sourceOnly = paneVisibility.sourceEnabled && !paneVisibility.previewEnabled;
+  const previewOnly = !paneVisibility.sourceEnabled && paneVisibility.previewEnabled;
 
   const caretSubmenu = [
     { id: "line", label: "Line", getChecked: () => caretStyle === "line", value: "line" },
@@ -564,17 +592,50 @@ function showContextMenu(x, y) {
     { id: "custom", label: "Custom", getChecked: () => editorFont === "custom", value: "custom" }
   ];
 
-  const options = [
-    {
+  const options = [];
+
+  if (!sourceOnly) {
+    options.push({
+      id: "source",
+      label: "Show source",
+      getChecked: () => !editorWrap.classList.contains("source-hidden"),
+      onToggle: async () => {
+        const current = getPaneVisibility();
+        await savePaneVisibility({
+          sourceEnabled: !current.sourceEnabled,
+          previewEnabled: current.previewEnabled
+        });
+      }
+    });
+  }
+
+  if (!previewOnly) {
+    options.push({
       id: "preview",
       label: "Show preview",
       getChecked: () => !editorWrap.classList.contains("preview-hidden"),
       onToggle: async () => {
-        const next = editorWrap.classList.contains("preview-hidden");
-        await saveEditorSettings({ previewEnabled: next });
-        applyPreviewVisibility(next);
+        const current = getPaneVisibility();
+        await savePaneVisibility({
+          sourceEnabled: current.sourceEnabled,
+          previewEnabled: !current.previewEnabled
+        });
       }
-    },
+    });
+  }
+
+  options.push({
+    id: "pane-headers",
+    label: "Show headers",
+    getChecked: () => !document.body.classList.contains("pane-headers-hidden"),
+    onToggle: async () => {
+      const next = document.body.classList.contains("pane-headers-hidden");
+      document.body.classList.toggle("pane-headers-hidden", !next);
+      await saveEditorSettings({ showPaneHeaders: next });
+    }
+  });
+
+  options.push(
     {
       id: "caret-shape",
       label: "Caret shape",
@@ -622,7 +683,16 @@ function showContextMenu(x, y) {
         }
       }
     }
-  ];
+  );
+
+  options.push({
+    id: "open-settings",
+    label: "Open settings",
+    getChecked: () => false,
+    onToggle: async () => {
+      chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
+    }
+  });
 
   function appendCheckOrSpacer(row, checked) {
     if (checked) {
@@ -869,8 +939,26 @@ if (vaultDropdownTrigger && vaultDropdownList) {
   vaultDropdownList.addEventListener("click", (e) => e.stopPropagation());
 }
 
+function setToolbarVisibility(hidden) {
+  document.body.classList.toggle("toolbar-hidden", hidden === true);
+}
+
+function saveToolbarVisibilityPreference(hidden) {
+  try {
+    localStorage.setItem(TOOLBAR_HIDDEN_KEY, hidden ? "true" : "false");
+  } catch (_) {}
+}
+
+function loadToolbarVisibilityPreference() {
+  try {
+    setToolbarVisibility(localStorage.getItem(TOOLBAR_HIDDEN_KEY) === "true");
+  } catch (_) {}
+}
+
 function toggleToolbarVisibility() {
-  document.body.classList.toggle("toolbar-hidden");
+  const nextHidden = !document.body.classList.contains("toolbar-hidden");
+  setToolbarVisibility(nextHidden);
+  saveToolbarVisibilityPreference(nextHidden);
 }
 
 chrome.runtime.onMessage.addListener((msg) => {
@@ -988,7 +1076,13 @@ settingsBtn.addEventListener("click", () => {
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "sync" && changes[EDITOR_SETTINGS_KEY]?.newValue) {
     const s = changes[EDITOR_SETTINGS_KEY].newValue;
-    applyPreviewVisibility(s.previewEnabled !== false);
+    if (s.sourceEnabled !== undefined || s.previewEnabled !== undefined) {
+      const current = getPaneVisibility();
+      applyPaneVisibility({
+        sourceEnabled: s.sourceEnabled !== undefined ? s.sourceEnabled : current.sourceEnabled,
+        previewEnabled: s.previewEnabled !== undefined ? s.previewEnabled : current.previewEnabled
+      });
+    }
     applyFonts(s);
     applyTheme(s.theme || "system", s.customThemes);
     if (editorFakeCaret) {
@@ -1013,6 +1107,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
     if (s.syncScroll !== undefined) syncScrollEnabled = s.syncScroll === true;
     if (s.minimalMode !== undefined) document.body.classList.toggle("minimal-mode", s.minimalMode === true);
+    if (s.showPaneHeaders !== undefined) document.body.classList.toggle("pane-headers-hidden", s.showPaneHeaders === false);
     if (s.savedVaults !== undefined) {
       cachedSavedVaults = Array.isArray(s.savedVaults) ? s.savedVaults : [];
       renderVaultDropdownList(cachedSavedVaults);
@@ -1067,6 +1162,7 @@ window.addEventListener("pagehide", () => {
 const WRAP_CLOSE = { "`": "`", "*": "*", "(": ")", "{": "}", "[": "]", "~": "~" };
 const WRAP_OPEN = { Backquote: "`" };
 const CLOSE_TO_OPEN = { "`": "`", "*": "*", ")": "(", "}": "{", "]": "[", "~": "~" };
+const SOFT_TAB = "    ";
 
 function editorInsert(replaceStart, replaceEnd, text, cursorStart, cursorEnd) {
   markdownInput.focus();
@@ -1076,6 +1172,48 @@ function editorInsert(replaceStart, replaceEnd, text, cursorStart, cursorEnd) {
   updatePreview();
   scheduleSave();
   scheduleCaretUpdate();
+}
+
+function toggleAsteriskWrap(marker) {
+  const start = markdownInput.selectionStart;
+  const end = markdownInput.selectionEnd;
+  const value = markdownInput.value;
+  const markerLen = marker.length;
+  const hasSelection = start !== end;
+
+  if (hasSelection) {
+    const selected = value.slice(start, end);
+    if (
+      selected.length >= markerLen * 2 &&
+      selected.startsWith(marker) &&
+      selected.endsWith(marker)
+    ) {
+      const unwrapped = selected.slice(markerLen, selected.length - markerLen);
+      editorInsert(start, end, unwrapped, start, start + unwrapped.length);
+      return;
+    }
+    const hasOuterWrap =
+      start >= markerLen &&
+      value.slice(start - markerLen, start) === marker &&
+      value.slice(end, end + markerLen) === marker;
+    if (hasOuterWrap) {
+      editorInsert(start - markerLen, end + markerLen, selected, start - markerLen, end - markerLen);
+      return;
+    }
+    editorInsert(start, end, marker + selected + marker, start + markerLen, end + markerLen);
+    return;
+  }
+
+  const hasOuterWrap =
+    start >= markerLen &&
+    value.slice(start - markerLen, start) === marker &&
+    value.slice(start, start + markerLen) === marker;
+  if (hasOuterWrap) {
+    editorInsert(start - markerLen, start + markerLen, "", start - markerLen, start - markerLen);
+    return;
+  }
+
+  editorInsert(start, end, marker + marker, start + markerLen, start + markerLen);
 }
 
 markdownInput.addEventListener("keydown", (e) => {
@@ -1088,15 +1226,13 @@ markdownInput.addEventListener("keydown", (e) => {
 
   if ((e.metaKey || e.ctrlKey) && e.key === "b") {
     e.preventDefault();
-    const selected = value.slice(start, end);
-    editorInsert(start, end, "**" + selected + "**", start + 2, start + 2 + selected.length);
+    toggleAsteriskWrap("**");
     return;
   }
 
   if ((e.metaKey || e.ctrlKey) && e.key === "i") {
     e.preventDefault();
-    const selected = value.slice(start, end);
-    editorInsert(start, end, "*" + selected + "*", start + 1, start + 1 + selected.length);
+    toggleAsteriskWrap("*");
     return;
   }
 
@@ -1108,6 +1244,14 @@ markdownInput.addEventListener("keydown", (e) => {
   }
 
   if (!hasSelection && e.key === "Backspace" && start > 0) {
+    if (
+      start >= SOFT_TAB.length &&
+      value.slice(start - SOFT_TAB.length, start) === SOFT_TAB
+    ) {
+      e.preventDefault();
+      editorInsert(start - SOFT_TAB.length, start, "", start - SOFT_TAB.length, start - SOFT_TAB.length);
+      return;
+    }
     const charBefore = value[start - 1];
     const charAfter = value[start];
     const expectedClose = WRAP_CLOSE[charBefore];
@@ -1119,6 +1263,11 @@ markdownInput.addEventListener("keydown", (e) => {
   }
 
   if (!hasSelection && e.key === "Delete" && start > 0 && start < value.length) {
+    if (value.slice(start, start + SOFT_TAB.length) === SOFT_TAB) {
+      e.preventDefault();
+      editorInsert(start, start + SOFT_TAB.length, "", start, start);
+      return;
+    }
     const charBefore = value[start - 1];
     const charAfter = value[start];
     const expectedOpen = CLOSE_TO_OPEN[charAfter];
@@ -1150,7 +1299,7 @@ markdownInput.addEventListener("keydown", (e) => {
 
   if (e.key === "Tab") {
     e.preventDefault();
-    editorInsert(start, end, "    ", start + 4, start + 4);
+    editorInsert(start, end, SOFT_TAB, start + SOFT_TAB.length, start + SOFT_TAB.length);
   }
 });
 
@@ -1281,6 +1430,8 @@ if (editorResizer && editorWrap) {
     }
   });
 }
+
+loadToolbarVisibilityPreference();
 
 loadSettings()
   .then(() => loadEditorSettings())
