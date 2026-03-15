@@ -289,8 +289,11 @@ function renderCustomThemesList(customThemes) {
 
 const previewToggle = document.getElementById("previewToggle");
 const showPaneHeadersToggle = document.getElementById("showPaneHeadersToggle");
+const saveScrollToggle = document.getElementById("saveScrollToggle");
 const radiusSlider = document.getElementById("radiusSlider");
 const radiusValue = document.getElementById("radiusValue");
+const lineHeightSlider = document.getElementById("lineHeightSlider");
+const lineHeightValue = document.getElementById("lineHeightValue");
 const interfaceFontSelect = document.getElementById("interfaceFontSelect");
 const interfaceFontCustom = document.getElementById("interfaceFontCustom");
 const interfaceFontUrl = document.getElementById("interfaceFontUrl");
@@ -339,6 +342,11 @@ const optionsMarkdownPreview = document.getElementById("optionsMarkdownPreview")
 const optionsSourceCount = document.getElementById("optionsSourceCount");
 const optionsCaretMirror = document.getElementById("optionsCaretMirror");
 const optionsFakeCaret = document.getElementById("optionsFakeCaret");
+const optionsVaultInput = document.getElementById("optionsVaultInput");
+const optionsTitleInput = document.getElementById("optionsTitleInput");
+const optionsFolderInput = document.getElementById("optionsFolderInput");
+const optionsExportBtn = document.getElementById("optionsExportBtn");
+const optionsExportStatus = document.getElementById("optionsExportStatus");
 
 function setActiveTab(tabId, { updateHash = true } = {}) {
   const showEditor = tabId === "editor";
@@ -428,6 +436,43 @@ function optionsUpdatePreview() {
   optionsMarkdownPreview.innerHTML = typeof renderMarkdown === "function"
     ? renderMarkdown(optionsMarkdownInput.value)
     : optionsMarkdownInput.value.replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m]));
+}
+
+function optionsNormalizeTitle(title) {
+  return (title || "").trim() || "Untitled";
+}
+
+function optionsEncodeObsidianParam(value) {
+  return encodeURIComponent(value);
+}
+
+function optionsBuildObsidianUrl({ vault, title, content, folder }) {
+  const safeTitle = (title || "").replace(/[/\\:*?"<>|]/g, "-").trim() || "Untitled";
+  const safeFolder = (folder || "").replace(/\/$/, "").replace(/\\/g, "/").trim();
+  const filePath = safeFolder ? `${safeFolder}/${safeTitle}` : safeTitle;
+  const params = [
+    `vault=${optionsEncodeObsidianParam(vault)}`,
+    `file=${optionsEncodeObsidianParam(filePath)}`,
+    `content=${optionsEncodeObsidianParam(content)}`
+  ];
+  return `obsidian://new?${params.join("&")}`;
+}
+
+function optionsApplyExportTemplate(template, { title, date, time }) {
+  if (!template || typeof template !== "string") return "";
+  return template
+    .replace(/\{\{title\}\}/g, title)
+    .replace(/\{\{date\}\}/g, date)
+    .replace(/\{\{time\}\}/g, time);
+}
+
+function optionsSetExportStatus(message) {
+  if (!optionsExportStatus) return;
+  optionsExportStatus.textContent = message;
+  if (!message) return;
+  setTimeout(() => {
+    if (optionsExportStatus) optionsExportStatus.textContent = "";
+  }, 2500);
 }
 
 function optionsEscapeHtml(s) {
@@ -594,6 +639,14 @@ function optionsHandleEditorKeydown(e) {
   const value = optionsMarkdownInput.value;
   const openChar = OPTIONS_WRAP_OPEN[e.key] ?? e.key;
   const closeChar = OPTIONS_WRAP_CLOSE[openChar] ?? OPTIONS_WRAP_CLOSE[e.key];
+  const isClosingChar = OPTIONS_CLOSE_TO_OPEN[e.key] !== undefined || OPTIONS_WRAP_CLOSE[e.key] === e.key;
+
+  if (!hasSelection && isClosingChar && value[start] === e.key) {
+    e.preventDefault();
+    optionsMarkdownInput.setSelectionRange(start + 1, start + 1);
+    optionsScheduleCaretUpdate();
+    return;
+  }
 
   if ((e.metaKey || e.ctrlKey) && e.key === "b") {
     e.preventDefault();
@@ -667,9 +720,13 @@ function optionsHandleEditorKeydown(e) {
 
 async function optionsSaveNoteContent() {
   if (!optionsMarkdownInput) return;
-  const data = await chrome.storage.sync.get(STORAGE_KEY);
-  const current = data[STORAGE_KEY] || {};
-  await chrome.storage.sync.set({ [STORAGE_KEY]: { ...current, content: optionsMarkdownInput.value } });
+  const payload = {
+    vault: optionsVaultInput?.value?.trim() ?? "",
+    title: optionsTitleInput?.value?.trim() ?? "",
+    folder: optionsFolderInput?.value?.trim() ?? "",
+    content: optionsMarkdownInput.value
+  };
+  await chrome.storage.sync.set({ [STORAGE_KEY]: payload });
 }
 
 function optionsScheduleSave() {
@@ -682,7 +739,13 @@ function optionsScheduleSave() {
 
 function optionsApplyStoredNoteSettings(settings = {}) {
   if (!optionsMarkdownInput) return;
+  const nextVault = settings.vault || "";
+  const nextTitle = settings.title || "";
+  const nextFolder = settings.folder || "";
   const nextContent = settings.content || "";
+  if (optionsVaultInput && optionsVaultInput.value !== nextVault) optionsVaultInput.value = nextVault;
+  if (optionsTitleInput && optionsTitleInput.value !== nextTitle) optionsTitleInput.value = nextTitle;
+  if (optionsFolderInput && optionsFolderInput.value !== nextFolder) optionsFolderInput.value = nextFolder;
   if (optionsMarkdownInput.value === nextContent) return;
   const active = document.activeElement === optionsMarkdownInput;
   const start = optionsMarkdownInput.selectionStart;
@@ -1077,6 +1140,15 @@ async function initOptionsEditor() {
   const note = noteData[STORAGE_KEY] || {};
   const editorSettings = editorData[EDITOR_SETTINGS_KEY] || {};
 
+  if (optionsVaultInput) optionsVaultInput.value = note.vault || "";
+  if (optionsTitleInput) optionsTitleInput.value = note.title || "";
+  if (optionsFolderInput) optionsFolderInput.value = note.folder || "";
+  if (optionsVaultInput && !optionsVaultInput.value.trim() && editorSettings.defaultVault) {
+    optionsVaultInput.value = String(editorSettings.defaultVault || "").trim();
+  }
+  if (optionsFolderInput && !optionsFolderInput.value.trim() && editorSettings.defaultFolder != null) {
+    optionsFolderInput.value = String(editorSettings.defaultFolder || "").trim();
+  }
   optionsMarkdownInput.value = note.content || "";
   optionsCountDisplay = editorSettings.countDisplay || "both";
   optionsSyncScrollEnabled = editorSettings.syncScroll === true;
@@ -1114,6 +1186,37 @@ async function initOptionsEditor() {
   optionsMarkdownInput.addEventListener("scroll", optionsOnSourceScrollSync);
   optionsMarkdownInput.addEventListener("scroll", optionsScheduleCaretUpdate);
   optionsMarkdownPreview.addEventListener("scroll", optionsOnPreviewScrollSync);
+  [optionsVaultInput, optionsTitleInput, optionsFolderInput].forEach((el) => {
+    if (!el) return;
+    el.addEventListener("input", optionsScheduleSave);
+    el.addEventListener("change", optionsScheduleSave);
+  });
+
+  if (optionsExportBtn) {
+    optionsExportBtn.addEventListener("click", async () => {
+      const vault = optionsVaultInput?.value?.trim() || "";
+      if (!vault) {
+        optionsSetExportStatus("Enter vault first");
+        optionsVaultInput?.focus();
+        return;
+      }
+      await optionsSaveNoteContent();
+      const title = optionsNormalizeTitle(optionsTitleInput?.value || "");
+      const folder = optionsFolderInput?.value?.trim() || "";
+      const body = optionsMarkdownInput.value;
+      const now = new Date();
+      const dateStr = now.toISOString().slice(0, 10);
+      const timeStr = now.toTimeString().slice(0, 5);
+      const exportTemplate = (exportTemplateInput?.value || "").trim();
+      const templateBlock = exportTemplate
+        ? optionsApplyExportTemplate(exportTemplate, { title, date: dateStr, time: timeStr }) + "\n\n"
+        : "";
+      const content = templateBlock + body;
+      const obsidianUrl = optionsBuildObsidianUrl({ vault, title, content, folder });
+      if (obsidianUrl.length > 1800) optionsSetExportStatus("Note very long – check Obsidian");
+      chrome.tabs.create({ url: obsidianUrl });
+    });
+  }
 
   const optionsEditorPane = document.querySelector(".options-editor-pane");
   const optionsPreviewPane = document.querySelector(".options-preview-pane");
@@ -1133,9 +1236,11 @@ function getSettingsFromForm() {
     theme: themeSelect ? themeSelect.value : "system",
     previewEnabled: previewToggle?.checked ?? true,
     showPaneHeaders: showPaneHeadersToggle?.checked ?? true,
+    saveScrollPosition: saveScrollToggle?.checked ?? true,
     syncScroll: document.getElementById("syncScrollToggle")?.checked ?? false,
     minimalMode: document.getElementById("minimalModeToggle")?.checked ?? false,
     radiusPx: radiusSlider ? parseInt(radiusSlider.value, 10) : 8,
+    lineHeight: lineHeightSlider ? parseFloat(lineHeightSlider.value) : 1.6,
     caretStyle: caretStyleSelect?.value ?? "line",
     caretAnimation: caretAnimationSelect?.value ?? "blink",
     caretMovement: caretMovementSelect?.value ?? "instant",
@@ -1297,6 +1402,14 @@ function applyRadius(pixels) {
   if (radiusValue) radiusValue.textContent = px + "px";
 }
 
+function applyLineHeight(value) {
+  const lh = Math.max(1.1, Math.min(2.2, typeof value === "number" ? value : 1.6));
+  document.documentElement.style.setProperty("--line-height", String(lh));
+  if (lineHeightSlider) lineHeightSlider.value = String(lh);
+  if (lineHeightSlider) lineHeightSlider.setAttribute("aria-valuenow", String(lh));
+  if (lineHeightValue) lineHeightValue.textContent = lh.toFixed(2).replace(/\.00$/, "");
+}
+
 async function loadSettings() {
   const data = await chrome.storage.sync.get(EDITOR_SETTINGS_KEY);
   const s = data[EDITOR_SETTINGS_KEY] || {};
@@ -1312,12 +1425,15 @@ async function loadSettings() {
   }
   previewToggle.checked = s.previewEnabled !== false;
   if (showPaneHeadersToggle) showPaneHeadersToggle.checked = s.showPaneHeaders !== false;
+  if (saveScrollToggle) saveScrollToggle.checked = s.saveScrollPosition !== false;
   const syncScrollToggle = document.getElementById("syncScrollToggle");
   if (syncScrollToggle) syncScrollToggle.checked = s.syncScroll === true;
   const minimalModeToggle = document.getElementById("minimalModeToggle");
   if (minimalModeToggle) minimalModeToggle.checked = s.minimalMode === true;
   const radius = typeof s.radiusPx === "number" && s.radiusPx >= 0 && s.radiusPx <= 24 ? s.radiusPx : 8;
   applyRadius(radius);
+  const lineHeight = typeof s.lineHeight === "number" ? s.lineHeight : 1.6;
+  applyLineHeight(lineHeight);
   caretStyleSelect.value = s.caretStyle || "line";
   caretAnimationSelect.value = s.caretAnimation || "blink";
   caretMovementSelect.value = s.caretMovement || "instant";
@@ -1391,6 +1507,12 @@ if (showPaneHeadersToggle) {
   });
 }
 
+if (saveScrollToggle) {
+  saveScrollToggle.addEventListener("change", () => {
+    saveSettings({ saveScrollPosition: saveScrollToggle.checked });
+  });
+}
+
 const syncScrollToggle = document.getElementById("syncScrollToggle");
 if (syncScrollToggle) {
   syncScrollToggle.addEventListener("change", () => {
@@ -1449,6 +1571,14 @@ if (radiusSlider) {
     const px = parseInt(radiusSlider.value, 10);
     applyRadius(px);
     saveSettings({ radiusPx: px });
+  });
+}
+
+if (lineHeightSlider) {
+  lineHeightSlider.addEventListener("input", () => {
+    const lh = parseFloat(lineHeightSlider.value);
+    applyLineHeight(lh);
+    saveSettings({ lineHeight: lh });
   });
 }
 

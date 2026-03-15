@@ -66,10 +66,19 @@ input {
 }
 
 .options-title {
+  display: flex;
+  justify-content: start;
+  align-items: center;
   font-size: 22px;
   font-weight: 600;
   margin: 0 0 24px;
   color: var(--ink);
+  gap: 8px;
+}
+
+.options-title img {
+  width: 32px;
+  height: 32px;
 }
 
 .options-tabs {
@@ -122,6 +131,54 @@ input {
   height: 100%;
   min-height: max(640px, calc(100vh - 170px));
   min-width: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 12px;
+}
+
+.options-export-bar {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  background: var(--panel);
+  border-radius: var(--radius);
+}
+
+.options-export-row {
+  display: grid;
+  gap: 8px;
+  align-items: end;
+  grid-template-columns: 1fr auto auto;
+}
+
+.options-export-row--single {
+  grid-template-columns: minmax(120px, 1fr) minmax(120px, 1fr) minmax(140px, 1fr) auto;
+}
+
+.options-export-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.options-export-input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  font-size: 13px;
+  background: var(--panel-strong);
+  color: var(--ink);
+}
+
+#optionsExportStatus {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--muted);
 }
 
 .options-editor-wrap {
@@ -173,7 +230,7 @@ input {
   resize: none;
   font-family: var(--font-editor);
   font-size: 14px;
-  line-height: 1.6;
+  line-height: var(--line-height, 1.6);
   background: transparent;
   color: var(--ink);
   caret-color: transparent;
@@ -192,13 +249,14 @@ input {
   padding: 2px;
   font-family: var(--font-editor);
   font-size: 14px;
-  line-height: 1.6;
+  line-height: var(--line-height, 1.6);
   color: var(--ink);
 }
 
 #optionsMarkdownPreview,
 #optionsMarkdownPreview * {
   font-family: var(--font-editor);
+  line-height: var(--line-height, 1.6);
 }
 
 #optionsMarkdownPreview h1 {
@@ -229,7 +287,7 @@ input {
 }
 
 #optionsMarkdownPreview p {
-  margin: 0.5em 0;
+  margin: 0;
 }
 
 #optionsMarkdownPreview p:first-child {
@@ -290,7 +348,7 @@ input {
 
 #optionsMarkdownPreview ul,
 #optionsMarkdownPreview ol {
-  margin: 0.5em 0;
+  margin: 0;
   margin-left: 4px;
   padding-left: 1.5em;
   list-style-position: outside;
@@ -301,7 +359,7 @@ input {
 }
 
 #optionsMarkdownPreview li {
-  margin: 0.25em 0;
+  margin: 0;
   padding-left: 0.25em;
 }
 
@@ -530,6 +588,11 @@ input {
 }
 
 @media (max-width: 860px) {
+  .options-export-row,
+  .options-export-row--single {
+    grid-template-columns: 1fr;
+  }
+
   .options-editor-wrap {
     grid-template-columns: 1fr;
     grid-template-rows: minmax(120px, var(--options-source-height, 1fr)) 12px minmax(120px, 1fr);

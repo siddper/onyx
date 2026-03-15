@@ -367,7 +367,7 @@ body.pane-headers-hidden .preview-pane {
     resize: none;
     font-family: var(--font-editor);
     font-size: 14px;
-    line-height: 1.6;
+    line-height: var(--line-height, 1.6);
     background: transparent;
     color: var(--ink);
     caret-color: transparent;
@@ -457,14 +457,16 @@ body.pane-headers-hidden .preview-pane {
     min-height: 120px;
     overflow: auto;
     font-size: 14px;
-    line-height: 1.6;
+    line-height: var(--line-height, 1.6);
     box-sizing: border-box;
 }
 
 .markdown-body,
 .markdown-body * {
     font-family: var(--font-editor);
+    line-height: var(--line-height, 1.6);
 }
+
 
 .markdown-body h1 {
     font-size: 1.75em;
@@ -494,7 +496,7 @@ body.pane-headers-hidden .preview-pane {
 }
 
 .markdown-body p {
-    margin: 0.5em 0;
+    margin: 0;
 }
 
 .markdown-body p:first-child {
@@ -555,7 +557,7 @@ body.pane-headers-hidden .preview-pane {
 
 .markdown-body ul,
 .markdown-body ol {
-    margin: 0.5em 0;
+    margin: 0;
     margin-left: 4px;
     padding-left: 1.5em;
     list-style-position: outside;
@@ -566,7 +568,7 @@ body.pane-headers-hidden .preview-pane {
 }
 
 .markdown-body li {
-    margin: 0.25em 0;
+    margin: 0;
     padding-left: 0.25em;
 }
 

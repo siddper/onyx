@@ -33,6 +33,8 @@ let editorFont = "inter";
 let caretBlinkTimer = null;
 let caretVisible = true;
 let cachedSavedVaults = [];
+let saveScrollPositionEnabled = true;
+let scrollSaveTimer = null;
 
 if (EMBEDDED_EDITOR_MODE) {
   document.body.classList.add("embedded-editor-mode");
@@ -383,6 +385,7 @@ async function loadEditorSettings() {
   editorFont = editorSettings.editorFont || "inter";
   countDisplay = editorSettings.countDisplay || "both";
   syncScrollEnabled = editorSettings.syncScroll === true;
+  saveScrollPositionEnabled = editorSettings.saveScrollPosition !== false;
   document.body.classList.toggle("minimal-mode", editorSettings.minimalMode === true);
   document.body.classList.toggle("pane-headers-hidden", editorSettings.showPaneHeaders === false);
   if (editorFakeCaret) {
@@ -411,6 +414,12 @@ async function loadEditorSettings() {
   } else {
     document.documentElement.style.setProperty("--radius", "8px");
   }
+  const lineHeight = typeof editorSettings.lineHeight === "number" ? editorSettings.lineHeight : 1.6;
+  if (lineHeight >= 1.1 && lineHeight <= 2.2) {
+    document.documentElement.style.setProperty("--line-height", String(lineHeight));
+  } else {
+    document.documentElement.style.setProperty("--line-height", "1.6");
+  }
   const rawCss = !DISABLE_CUSTOM_CSS && typeof editorSettings.customCss === "string" ? editorSettings.customCss : "";
   if (rawCss) {
     document.body.classList.add("custom-css-loaded", "custom-css-scope");
@@ -431,6 +440,15 @@ async function loadEditorSettings() {
     document.body.classList.remove("custom-css-loaded", "custom-css-scope");
     const customCssEl = document.getElementById("customCss");
     if (customCssEl) customCssEl.textContent = "";
+  }
+
+  if (saveScrollPositionEnabled) {
+    const sourceTop = typeof editorSettings.sourceScrollTop === "number" ? editorSettings.sourceScrollTop : 0;
+    const previewTop = typeof editorSettings.previewScrollTop === "number" ? editorSettings.previewScrollTop : 0;
+    requestAnimationFrame(() => {
+      if (markdownInput) markdownInput.scrollTop = sourceTop;
+      if (markdownPreview) markdownPreview.scrollTop = previewTop;
+    });
   }
 }
 
@@ -497,6 +515,18 @@ function scheduleCaretUpdate() {
   requestAnimationFrame(() => {
     updateFakeCaret();
   });
+}
+
+function scheduleScrollPositionSave() {
+  if (!saveScrollPositionEnabled) return;
+  clearTimeout(scrollSaveTimer);
+  scrollSaveTimer = setTimeout(() => {
+    scrollSaveTimer = null;
+    saveEditorSettings({
+      sourceScrollTop: markdownInput ? markdownInput.scrollTop : 0,
+      previewScrollTop: markdownPreview ? markdownPreview.scrollTop : 0
+    });
+  }, 200);
 }
 
 function startCaretBlink() {
@@ -1142,8 +1172,13 @@ chrome.storage.onChanged.addListener((changes, area) => {
       updatePaneCounts();
     }
     if (s.syncScroll !== undefined) syncScrollEnabled = s.syncScroll === true;
+    if (s.saveScrollPosition !== undefined) saveScrollPositionEnabled = s.saveScrollPosition !== false;
     if (s.minimalMode !== undefined) document.body.classList.toggle("minimal-mode", s.minimalMode === true);
     if (s.showPaneHeaders !== undefined) document.body.classList.toggle("pane-headers-hidden", s.showPaneHeaders === false);
+    if (saveScrollPositionEnabled && (s.sourceScrollTop !== undefined || s.previewScrollTop !== undefined)) {
+      if (typeof s.sourceScrollTop === "number" && markdownInput) markdownInput.scrollTop = s.sourceScrollTop;
+      if (typeof s.previewScrollTop === "number" && markdownPreview) markdownPreview.scrollTop = s.previewScrollTop;
+    }
     if (s.savedVaults !== undefined) {
       cachedSavedVaults = Array.isArray(s.savedVaults) ? s.savedVaults : [];
       renderVaultDropdownList(cachedSavedVaults);
@@ -1162,6 +1197,11 @@ chrome.storage.onChanged.addListener((changes, area) => {
       document.documentElement.style.setProperty("--radius", s.radiusPx + "px");
     } else {
       document.documentElement.style.setProperty("--radius", "8px");
+    }
+    if (typeof s.lineHeight === "number" && s.lineHeight >= 1.1 && s.lineHeight <= 2.2) {
+      document.documentElement.style.setProperty("--line-height", String(s.lineHeight));
+    } else if (s.lineHeight !== undefined) {
+      document.documentElement.style.setProperty("--line-height", "1.6");
     }
     const rawCss = !DISABLE_CUSTOM_CSS && typeof s.customCss === "string" ? s.customCss : "";
     if (rawCss) {
@@ -1188,11 +1228,15 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 document.addEventListener("visibilitychange", () => {
-  if (document.hidden) flushSave();
+  if (document.hidden) {
+    flushSave();
+    scheduleScrollPositionSave();
+  }
 });
 
 window.addEventListener("pagehide", () => {
   flushSave();
+  scheduleScrollPositionSave();
 });
 
 const WRAP_CLOSE = { "`": "`", "*": "*", "(": ")", "{": "}", "[": "]", "~": "~" };
@@ -1259,6 +1303,14 @@ markdownInput.addEventListener("keydown", (e) => {
   const value = markdownInput.value;
   const openChar = WRAP_OPEN[e.key] ?? e.key;
   const closeChar = WRAP_CLOSE[openChar] ?? WRAP_CLOSE[e.key];
+  const isClosingChar = CLOSE_TO_OPEN[e.key] !== undefined || WRAP_CLOSE[e.key] === e.key;
+
+  if (!hasSelection && isClosingChar && value[start] === e.key) {
+    e.preventDefault();
+    markdownInput.setSelectionRange(start + 1, start + 1);
+    scheduleCaretUpdate();
+    return;
+  }
 
   if ((e.metaKey || e.ctrlKey) && e.key === "b") {
     e.preventDefault();
@@ -1349,6 +1401,7 @@ markdownInput.addEventListener("click", scheduleCaretUpdate);
 markdownInput.addEventListener("keydown", scheduleCaretUpdate);
 markdownInput.addEventListener("keyup", scheduleCaretUpdate);
 markdownInput.addEventListener("scroll", scheduleCaretUpdate);
+markdownInput.addEventListener("scroll", scheduleScrollPositionSave);
 markdownInput.addEventListener("focus", () => {
   startCaretBlink();
   scheduleCaretUpdate();
@@ -1380,6 +1433,7 @@ function onPreviewScrollSync() {
 
 markdownInput.addEventListener("scroll", onSourceScrollSync);
 markdownPreview.addEventListener("scroll", onPreviewScrollSync);
+markdownPreview.addEventListener("scroll", scheduleScrollPositionSave);
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && changes.pendingImportToEditor?.newValue != null) {

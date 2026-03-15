@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Onyx – Settings</title>
+    <title>Onyx</title>
     <link rel="stylesheet" href="options.css" />
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap");
@@ -12,7 +12,10 @@
   </head>
   <body>
     <div class="options-page">
-      <h1 class="options-title">Onyx Settings</h1>
+      <h1 class="options-title">
+        <img src="icon.png" />
+        Onyx
+      </h1>
       <div class="options-layout">
         <div class="options-tabs" role="tablist" aria-label="Settings tabs">
           <button
@@ -370,6 +373,31 @@
               </div>
             </div>
             <div class="settings-item">
+              <label class="settings-label" for="lineHeightSlider"
+                >Line height</label
+              >
+              <div class="settings-slider-wrap">
+                <input
+                  id="lineHeightSlider"
+                  class="settings-slider"
+                  type="range"
+                  min="1.1"
+                  max="2.2"
+                  step="0.05"
+                  value="1.6"
+                  aria-valuemin="1.1"
+                  aria-valuemax="2.2"
+                  aria-valuenow="1.6"
+                />
+                <span
+                  id="lineHeightValue"
+                  class="settings-slider-value"
+                  aria-live="polite"
+                  >1.6</span
+                >
+              </div>
+            </div>
+            <div class="settings-item">
               <label class="settings-label" for="previewToggle"
                 >Show preview</label
               >
@@ -405,6 +433,15 @@
                 <span class="toggle-track"></span>
               </label>
             </div>
+            <div class="settings-item">
+              <label class="settings-label" for="saveScrollToggle"
+                >Save scroll position</label
+              >
+              <label class="toggle-wrap" aria-label="Save scroll position">
+                <input id="saveScrollToggle" type="checkbox" checked />
+                <span class="toggle-track"></span>
+              </label>
+            </div>
           </section>
         </div>
 
@@ -416,6 +453,45 @@
           hidden
         >
           <div id="optionsEditorRoot" class="options-editor-root">
+            <div class="options-export-bar">
+              <div class="options-export-row options-export-row--single">
+                <label for="optionsVaultInput"
+                  >Vault
+                  <input
+                    id="optionsVaultInput"
+                    class="options-export-input"
+                    type="text"
+                    placeholder="MyVault"
+                  />
+                </label>
+                <label for="optionsTitleInput"
+                  >Title
+                  <input
+                    id="optionsTitleInput"
+                    class="options-export-input"
+                    type="text"
+                    placeholder="Untitled"
+                  />
+                </label>
+                <label for="optionsFolderInput"
+                  >Folder
+                  <input
+                    id="optionsFolderInput"
+                    class="options-export-input"
+                    type="text"
+                    placeholder="Folder (optional)"
+                  />
+                </label>
+                <button
+                  id="optionsExportBtn"
+                  class="settings-btn"
+                  type="button"
+                >
+                  Export to Obsidian
+                </button>
+              </div>
+              <span id="optionsExportStatus" aria-live="polite"></span>
+            </div>
             <div id="optionsEditorWrap" class="options-editor-wrap">
               <div class="options-editor-pane">
                 <label class="options-pane-label" for="optionsMarkdownInput"
