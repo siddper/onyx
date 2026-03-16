@@ -35,6 +35,8 @@ let caretVisible = true;
 let cachedSavedVaults = [];
 let saveScrollPositionEnabled = true;
 let scrollSaveTimer = null;
+let currentThemeId = "system";
+let cachedCustomThemes = {};
 
 if (EMBEDDED_EDITOR_MODE) {
   document.body.classList.add("embedded-editor-mode");
@@ -395,7 +397,9 @@ async function loadEditorSettings() {
   }
   applyPaneVisibility({ sourceEnabled, previewEnabled });
   applyFonts(editorSettings);
-  applyTheme(editorSettings.theme || "system", editorSettings.customThemes);
+  currentThemeId = editorSettings.theme || "system";
+  cachedCustomThemes = editorSettings.customThemes || {};
+  applyTheme(currentThemeId, cachedCustomThemes);
   const pct = editorSettings.sourceWidthPercent;
   if (typeof pct === "number" && pct >= 10 && pct <= 90 && editorWrap) {
     editorWrap.style.setProperty("--source-width", pct + "%");
@@ -419,6 +423,12 @@ async function loadEditorSettings() {
     document.documentElement.style.setProperty("--line-height", String(lineHeight));
   } else {
     document.documentElement.style.setProperty("--line-height", "1.6");
+  }
+  const fontSize = typeof editorSettings.fontSize === "number" ? editorSettings.fontSize : 13;
+  if (fontSize >= 10 && fontSize <= 22) {
+    document.documentElement.style.setProperty("--font-size", fontSize + "px");
+  } else {
+    document.documentElement.style.setProperty("--font-size", "13px");
   }
   const rawCss = !DISABLE_CUSTOM_CSS && typeof editorSettings.customCss === "string" ? editorSettings.customCss : "";
   if (rawCss) {
@@ -648,6 +658,30 @@ function showContextMenu(x, y) {
     { id: "smooth", label: "Smooth", getChecked: () => caretMovement === "smooth", value: "smooth" }
   ];
 
+  const themeSubmenu = [
+    { id: "system", label: "System", getChecked: () => currentThemeId === "system", value: "system" },
+    { id: "light", label: "Light", getChecked: () => currentThemeId === "light", value: "light" },
+    { id: "dark", label: "Dark", getChecked: () => currentThemeId === "dark", value: "dark" },
+    { id: "oled", label: "OLED", getChecked: () => currentThemeId === "oled", value: "oled" },
+    { id: "cyberpunk", label: "Cyberpunk", getChecked: () => currentThemeId === "cyberpunk", value: "cyberpunk" },
+    { id: "sepia", label: "Sepia", getChecked: () => currentThemeId === "sepia", value: "sepia" },
+    { id: "nord", label: "Nord", getChecked: () => currentThemeId === "nord", value: "nord" },
+    { id: "dracula", label: "Dracula", getChecked: () => currentThemeId === "dracula", value: "dracula" },
+    { id: "tokyo-night", label: "Tokyo Night", getChecked: () => currentThemeId === "tokyo-night", value: "tokyo-night" },
+    { id: "blueberry", label: "Blueberry", getChecked: () => currentThemeId === "blueberry", value: "blueberry" },
+    { id: "monokai", label: "Monokai", getChecked: () => currentThemeId === "monokai", value: "monokai" }
+  ];
+  if (cachedCustomThemes && typeof cachedCustomThemes === "object") {
+    Object.entries(cachedCustomThemes).forEach(([id, t]) => {
+      themeSubmenu.push({
+        id: `custom:${id}`,
+        label: t.name || id,
+        getChecked: () => currentThemeId === `custom:${id}`,
+        value: `custom:${id}`
+      });
+    });
+  }
+
   const fontSubmenu = [
     { id: "inter", label: "Inter", getChecked: () => editorFont === "inter", value: "inter" },
     { id: "jetbrains-mono", label: "JetBrains Mono", getChecked: () => editorFont === "jetbrains-mono", value: "jetbrains-mono" },
@@ -697,8 +731,28 @@ function showContextMenu(x, y) {
       await saveEditorSettings({ showPaneHeaders: next });
     }
   });
+  options.push({
+    id: "toolbar",
+    label: "Show toolbar",
+    getChecked: () => !document.body.classList.contains("toolbar-hidden"),
+    onToggle: async () => {
+      const nextHidden = document.body.classList.contains("toolbar-hidden");
+      setToolbarVisibility(!nextHidden);
+      saveToolbarVisibilityPreference(!nextHidden);
+    }
+  });
 
   options.push(
+    {
+      id: "theme",
+      label: "Theme",
+      submenu: themeSubmenu,
+      onSelectItem: async (item) => {
+        currentThemeId = item.value;
+        await saveEditorSettings({ theme: item.value });
+        applyTheme(item.value, cachedCustomThemes);
+      }
+    },
     {
       id: "caret-shape",
       label: "Caret shape",
@@ -1150,7 +1204,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
       });
     }
     applyFonts(s);
-    applyTheme(s.theme || "system", s.customThemes);
+    currentThemeId = s.theme || "system";
+    cachedCustomThemes = s.customThemes || {};
+    applyTheme(currentThemeId, cachedCustomThemes);
     if (editorFakeCaret) {
       if (s.caretStyle) {
         caretStyle = s.caretStyle;
@@ -1202,6 +1258,11 @@ chrome.storage.onChanged.addListener((changes, area) => {
       document.documentElement.style.setProperty("--line-height", String(s.lineHeight));
     } else if (s.lineHeight !== undefined) {
       document.documentElement.style.setProperty("--line-height", "1.6");
+    }
+    if (typeof s.fontSize === "number" && s.fontSize >= 10 && s.fontSize <= 22) {
+      document.documentElement.style.setProperty("--font-size", s.fontSize + "px");
+    } else if (s.fontSize !== undefined) {
+      document.documentElement.style.setProperty("--font-size", "13px");
     }
     const rawCss = !DISABLE_CUSTOM_CSS && typeof s.customCss === "string" ? s.customCss : "";
     if (rawCss) {

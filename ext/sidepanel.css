@@ -14,6 +14,7 @@
     --font-interface: "Inter", sans-serif;
     --font-editor: "Inter", sans-serif;
     --font-code: "JetBrains Mono", monospace;
+    --font-size: 13px;
 }
 
 @media (prefers-color-scheme: light) {
@@ -50,6 +51,7 @@ body {
     margin: 0;
     background: var(--bg);
     color: var(--ink);
+    font-size: var(--font-size);
 }
 
 .app {
@@ -108,7 +110,7 @@ body.toolbar-hidden .editor-wrap {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    font-size: 12px;
+    font-size: calc(var(--font-size) * 0.923);
     color: var(--muted);
 }
 
@@ -118,7 +120,7 @@ body.toolbar-hidden .editor-wrap {
     border: none;
     border-radius: var(--radius);
     padding: 8px 10px;
-    font-size: 13px;
+    font-size: var(--font-size);
     background: var(--panel-strong);
     color: var(--ink);
 }
@@ -142,7 +144,7 @@ body.toolbar-hidden .editor-wrap {
     border: none;
     border-radius: var(--radius);
     padding: 8px 10px;
-    font-size: 13px;
+    font-size: var(--font-size);
     font-family: inherit;
     background: var(--panel-strong);
     color: var(--ink);
@@ -183,7 +185,7 @@ body.toolbar-hidden .editor-wrap {
     border: none;
     border-radius: var(--radius);
     gap: 12px;
-    font-size: 13px;
+    font-size: var(--font-size);
     font-family: inherit;
     background: transparent;
     color: var(--ink);
@@ -209,7 +211,7 @@ body.toolbar-hidden .editor-wrap {
     margin-top: 2px;
     padding-top: 8px;
     color: var(--muted);
-    font-size: 12px;
+    font-size: calc(var(--font-size) * 0.923);
 }
 
 .vault-dropdown-option--add:hover {
@@ -263,7 +265,7 @@ body.toolbar-hidden .editor-wrap {
 }
 
 #status {
-    font-size: 12px;
+    font-size: calc(var(--font-size) * 0.923);
     color: var(--muted);
     align-self: center;
 }
@@ -324,7 +326,7 @@ body.toolbar-hidden .editor-wrap {
 }
 
 .pane-label {
-    font-size: 11px;
+    font-size: calc(var(--font-size) * 0.846);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -348,7 +350,7 @@ body.pane-headers-hidden .preview-pane {
     text-transform: none;
     letter-spacing: 0;
     margin-left: 0.35em;
-    font-size: 10px;
+    font-size: calc(var(--font-size) * 0.769);
     opacity: 0.85;
 }
 
@@ -366,7 +368,7 @@ body.pane-headers-hidden .preview-pane {
     border: none;
     resize: none;
     font-family: var(--font-editor);
-    font-size: 14px;
+    font-size: calc(var(--font-size) * 1.077);
     line-height: var(--line-height, 1.6);
     background: transparent;
     color: var(--ink);
@@ -456,7 +458,7 @@ body.pane-headers-hidden .preview-pane {
     padding: 2px;
     min-height: 120px;
     overflow: auto;
-    font-size: 14px;
+    font-size: calc(var(--font-size) * 1.077);
     line-height: var(--line-height, 1.6);
     box-sizing: border-box;
 }
@@ -552,7 +554,7 @@ body.pane-headers-hidden .preview-pane {
     font-family: var(--font-code);
     padding: 0;
     background: none;
-    font-size: 13px;
+    font-size: var(--font-size);
 }
 
 .markdown-body ul,
@@ -605,7 +607,7 @@ body.pane-headers-hidden .preview-pane {
     width: 100%;
     border-collapse: collapse;
     margin: 0.75em 0;
-    font-size: 14px;
+    font-size: calc(var(--font-size) * 1.077);
 }
 
 .markdown-body th,
@@ -625,7 +627,7 @@ body.pane-headers-hidden .preview-pane {
     border: none;
     border-radius: var(--radius);
     padding: 9px 14px;
-    font-size: 12px;
+    font-size: calc(var(--font-size) * 0.923);
     cursor: pointer;
     transition: all 0.2s ease;
     background: var(--accent);
@@ -663,7 +665,7 @@ body.pane-headers-hidden .preview-pane {
 
 .settings-title {
     margin: 0 0 16px;
-    font-size: 14px;
+    font-size: calc(var(--font-size) * 1.077);
     font-weight: 600;
     color: var(--muted);
     text-transform: uppercase;
@@ -679,7 +681,7 @@ body.pane-headers-hidden .preview-pane {
 }
 
 .settings-label {
-    font-size: 13px;
+    font-size: var(--font-size);
     color: var(--ink);
     margin: 0;
     cursor: pointer;
@@ -741,7 +743,7 @@ body.pane-headers-hidden .preview-pane {
 .settings-select {
     width: 100%;
     padding: 8px 32px 8px 10px;
-    font-size: 13px;
+    font-size: var(--font-size);
     background-color: var(--panel-strong);
     background-repeat: no-repeat;
     background-position: right 14px center;
@@ -767,7 +769,7 @@ body.pane-headers-hidden .preview-pane {
 .settings-input {
     width: 100%;
     padding: 8px 10px;
-    font-size: 12px;
+    font-size: calc(var(--font-size) * 0.923);
     background: var(--panel-strong);
     color: var(--ink);
     border: none;
@@ -863,7 +865,7 @@ input::placeholder {
     cursor: pointer;
     border-radius: var(--radius);
     gap: 12px;
-    font-size: 13px;
+    font-size: var(--font-size);
     color: var(--ink);
     transition: all 0.2s ease;
 }
@@ -919,33 +921,33 @@ body.minimal-mode .toolbar-row {
 }
 
 body.minimal-mode .toolbar label {
-    font-size: 10px;
+    font-size: calc(var(--font-size) * 0.769);
     gap: 2px;
 }
 
 body.minimal-mode .toolbar input {
     padding: 4px 6px;
-    font-size: 12px;
+    font-size: calc(var(--font-size) * 0.923);
 }
 
 body.minimal-mode .vault-dropdown-trigger {
     padding: 4px 6px;
-    font-size: 12px;
+    font-size: calc(var(--font-size) * 0.923);
 }
 
 body.minimal-mode .vault-dropdown-option {
     padding: 6px 10px;
-    font-size: 12px;
+    font-size: calc(var(--font-size) * 0.923);
 }
 
 body.minimal-mode .toolbar .primary,
 body.minimal-mode .toolbar .ghost {
     padding: 5px 10px;
-    font-size: 11px;
+    font-size: calc(var(--font-size) * 0.846);
 }
 
 body.minimal-mode #status {
-    font-size: 10px;
+    font-size: calc(var(--font-size) * 0.769);
 }
 
 body.minimal-mode .toolbar-title-icon {
@@ -987,11 +989,11 @@ body.minimal-mode .preview-pane {
 }
 
 body.minimal-mode .pane-label {
-    font-size: 10px;
+    font-size: calc(var(--font-size) * 0.769);
 }
 
 body.minimal-mode .pane-count {
-    font-size: 9px;
+    font-size: calc(var(--font-size) * 0.692);
 }
 
 body.minimal-mode #markdownPreview {

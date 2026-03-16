@@ -17,7 +17,7 @@
         Onyx
       </h1>
       <div class="options-layout">
-        <div class="options-tabs" role="tablist" aria-label="Settings tabs">
+        <div class="options-tabs" role="tablist" aria-label="Options tabs">
           <button
             id="settingsTabBtn"
             class="options-tab is-active"
@@ -27,6 +27,16 @@
             aria-selected="true"
           >
             Settings
+          </button>
+          <button
+            id="vaultTabBtn"
+            class="options-tab"
+            type="button"
+            role="tab"
+            aria-controls="vaultTabPanel"
+            aria-selected="false"
+          >
+            Vault
           </button>
           <button
             id="editorTabBtn"
@@ -398,6 +408,31 @@
               </div>
             </div>
             <div class="settings-item">
+              <label class="settings-label" for="fontSizeSlider"
+                >Font size</label
+              >
+              <div class="settings-slider-wrap">
+                <input
+                  id="fontSizeSlider"
+                  class="settings-slider"
+                  type="range"
+                  min="10"
+                  max="22"
+                  step="1"
+                  value="13"
+                  aria-valuemin="10"
+                  aria-valuemax="22"
+                  aria-valuenow="13"
+                />
+                <span
+                  id="fontSizeValue"
+                  class="settings-slider-value"
+                  aria-live="polite"
+                  >13px</span
+                >
+              </div>
+            </div>
+            <div class="settings-item">
               <label class="settings-label" for="previewToggle"
                 >Show preview</label
               >
@@ -443,6 +478,83 @@
               </label>
             </div>
           </section>
+        </div>
+
+        <div
+          id="vaultTabPanel"
+          class="options-tab-panel options-tab-panel--vault"
+          role="tabpanel"
+          aria-labelledby="vaultTabBtn"
+          hidden
+        >
+          <section class="options-section">
+            <h2 class="options-heading">Vault folder</h2>
+            <p class="options-hint">
+              Select your Obsidian vault folder to browse and edit notes
+              directly.
+            </p>
+            <div class="settings-inline-row">
+              <button id="vaultPickBtn" class="settings-btn" type="button">
+                Select folder
+              </button>
+              <button
+                id="vaultRefreshBtn"
+                class="settings-btn settings-btn--secondary"
+                type="button"
+              >
+                Refresh
+              </button>
+              <span id="vaultFolderName" class="vault-folder-name"
+                >No folder selected</span
+              >
+            </div>
+            <p
+              id="vaultStatus"
+              class="options-hint options-hint--inline"
+              aria-live="polite"
+            ></p>
+          </section>
+
+          <div class="vault-layout">
+            <div class="vault-list-panel">
+              <div class="vault-panel-header">
+                <h3 class="vault-panel-title">Files</h3>
+              </div>
+              <ul
+                id="vaultFileList"
+                class="vault-file-list"
+                aria-label="Vault files"
+              ></ul>
+            </div>
+            <div class="vault-editor-panel">
+              <div class="vault-panel-header vault-panel-header--editor">
+                <span id="vaultFileTitle" class="vault-file-title"
+                  >Select a file to start editing</span
+                >
+                <button
+                  id="vaultSaveBtn"
+                  class="settings-btn"
+                  type="button"
+                  disabled
+                >
+                  Save
+                </button>
+              </div>
+              <div class="vault-editor-wrap">
+                <textarea
+                  id="vaultEditorInput"
+                  class="vault-editor-input"
+                  placeholder="# Open a file to edit its contents..."
+                  spellcheck="true"
+                ></textarea>
+                <div
+                  id="vaultEditorPreview"
+                  class="vault-editor-preview markdown-body"
+                  aria-live="polite"
+                ></div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div
