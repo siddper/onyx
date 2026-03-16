@@ -354,11 +354,16 @@ const optionsExportStatus = document.getElementById("optionsExportStatus");
 const vaultPickBtn = document.getElementById("vaultPickBtn");
 const vaultRefreshBtn = document.getElementById("vaultRefreshBtn");
 const vaultFolderName = document.getElementById("vaultFolderName");
-const vaultStatus = document.getElementById("vaultStatus");
 const vaultFileList = document.getElementById("vaultFileList");
+const vaultFileSearch = document.getElementById("vaultFileSearch");
 const vaultFileTitle = document.getElementById("vaultFileTitle");
+const vaultEditorRoot = document.getElementById("vaultEditorRoot");
+const vaultEditorWrap = document.getElementById("vaultEditorWrap");
+const vaultEditorResizer = document.getElementById("vaultEditorResizer");
 const vaultEditorInput = document.getElementById("vaultEditorInput");
 const vaultEditorPreview = document.getElementById("vaultEditorPreview");
+const vaultCaretMirror = document.getElementById("vaultCaretMirror");
+const vaultFakeCaret = document.getElementById("vaultFakeCaret");
 const vaultSaveBtn = document.getElementById("vaultSaveBtn");
 
 function setActiveTab(tabId, { updateHash = true } = {}) {
@@ -400,10 +405,14 @@ let vaultDirHandle = null;
 let vaultFiles = [];
 let vaultActiveFile = null;
 let vaultDirty = false;
+let vaultSyncScrollInProgress = false;
+let vaultCaretBlinkTimer = null;
+let vaultCaretVisible = true;
 
 const VAULT_DB_NAME = "onyx-vault-db";
 const VAULT_DB_STORE = "handles";
 const VAULT_DB_KEY = "vaultDir";
+const VAULT_LAST_FILE_KEY = "vaultLastFilePath";
 
 function vaultSupportsFileAccess() {
   return typeof window.showDirectoryPicker === "function";
@@ -449,28 +458,139 @@ function vaultSetFolderLabel(name) {
   if (vaultFolderName) vaultFolderName.textContent = name || "No folder selected";
 }
 
-function vaultSetStatus(message) {
-  if (vaultStatus) vaultStatus.textContent = message || "";
-}
-
 function vaultUpdatePreview() {
   if (!vaultEditorPreview || !vaultEditorInput) return;
+  if (vaultEditorWrap?.classList.contains("preview-hidden")) return;
   vaultEditorPreview.innerHTML = typeof renderMarkdown === "function"
     ? renderMarkdown(vaultEditorInput.value)
     : vaultEditorInput.value.replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m]));
 }
 
+function vaultGetCaretCoordinates() {
+  if (!vaultCaretMirror || !vaultEditorInput) return null;
+  const text = vaultEditorInput.value;
+  const pos = vaultEditorInput.selectionEnd;
+  const before = text.substring(0, pos);
+  const after = text.substring(pos);
+  const cs = getComputedStyle(vaultEditorInput);
+  vaultCaretMirror.style.fontFamily = cs.fontFamily;
+  vaultCaretMirror.style.fontSize = cs.fontSize;
+  vaultCaretMirror.style.lineHeight = cs.lineHeight;
+  const padL = parseFloat(cs.paddingLeft) || 0;
+  const padT = parseFloat(cs.paddingTop) || 0;
+  vaultCaretMirror.style.width = (vaultEditorInput.clientWidth - padL - (parseFloat(cs.paddingRight) || 0)) + "px";
+  vaultCaretMirror.style.padding = "0";
+  vaultCaretMirror.style.boxSizing = "border-box";
+  vaultCaretMirror.innerHTML = optionsEscapeHtml(before) + '<span data-caret-pos>\u200b</span><span data-char-width>M</span>' + optionsEscapeHtml(after);
+  const span = vaultCaretMirror.querySelector("[data-caret-pos]");
+  const charSpan = vaultCaretMirror.querySelector("[data-char-width]");
+  if (!span) return null;
+  const left = span.offsetLeft - vaultEditorInput.scrollLeft + padL;
+  const top = span.offsetTop - vaultEditorInput.scrollTop + padT;
+  const height = span.offsetHeight;
+  const fontSizePx = parseFloat(cs.fontSize) || 13;
+  const fallbackWidth = Math.max(6, Math.round(fontSizePx * 0.6));
+  const raw = charSpan ? charSpan.offsetLeft - span.offsetLeft : fallbackWidth;
+  const charWidth = Math.max(fallbackWidth, Math.round(raw));
+  return { left, top, height, bottom: top + height, charWidth, fallbackWidth };
+}
+
+function vaultUpdateFakeCaret() {
+  if (!vaultFakeCaret || document.activeElement !== vaultEditorInput) {
+    if (vaultFakeCaret) vaultFakeCaret.style.opacity = "0";
+    return;
+  }
+  const coords = vaultGetCaretCoordinates();
+  if (!coords) {
+    vaultFakeCaret.style.opacity = "0";
+    return;
+  }
+  const fallbackWidth = coords.fallbackWidth ?? Math.max(6, Math.round((parseFloat(getComputedStyle(vaultEditorInput).fontSize) || 13) * 0.6));
+  vaultFakeCaret.style.left = coords.left + "px";
+  if (optionsCaretStyle === "underline") {
+    vaultFakeCaret.style.width = (coords.charWidth ?? fallbackWidth) + "px";
+    vaultFakeCaret.style.height = "2px";
+    vaultFakeCaret.style.top = coords.bottom - 2 + "px";
+  } else if (optionsCaretStyle === "block") {
+    vaultFakeCaret.style.width = (coords.charWidth ?? fallbackWidth) + "px";
+    vaultFakeCaret.style.top = coords.top + "px";
+    vaultFakeCaret.style.height = coords.height + "px";
+  } else {
+    vaultFakeCaret.style.width = "2px";
+    vaultFakeCaret.style.top = coords.top + "px";
+    vaultFakeCaret.style.height = coords.height + "px";
+  }
+  if (optionsCaretAnimation === "blink") {
+    vaultFakeCaret.style.opacity = vaultCaretVisible ? "1" : "0";
+  } else if (optionsCaretAnimation === "solid") {
+    vaultFakeCaret.style.opacity = "1";
+  }
+}
+
+function vaultScheduleCaretUpdate() {
+  requestAnimationFrame(() => vaultUpdateFakeCaret());
+}
+
+function vaultStartCaretBlink() {
+  if (!vaultFakeCaret) return;
+  if (optionsCaretAnimation === "blink") {
+    if (vaultCaretBlinkTimer) return;
+    vaultCaretVisible = true;
+    vaultFakeCaret.style.opacity = "1";
+    vaultCaretBlinkTimer = setInterval(() => {
+      vaultCaretVisible = !vaultCaretVisible;
+      if (vaultFakeCaret) vaultFakeCaret.style.opacity = vaultCaretVisible ? "1" : "0";
+    }, 530);
+  } else {
+    vaultCaretVisible = true;
+    if (optionsCaretAnimation === "solid") vaultFakeCaret.style.opacity = "1";
+    if (optionsCaretAnimation === "phase" || optionsCaretAnimation === "expand") {
+      vaultFakeCaret.style.animation = "";
+      vaultFakeCaret.style.opacity = "";
+    }
+  }
+}
+
+function vaultStopCaretBlink() {
+  if (vaultCaretBlinkTimer) {
+    clearInterval(vaultCaretBlinkTimer);
+    vaultCaretBlinkTimer = null;
+  }
+  if (vaultFakeCaret) {
+    vaultFakeCaret.style.opacity = "0";
+    vaultFakeCaret.style.animation = "none";
+  }
+}
+
+function vaultHandleEditorKeydown(e) {
+  if (e.key !== "Tab" || !vaultEditorInput) return;
+  e.preventDefault();
+  const start = vaultEditorInput.selectionStart;
+  const end = vaultEditorInput.selectionEnd;
+  const value = vaultEditorInput.value;
+  const insert = "    ";
+  vaultEditorInput.value = value.slice(0, start) + insert + value.slice(end);
+  const nextPos = start + insert.length;
+  vaultEditorInput.setSelectionRange(nextPos, nextPos);
+  vaultUpdatePreview();
+  vaultScheduleCaretUpdate();
+}
+
 function vaultRenderFileList() {
   if (!vaultFileList) return;
   vaultFileList.innerHTML = "";
-  if (!vaultFiles.length) {
+  const query = vaultFileSearch?.value?.trim().toLowerCase() || "";
+  const visibleFiles = query
+    ? vaultFiles.filter((file) => file.path.toLowerCase().includes(query))
+    : vaultFiles;
+  if (!visibleFiles.length) {
     const empty = document.createElement("li");
     empty.className = "vault-file-empty";
-    empty.textContent = "No markdown files found yet.";
+    empty.textContent = query ? "No matching files." : "No markdown files found yet.";
     vaultFileList.appendChild(empty);
     return;
   }
-  vaultFiles.forEach((file) => {
+  visibleFiles.forEach((file) => {
     const item = document.createElement("li");
     item.className = "vault-file-item" + (vaultActiveFile?.path === file.path ? " is-active" : "");
     const btn = document.createElement("button");
@@ -501,14 +621,11 @@ async function vaultCollectMarkdownFiles(dirHandle, prefix = "") {
 
 async function vaultLoadFiles() {
   if (!vaultDirHandle) {
-    vaultSetStatus("Select a folder first.");
     return;
   }
-  vaultSetStatus("Scanning vault...");
   vaultFiles = await vaultCollectMarkdownFiles(vaultDirHandle);
   vaultFiles.sort((a, b) => a.path.localeCompare(b.path));
   vaultRenderFileList();
-  vaultSetStatus(`Loaded ${vaultFiles.length} markdown ${vaultFiles.length === 1 ? "file" : "files"}.`);
 }
 
 async function vaultOpenFile(file) {
@@ -523,20 +640,20 @@ async function vaultOpenFile(file) {
   vaultDirty = false;
   if (vaultSaveBtn) vaultSaveBtn.disabled = true;
   if (vaultFileTitle) vaultFileTitle.textContent = file.path;
+  chrome.storage.local.set({ [VAULT_LAST_FILE_KEY]: file.path });
   vaultUpdatePreview();
+  vaultScheduleCaretUpdate();
   vaultRenderFileList();
 }
 
 async function vaultSaveActiveFile() {
   if (!vaultActiveFile?.handle || !vaultEditorInput) {
-    vaultSetStatus("Pick a file first.");
     return;
   }
   try {
     if (vaultActiveFile.handle.requestPermission) {
       const perm = await vaultActiveFile.handle.requestPermission({ mode: "readwrite" });
       if (perm !== "granted") {
-        vaultSetStatus("Write permission denied.");
         return;
       }
     }
@@ -545,15 +662,18 @@ async function vaultSaveActiveFile() {
     await writable.close();
     vaultDirty = false;
     if (vaultSaveBtn) vaultSaveBtn.disabled = true;
-    vaultSetStatus(`Saved ${vaultActiveFile.path}.`);
-  } catch (err) {
-    vaultSetStatus("Unable to save file.");
-  }
+    if (vaultSaveBtn) {
+      const label = vaultSaveBtn.textContent;
+      vaultSaveBtn.textContent = "Saved!";
+      setTimeout(() => {
+        if (vaultSaveBtn) vaultSaveBtn.textContent = label;
+      }, 1500);
+    }
+  } catch (err) {}
 }
 
 async function vaultPickDirectory() {
   if (!vaultSupportsFileAccess()) {
-    vaultSetStatus("Folder access is not supported in this browser.");
     return;
   }
   try {
@@ -561,7 +681,6 @@ async function vaultPickDirectory() {
     if (handle?.requestPermission) {
       const perm = await handle.requestPermission({ mode: "readwrite" });
       if (perm !== "granted") {
-        vaultSetStatus("Folder permission denied.");
         return;
       }
     }
@@ -575,9 +694,7 @@ async function vaultPickDirectory() {
     if (vaultFileTitle) vaultFileTitle.textContent = "Select a file to start editing";
     if (vaultSaveBtn) vaultSaveBtn.disabled = true;
     await vaultLoadFiles();
-  } catch (err) {
-    if (err?.name !== "AbortError") vaultSetStatus("Could not access that folder.");
-  }
+  } catch (err) {}
 }
 
 async function vaultRestoreDirectory() {
@@ -587,37 +704,64 @@ async function vaultRestoreDirectory() {
     if (handle?.queryPermission) {
       const perm = await handle.queryPermission({ mode: "readwrite" });
       if (perm !== "granted") {
-        vaultSetStatus("Select folder to re-grant access.");
         return;
       }
     }
     vaultDirHandle = handle;
     vaultSetFolderLabel(handle?.name || "Selected folder");
     await vaultLoadFiles();
-  } catch (err) {
-    vaultSetStatus("Select folder to restore access.");
-  }
+    const stored = await chrome.storage.local.get(VAULT_LAST_FILE_KEY);
+    const lastPath = stored[VAULT_LAST_FILE_KEY];
+    if (lastPath) {
+      const match = vaultFiles.find((file) => file.path === lastPath);
+      if (match) await vaultOpenFile(match);
+    }
+  } catch (err) {}
 }
 
 function initVaultTab() {
   if (!vaultPickBtn || !vaultRefreshBtn) return;
   vaultSetFolderLabel("");
   if (!vaultSupportsFileAccess()) {
-    vaultSetStatus("Folder access is not supported in this browser.");
     vaultPickBtn.disabled = true;
     vaultRefreshBtn.disabled = true;
     return;
   }
   vaultPickBtn.addEventListener("click", vaultPickDirectory);
   vaultRefreshBtn.addEventListener("click", () => vaultLoadFiles());
+  if (vaultFakeCaret) {
+    vaultFakeCaret.dataset.style = optionsCaretStyle;
+    vaultFakeCaret.dataset.animation = optionsCaretAnimation;
+    vaultFakeCaret.dataset.movement = optionsCaretMovement;
+  }
   if (vaultEditorInput) {
     vaultEditorInput.addEventListener("input", () => {
       vaultDirty = true;
       if (vaultSaveBtn) vaultSaveBtn.disabled = false;
       vaultUpdatePreview();
+      vaultScheduleCaretUpdate();
     });
+    vaultEditorInput.addEventListener("keydown", vaultHandleEditorKeydown);
+    vaultEditorInput.addEventListener("click", vaultScheduleCaretUpdate);
+    vaultEditorInput.addEventListener("keydown", vaultScheduleCaretUpdate);
+    vaultEditorInput.addEventListener("keyup", vaultScheduleCaretUpdate);
+    vaultEditorInput.addEventListener("focus", () => {
+      vaultStartCaretBlink();
+      vaultScheduleCaretUpdate();
+    });
+    vaultEditorInput.addEventListener("blur", () => {
+      vaultStopCaretBlink();
+      if (vaultFakeCaret) vaultFakeCaret.style.opacity = "0";
+    });
+    vaultEditorInput.addEventListener("scroll", vaultOnSourceScrollSync);
+    vaultEditorInput.addEventListener("scroll", vaultScheduleCaretUpdate);
   }
+  if (vaultEditorPreview) vaultEditorPreview.addEventListener("scroll", vaultOnPreviewScrollSync);
   if (vaultSaveBtn) vaultSaveBtn.addEventListener("click", vaultSaveActiveFile);
+  if (vaultFileSearch) {
+    vaultFileSearch.addEventListener("input", () => vaultRenderFileList());
+  }
+  initVaultEditorResizer();
   vaultRestoreDirectory();
 }
 
@@ -639,11 +783,17 @@ function optionsNormalizePaneVisibility(sourceEnabled, previewEnabled) {
 }
 
 function optionsApplyPaneVisibility(sourceEnabled, previewEnabled) {
-  if (!optionsEditorWrap) return;
   const resolved = optionsNormalizePaneVisibility(sourceEnabled, previewEnabled);
-  optionsEditorWrap.classList.toggle("source-hidden", !resolved.sourceEnabled);
-  optionsEditorWrap.classList.toggle("preview-hidden", !resolved.previewEnabled);
-  if (resolved.previewEnabled) optionsUpdatePreview();
+  if (optionsEditorWrap) {
+    optionsEditorWrap.classList.toggle("source-hidden", !resolved.sourceEnabled);
+    optionsEditorWrap.classList.toggle("preview-hidden", !resolved.previewEnabled);
+    if (resolved.previewEnabled) optionsUpdatePreview();
+  }
+  if (vaultEditorWrap) {
+    vaultEditorWrap.classList.toggle("source-hidden", !resolved.sourceEnabled);
+    vaultEditorWrap.classList.toggle("preview-hidden", !resolved.previewEnabled);
+    if (resolved.previewEnabled) vaultUpdatePreview();
+  }
 }
 
 function optionsGetPaneVisibility() {
@@ -654,8 +804,8 @@ function optionsGetPaneVisibility() {
 }
 
 function optionsApplyHeaderVisibility(showPaneHeaders) {
-  if (!optionsEditorRoot) return;
-  optionsEditorRoot.classList.toggle("pane-headers-hidden", showPaneHeaders === false);
+  if (optionsEditorRoot) optionsEditorRoot.classList.toggle("pane-headers-hidden", showPaneHeaders === false);
+  if (vaultEditorRoot) vaultEditorRoot.classList.toggle("pane-headers-hidden", showPaneHeaders === false);
 }
 
 function optionsGetWordCharCount(text) {
@@ -750,9 +900,11 @@ function optionsGetCaretCoordinates() {
   const left = span.offsetLeft - optionsMarkdownInput.scrollLeft + padL;
   const top = span.offsetTop - optionsMarkdownInput.scrollTop + padT;
   const height = span.offsetHeight;
-  const raw = charSpan ? charSpan.offsetLeft - span.offsetLeft : 8;
-  const charWidth = Math.max(8, Math.round(raw * 1));
-  return { left, top, height, bottom: top + height, charWidth };
+  const fontSizePx = parseFloat(cs.fontSize) || 13;
+  const fallbackWidth = Math.max(6, Math.round(fontSizePx * 0.6));
+  const raw = charSpan ? charSpan.offsetLeft - span.offsetLeft : fallbackWidth;
+  const charWidth = Math.max(fallbackWidth, Math.round(raw));
+  return { left, top, height, bottom: top + height, charWidth, fallbackWidth };
 }
 
 function optionsUpdateFakeCaret() {
@@ -765,13 +917,14 @@ function optionsUpdateFakeCaret() {
     optionsFakeCaret.style.opacity = "0";
     return;
   }
+  const fallbackWidth = coords.fallbackWidth ?? Math.max(6, Math.round((parseFloat(getComputedStyle(optionsMarkdownInput).fontSize) || 13) * 0.6));
   optionsFakeCaret.style.left = coords.left + "px";
   if (optionsCaretStyle === "underline") {
-    optionsFakeCaret.style.width = (coords.charWidth ?? 8) + "px";
+    optionsFakeCaret.style.width = (coords.charWidth ?? fallbackWidth) + "px";
     optionsFakeCaret.style.height = "2px";
     optionsFakeCaret.style.top = coords.bottom - 2 + "px";
   } else if (optionsCaretStyle === "block") {
-    optionsFakeCaret.style.width = (coords.charWidth ?? 8) + "px";
+    optionsFakeCaret.style.width = (coords.charWidth ?? fallbackWidth) + "px";
     optionsFakeCaret.style.top = coords.top + "px";
     optionsFakeCaret.style.height = coords.height + "px";
   } else {
@@ -1028,6 +1181,28 @@ function optionsOnPreviewScrollSync() {
   requestAnimationFrame(() => { optionsSyncScrollInProgress = false; });
 }
 
+function vaultOnSourceScrollSync() {
+  if (!optionsSyncScrollEnabled || vaultSyncScrollInProgress || !vaultEditorPreview || !vaultEditorInput) return;
+  if (vaultEditorWrap?.classList.contains("preview-hidden")) return;
+  vaultSyncScrollInProgress = true;
+  const maxSource = vaultEditorInput.scrollHeight - vaultEditorInput.clientHeight;
+  const pct = maxSource > 0 ? vaultEditorInput.scrollTop / maxSource : 0;
+  const maxPrev = vaultEditorPreview.scrollHeight - vaultEditorPreview.clientHeight;
+  vaultEditorPreview.scrollTop = pct * maxPrev;
+  requestAnimationFrame(() => { vaultSyncScrollInProgress = false; });
+}
+
+function vaultOnPreviewScrollSync() {
+  if (!optionsSyncScrollEnabled || vaultSyncScrollInProgress || !vaultEditorPreview || !vaultEditorInput) return;
+  if (vaultEditorWrap?.classList.contains("source-hidden")) return;
+  vaultSyncScrollInProgress = true;
+  const maxPrev = vaultEditorPreview.scrollHeight - vaultEditorPreview.clientHeight;
+  const pct = maxPrev > 0 ? vaultEditorPreview.scrollTop / maxPrev : 0;
+  const maxSource = vaultEditorInput.scrollHeight - vaultEditorInput.clientHeight;
+  vaultEditorInput.scrollTop = pct * maxSource;
+  requestAnimationFrame(() => { vaultSyncScrollInProgress = false; });
+}
+
 function optionsIsStackedLayout() {
   return window.matchMedia("(max-width: 860px)").matches;
 }
@@ -1167,8 +1342,10 @@ function showOptionsContextMenu(x, y) {
       onSelectItem: async (item) => {
         optionsCaretStyle = item.value;
         if (optionsFakeCaret) optionsFakeCaret.dataset.style = optionsCaretStyle;
+        if (vaultFakeCaret) vaultFakeCaret.dataset.style = optionsCaretStyle;
         if (caretStyleSelect) caretStyleSelect.value = item.value;
         optionsScheduleCaretUpdate();
+        vaultScheduleCaretUpdate();
         await saveSettings({ caretStyle: item.value });
       }
     },
@@ -1179,8 +1356,10 @@ function showOptionsContextMenu(x, y) {
       onSelectItem: async (item) => {
         optionsCaretAnimation = item.value;
         if (optionsFakeCaret) optionsFakeCaret.dataset.animation = optionsCaretAnimation;
+        if (vaultFakeCaret) vaultFakeCaret.dataset.animation = optionsCaretAnimation;
         if (caretAnimationSelect) caretAnimationSelect.value = item.value;
         optionsScheduleCaretUpdate();
+        vaultScheduleCaretUpdate();
         await saveSettings({ caretAnimation: item.value });
       }
     },
@@ -1191,8 +1370,10 @@ function showOptionsContextMenu(x, y) {
       onSelectItem: async (item) => {
         optionsCaretMovement = item.value;
         if (optionsFakeCaret) optionsFakeCaret.dataset.movement = optionsCaretMovement;
+        if (vaultFakeCaret) vaultFakeCaret.dataset.movement = optionsCaretMovement;
         if (caretMovementSelect) caretMovementSelect.value = item.value;
         optionsScheduleCaretUpdate();
+        vaultScheduleCaretUpdate();
         await saveSettings({ caretMovement: item.value });
       }
     },
@@ -1400,6 +1581,57 @@ function initOptionsEditorResizer() {
   });
 }
 
+function initVaultEditorResizer() {
+  if (!vaultEditorResizer || !vaultEditorWrap) return;
+  vaultEditorResizer.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const wrapRect = () => vaultEditorWrap.getBoundingClientRect();
+    const stacked = optionsIsStackedLayout();
+
+    if (stacked) {
+      const update = (clientY) => {
+        const r = wrapRect();
+        let pct = Math.round(((clientY - r.top) / r.height) * 100);
+        pct = Math.max(10, Math.min(90, pct));
+        vaultEditorWrap.style.setProperty("--options-source-height", pct + "%");
+      };
+      const onMove = (ev) => update(ev.clientY);
+      const onUp = () => {
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      };
+      document.body.style.cursor = "row-resize";
+      document.body.style.userSelect = "none";
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+      update(e.clientY);
+      return;
+    }
+
+    const update = (clientX) => {
+      const r = wrapRect();
+      let pct = Math.round(((clientX - r.left) / r.width) * 100);
+      pct = Math.max(10, Math.min(90, pct));
+      vaultEditorWrap.style.setProperty("--options-source-width", pct + "%");
+    };
+    const onMove = (ev) => update(ev.clientX);
+    const onUp = () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+    update(e.clientX);
+  });
+}
+
 async function initOptionsEditor() {
   if (!optionsMarkdownInput || !optionsMarkdownPreview) return;
   const [noteData, editorData] = await Promise.all([
@@ -1428,6 +1660,11 @@ async function initOptionsEditor() {
     optionsFakeCaret.dataset.style = optionsCaretStyle;
     optionsFakeCaret.dataset.animation = optionsCaretAnimation;
     optionsFakeCaret.dataset.movement = optionsCaretMovement;
+  }
+  if (vaultFakeCaret) {
+    vaultFakeCaret.dataset.style = optionsCaretStyle;
+    vaultFakeCaret.dataset.animation = optionsCaretAnimation;
+    vaultFakeCaret.dataset.movement = optionsCaretMovement;
   }
   optionsApplyPaneVisibility(editorSettings.sourceEnabled, editorSettings.previewEnabled);
   optionsApplyHeaderVisibility(editorSettings.showPaneHeaders !== false);
@@ -1916,21 +2153,27 @@ caretStyleSelect.addEventListener("change", () => {
   saveSettings({ caretStyle: caretStyleSelect.value });
   optionsCaretStyle = caretStyleSelect.value;
   if (optionsFakeCaret) optionsFakeCaret.dataset.style = optionsCaretStyle;
+  if (vaultFakeCaret) vaultFakeCaret.dataset.style = optionsCaretStyle;
   optionsScheduleCaretUpdate();
+  vaultScheduleCaretUpdate();
 });
 
 caretAnimationSelect.addEventListener("change", () => {
   saveSettings({ caretAnimation: caretAnimationSelect.value });
   optionsCaretAnimation = caretAnimationSelect.value;
   if (optionsFakeCaret) optionsFakeCaret.dataset.animation = optionsCaretAnimation;
+  if (vaultFakeCaret) vaultFakeCaret.dataset.animation = optionsCaretAnimation;
   optionsScheduleCaretUpdate();
+  vaultScheduleCaretUpdate();
 });
 
 caretMovementSelect.addEventListener("change", () => {
   saveSettings({ caretMovement: caretMovementSelect.value });
   optionsCaretMovement = caretMovementSelect.value;
   if (optionsFakeCaret) optionsFakeCaret.dataset.movement = optionsCaretMovement;
+  if (vaultFakeCaret) vaultFakeCaret.dataset.movement = optionsCaretMovement;
   optionsScheduleCaretUpdate();
+  vaultScheduleCaretUpdate();
 });
 
 if (countDisplaySelect) {
@@ -1990,18 +2233,22 @@ chrome.storage.onChanged.addListener((changes, area) => {
     if (s.caretStyle) {
       optionsCaretStyle = s.caretStyle;
       if (optionsFakeCaret) optionsFakeCaret.dataset.style = optionsCaretStyle;
+      if (vaultFakeCaret) vaultFakeCaret.dataset.style = optionsCaretStyle;
     }
     if (s.caretAnimation) {
       optionsCaretAnimation = s.caretAnimation;
       if (optionsFakeCaret) optionsFakeCaret.dataset.animation = optionsCaretAnimation;
+      if (vaultFakeCaret) vaultFakeCaret.dataset.animation = optionsCaretAnimation;
     }
     if (s.caretMovement) {
       optionsCaretMovement = s.caretMovement;
       if (optionsFakeCaret) optionsFakeCaret.dataset.movement = optionsCaretMovement;
+      if (vaultFakeCaret) vaultFakeCaret.dataset.movement = optionsCaretMovement;
     }
     if (typeof s.fontSize === "number") applyFontSize(s.fontSize);
     if (typeof s.lineHeight === "number") applyLineHeight(s.lineHeight);
     optionsScheduleCaretUpdate();
+    vaultScheduleCaretUpdate();
   }
 });
 

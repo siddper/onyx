@@ -437,11 +437,13 @@ body.pane-headers-hidden .preview-pane {
 }
 
 .editor-fake-caret[data-style="block"] {
-    width: 8px;
+    width: calc(var(--font-size) * 1.077 * 0.6);
+    min-width: 6px;
 }
 
 .editor-fake-caret[data-style="underline"] {
-    width: 8px;
+    width: calc(var(--font-size) * 1.077 * 0.6);
+    min-width: 6px;
     transform-origin: left center;
 }
 
@@ -503,6 +505,11 @@ body.pane-headers-hidden .preview-pane {
 
 .markdown-body p:first-child {
     margin-top: 0;
+}
+
+.markdown-body .markdown-empty {
+    margin: 0;
+    min-height: 1em;
 }
 
 .markdown-body strong {

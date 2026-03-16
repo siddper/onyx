@@ -484,9 +484,11 @@ function getCaretCoordinates() {
   const left = span.offsetLeft - markdownInput.scrollLeft + padL;
   const top = span.offsetTop - markdownInput.scrollTop + padT;
   const height = span.offsetHeight;
-  const raw = charSpan ? charSpan.offsetLeft - span.offsetLeft : 8;
-  const charWidth = Math.max(8, Math.round(raw * 1));
-  return { left, top, height, bottom: top + height, charWidth };
+  const fontSizePx = parseFloat(cs.fontSize) || 13;
+  const fallbackWidth = Math.max(6, Math.round(fontSizePx * 0.6));
+  const raw = charSpan ? charSpan.offsetLeft - span.offsetLeft : fallbackWidth;
+  const charWidth = Math.max(fallbackWidth, Math.round(raw));
+  return { left, top, height, bottom: top + height, charWidth, fallbackWidth };
 }
 
 function updateFakeCaret() {
@@ -501,12 +503,13 @@ function updateFakeCaret() {
     return;
   }
   editorFakeCaret.style.left = coords.left + "px";
+  const fallbackWidth = coords.fallbackWidth ?? Math.max(6, Math.round((parseFloat(getComputedStyle(markdownInput).fontSize) || 13) * 0.6));
   if (caretStyle === "underline") {
-    editorFakeCaret.style.width = (coords.charWidth ?? 8) + "px";
+    editorFakeCaret.style.width = (coords.charWidth ?? fallbackWidth) + "px";
     editorFakeCaret.style.height = "2px";
     editorFakeCaret.style.top = coords.bottom - 2 + "px";
   } else if (caretStyle === "block") {
-    editorFakeCaret.style.width = (coords.charWidth ?? 8) + "px";
+    editorFakeCaret.style.width = (coords.charWidth ?? fallbackWidth) + "px";
     editorFakeCaret.style.top = coords.top + "px";
     editorFakeCaret.style.height = coords.height + "px";
   } else {

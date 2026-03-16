@@ -493,41 +493,47 @@
               Select your Obsidian vault folder to browse and edit notes
               directly.
             </p>
-            <div class="settings-inline-row">
-              <button id="vaultPickBtn" class="settings-btn" type="button">
-                Select folder
-              </button>
-              <button
-                id="vaultRefreshBtn"
-                class="settings-btn settings-btn--secondary"
-                type="button"
-              >
-                Refresh
-              </button>
-              <span id="vaultFolderName" class="vault-folder-name"
-                >No folder selected</span
-              >
+            <div class="vault-toolbar">
+              <div class="vault-toolbar__title">
+                <span id="vaultFolderName" class="vault-toolbar__name"
+                  >No folder selected</span
+                >
+              </div>
+              <div class="vault-toolbar__actions">
+                <button id="vaultPickBtn" class="settings-btn" type="button">
+                  Select folder
+                </button>
+                <button
+                  id="vaultRefreshBtn"
+                  class="settings-btn settings-btn--secondary"
+                  type="button"
+                >
+                  Refresh
+                </button>
+              </div>
             </div>
-            <p
-              id="vaultStatus"
-              class="options-hint options-hint--inline"
-              aria-live="polite"
-            ></p>
           </section>
 
           <div class="vault-layout">
-            <div class="vault-list-panel">
-              <div class="vault-panel-header">
-                <h3 class="vault-panel-title">Files</h3>
+            <div class="vault-files">
+              <div class="vault-files-header">
+                <span class="options-pane-label">Files</span>
               </div>
+              <input
+                id="vaultFileSearch"
+                class="vault-file-search"
+                type="text"
+                placeholder="Search files"
+                spellcheck="false"
+              />
               <ul
                 id="vaultFileList"
-                class="vault-file-list"
+                class="vault-file-list vault-file-list--compact"
                 aria-label="Vault files"
               ></ul>
             </div>
-            <div class="vault-editor-panel">
-              <div class="vault-panel-header vault-panel-header--editor">
+            <div id="vaultEditorRoot" class="options-editor-root vault-editor-root">
+              <div class="vault-editor-header">
                 <span id="vaultFileTitle" class="vault-file-title"
                   >Select a file to start editing</span
                 >
@@ -540,18 +546,38 @@
                   Save
                 </button>
               </div>
-              <div class="vault-editor-wrap">
-                <textarea
-                  id="vaultEditorInput"
-                  class="vault-editor-input"
-                  placeholder="# Open a file to edit its contents..."
-                  spellcheck="true"
-                ></textarea>
-                <div
-                  id="vaultEditorPreview"
-                  class="vault-editor-preview markdown-body"
-                  aria-live="polite"
-                ></div>
+              <div id="vaultEditorWrap" class="options-editor-wrap">
+                <div class="options-editor-pane">
+                  <label class="options-pane-label" for="vaultEditorInput"
+                    >Source</label
+                  >
+                  <div class="options-editor-caret-wrap">
+                    <textarea
+                      id="vaultEditorInput"
+                      placeholder="# Open a file to edit its contents..."
+                      spellcheck="true"
+                    ></textarea>
+                    <div
+                      id="vaultCaretMirror"
+                      class="options-editor-caret-mirror"
+                      aria-hidden="true"
+                    ></div>
+                    <div
+                      id="vaultFakeCaret"
+                      class="options-editor-fake-caret"
+                      aria-hidden="true"
+                    ></div>
+                  </div>
+                </div>
+                <div id="vaultEditorResizer" class="options-editor-resizer"></div>
+                <div class="options-preview-pane">
+                  <span class="options-pane-label">Preview</span>
+                  <div
+                    id="vaultEditorPreview"
+                    class="vault-editor-preview markdown-body"
+                    aria-live="polite"
+                  ></div>
+                </div>
               </div>
             </div>
           </div>

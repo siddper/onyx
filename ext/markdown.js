@@ -61,7 +61,7 @@
   function parseBlock(line, nextLines, output) {
     const trimmed = line.trim();
     if (!trimmed) {
-      output.push("");
+      output.push('<p class="markdown-empty">&nbsp;</p>');
       return 0;
     }
 
