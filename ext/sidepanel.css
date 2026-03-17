@@ -471,7 +471,6 @@ body.pane-headers-hidden .preview-pane {
     line-height: var(--line-height, 1.6);
 }
 
-
 .markdown-body h1 {
     font-size: 1.75em;
     font-weight: 700;
@@ -510,6 +509,37 @@ body.pane-headers-hidden .preview-pane {
 .markdown-body .markdown-empty {
     margin: 0;
     min-height: 1em;
+}
+
+.markdown-body .markdown-checkbox {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 0.9em;
+    height: 0.9em;
+    border: 0.11em solid var(--muted);
+    border-radius: 999px;
+    margin-right: 0.2em;
+    transform: translateY(0.06em);
+    position: relative;
+}
+
+.markdown-body .markdown-checkbox.is-checked {
+    border-color: var(--muted);
+    background: var(--muted);
+}
+
+.markdown-body .markdown-task {
+    list-style: none;
+    padding-left: 0;
+}
+
+.markdown-body .markdown-task::marker {
+    content: "";
+}
+
+.markdown-body .markdown-task .markdown-checkbox {
+    margin-left: -1.5em;
 }
 
 .markdown-body strong {

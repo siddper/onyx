@@ -17,6 +17,10 @@
   function parseInline(text) {
     const safe = escapeHtml(text);
     return safe
+      .replace(/^(\[\s\]|\[x\]|\[X\])\s+/, function (m) {
+        const checked = m.toLowerCase().startsWith("[x]");
+        return '<span class="markdown-checkbox' + (checked ? " is-checked" : "") + '" role="checkbox" aria-checked="' + (checked ? "true" : "false") + '"></span> ';
+      })
       .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
       .replace(/__(.+?)__/g, "<strong>$1</strong>")
       .replace(/\*(.+?)\*/g, "<em>$1</em>")
@@ -39,7 +43,7 @@
     const stack = [root];
     for (const item of items) {
       while (stack.length > 1 && stack[stack.length - 1].indent >= item.indent) stack.pop();
-      const node = { indent: item.indent, content: item.content, children: [] };
+      const node = { indent: item.indent, content: item.content, isTask: item.isTask, children: [] };
       stack[stack.length - 1].children.push(node);
       stack.push(node);
     }
@@ -53,7 +57,8 @@
         node.children.length > 0
           ? openTag + node.children.map(renderNode).join("") + closeTag
           : "";
-      return "<li>" + renderItemContent(node) + nested + "</li>";
+      const cls = node.isTask ? ' class="markdown-task"' : "";
+      return "<li" + cls + ">" + renderItemContent(node) + nested + "</li>";
     }
     return openTag + tree.map(renderNode).join("") + closeTag;
   }
@@ -91,12 +96,16 @@
 
     if ((match = trimmed.match(/^[-*+]\s+(.+)$/))) {
       const getIndent = (raw) => (raw.match(/^[\s]*/)[0].replace(/\t/g, "    ").length);
-      const items = [{ indent: getIndent(line), content: match[1] }];
+      const isTask = /^\[(\s|x|X)\]\s+/.test(match[1]);
+      const items = [{ indent: getIndent(line), content: match[1], isTask }];
       let j = 0;
       while (j < nextLines.length && /^\s*[-*+]\s+.+/.test(nextLines[j])) {
         const raw = nextLines[j];
         const bulletMatch = raw.match(/^(\s*)[-*+]\s+(.+)$/);
-        if (bulletMatch) items.push({ indent: getIndent(raw), content: bulletMatch[2] });
+        if (bulletMatch) {
+          const childTask = /^\[(\s|x|X)\]\s+/.test(bulletMatch[2]);
+          items.push({ indent: getIndent(raw), content: bulletMatch[2], isTask: childTask });
+        }
         j++;
       }
       output.push(renderListTree(items, "<ul>", "</ul>", (item) => parseInline(item.content)));
@@ -105,12 +114,16 @@
 
     if ((match = trimmed.match(/^\d+\.\s+(.+)$/))) {
       const getIndent = (raw) => (raw.match(/^[\s]*/)[0].replace(/\t/g, "    ").length);
-      const items = [{ indent: getIndent(line), content: match[1] }];
+      const isTask = /^\[(\s|x|X)\]\s+/.test(match[1]);
+      const items = [{ indent: getIndent(line), content: match[1], isTask }];
       let j = 0;
       while (j < nextLines.length && /^\s*\d+\.\s+.+/.test(nextLines[j])) {
         const raw = nextLines[j];
         const bulletMatch = raw.match(/^(\s*)\d+\.\s+(.+)$/);
-        if (bulletMatch) items.push({ indent: getIndent(raw), content: bulletMatch[2] });
+        if (bulletMatch) {
+          const childTask = /^\[(\s|x|X)\]\s+/.test(bulletMatch[2]);
+          items.push({ indent: getIndent(raw), content: bulletMatch[2], isTask: childTask });
+        }
         j++;
       }
       output.push(renderListTree(items, "<ol>", "</ol>", (item) => parseInline(item.content)));
