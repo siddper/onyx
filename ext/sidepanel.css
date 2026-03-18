@@ -375,6 +375,10 @@ body.pane-headers-hidden .preview-pane {
     caret-color: transparent;
 }
 
+#markdownInput::placeholder {
+    color: var(--muted);
+}
+
 #markdownInput::selection {
     background: var(--accent-hover);
     color: var(--ink);
