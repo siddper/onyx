@@ -356,7 +356,8 @@ const vaultRefreshBtn = document.getElementById("vaultRefreshBtn");
 const vaultFolderName = document.getElementById("vaultFolderName");
 const vaultFileList = document.getElementById("vaultFileList");
 const vaultFileSearch = document.getElementById("vaultFileSearch");
-const vaultFileTitle = document.getElementById("vaultFileTitle");
+const vaultNewFileBtn = document.getElementById("vaultNewFileBtn");
+const vaultFileTitleInput = document.getElementById("vaultFileTitleInput");
 const vaultEditorRoot = document.getElementById("vaultEditorRoot");
 const vaultEditorWrap = document.getElementById("vaultEditorWrap");
 const vaultEditorResizer = document.getElementById("vaultEditorResizer");
@@ -365,6 +366,7 @@ const vaultEditorPreview = document.getElementById("vaultEditorPreview");
 const vaultCaretMirror = document.getElementById("vaultCaretMirror");
 const vaultFakeCaret = document.getElementById("vaultFakeCaret");
 const vaultSaveBtn = document.getElementById("vaultSaveBtn");
+const vaultDeleteBtn = document.getElementById("vaultDeleteBtn");
 
 function setActiveTab(tabId, { updateHash = true } = {}) {
   const normalized = tabId === "editor" || tabId === "vault" ? tabId : "settings";
@@ -456,6 +458,76 @@ async function vaultSetStoredHandle(handle) {
 
 function vaultSetFolderLabel(name) {
   if (vaultFolderName) vaultFolderName.textContent = name || "No folder selected";
+}
+
+function vaultGetBasename(path) {
+  return String(path || "").split("/").pop() || "";
+}
+
+function vaultSetTitleInput(value, enabled) {
+  if (!vaultFileTitleInput) return;
+  vaultFileTitleInput.value = value || "";
+  vaultFileTitleInput.disabled = !enabled;
+}
+
+function vaultCloseFileView() {
+  vaultActiveFile = null;
+  vaultDirty = false;
+  if (vaultEditorInput) vaultEditorInput.value = "";
+  if (vaultEditorPreview) vaultEditorPreview.innerHTML = "";
+  vaultSetTitleInput("", false);
+  if (vaultSaveBtn) vaultSaveBtn.disabled = true;
+  if (vaultDeleteBtn) vaultDeleteBtn.disabled = true;
+  if (vaultDeleteBtn) vaultDeleteBtn.disabled = true;
+}
+
+function vaultBeginInlineRename(entryEl, file) {
+  if (!entryEl || !file) return;
+  const original = file.path;
+  if (entryEl.isContentEditable) return;
+  entryEl.contentEditable = "true";
+  entryEl.focus();
+  const range = document.createRange();
+  range.selectNodeContents(entryEl);
+  const sel = window.getSelection();
+  if (sel) {
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  const finish = async (apply) => {
+    entryEl.contentEditable = "false";
+    const nextName = entryEl.textContent.trim();
+    if (!apply || !nextName) {
+      entryEl.textContent = original;
+      return;
+    }
+    if (file.path === vaultActiveFile?.path) {
+      await vaultRenameActiveFile(nextName);
+    } else {
+      await vaultRenameFile(file, nextName);
+    }
+    vaultRenderFileList();
+  };
+
+  const onBlur = () => finish(true);
+  const onKey = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      entryEl.blur();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      finish(false);
+      entryEl.blur();
+    }
+  };
+  entryEl.addEventListener("blur", onBlur, { once: true });
+  entryEl.addEventListener("keydown", onKey);
+
+  const cleanup = () => {
+    entryEl.removeEventListener("keydown", onKey);
+  };
+  entryEl.addEventListener("blur", cleanup, { once: true });
 }
 
 function vaultUpdatePreview() {
@@ -593,11 +665,31 @@ function vaultRenderFileList() {
   visibleFiles.forEach((file) => {
     const item = document.createElement("li");
     item.className = "vault-file-item" + (vaultActiveFile?.path === file.path ? " is-active" : "");
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.textContent = file.path;
-    btn.addEventListener("click", () => vaultOpenFile(file));
-    item.appendChild(btn);
+    const entry = document.createElement("div");
+    entry.className = "vault-file-entry";
+    entry.setAttribute("role", "button");
+    entry.tabIndex = 0;
+    entry.textContent = file.path;
+    entry.dataset.path = file.path;
+    entry.addEventListener("click", () => {
+      if (entry.isContentEditable) return;
+      vaultOpenFile(file);
+    });
+    entry.addEventListener("dblclick", (e) => {
+      e.preventDefault();
+      vaultBeginInlineRename(entry, file);
+    });
+    entry.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !entry.isContentEditable) {
+        e.preventDefault();
+        vaultOpenFile(file);
+      }
+    });
+    entry.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      vaultShowFileMenu(e.clientX, e.clientY, file, entry);
+    });
+    item.appendChild(entry);
     vaultFileList.appendChild(item);
   });
 }
@@ -617,6 +709,162 @@ async function vaultCollectMarkdownFiles(dirHandle, prefix = "") {
     }
   }
   return entries;
+}
+
+async function vaultGetDirHandleForPath(dirPath) {
+  if (!vaultDirHandle) return null;
+  if (!dirPath) return vaultDirHandle;
+  const parts = dirPath.split("/").filter(Boolean);
+  let handle = vaultDirHandle;
+  for (const part of parts) {
+    handle = await handle.getDirectoryHandle(part);
+  }
+  return handle;
+}
+
+function vaultNormalizeFilename(name) {
+  const trimmed = String(name || "").trim();
+  if (!trimmed) return "";
+  if (trimmed.includes("/") || trimmed.includes("\\")) return "";
+  if (/\.(md|markdown)$/i.test(trimmed)) return trimmed;
+  return trimmed + ".md";
+}
+
+function vaultSplitPath(path) {
+  const parts = String(path || "").split("/");
+  const filename = parts.pop() || "";
+  const dir = parts.join("/");
+  return { dir, filename };
+}
+
+async function vaultRenameActiveFile(nextName) {
+  if (!vaultActiveFile || !vaultEditorInput) return;
+  const updated = await vaultRenameFile(vaultActiveFile, nextName, vaultEditorInput.value);
+  if (updated) {
+    vaultActiveFile = updated;
+    chrome.storage.local.set({ [VAULT_LAST_FILE_KEY]: updated.path });
+    vaultSetTitleInput(vaultGetBasename(updated.path), true);
+    vaultRenderFileList();
+  }
+}
+
+async function vaultRenameFile(file, nextName, contentsOverride) {
+  if (!file?.handle) return null;
+  const normalized = vaultNormalizeFilename(nextName);
+  if (!normalized) return null;
+  const oldPath = file.path;
+  const { dir, filename } = vaultSplitPath(oldPath);
+  if (normalized === filename) return null;
+  const parentHandle = await vaultGetDirHandleForPath(dir);
+  if (!parentHandle) return null;
+  const newHandle = await parentHandle.getFileHandle(normalized, { create: true });
+  const content = typeof contentsOverride === "string" ? contentsOverride : await (await file.handle.getFile()).text();
+  const writable = await newHandle.createWritable();
+  await writable.write(content);
+  await writable.close();
+  await parentHandle.removeEntry(filename);
+  const newPath = dir ? `${dir}/${normalized}` : normalized;
+  const updated = { path: newPath, handle: newHandle };
+  const idx = vaultFiles.findIndex((item) => item.path === oldPath);
+  if (idx >= 0) vaultFiles[idx] = updated;
+  else vaultFiles.push(updated);
+  vaultFiles.sort((a, b) => a.path.localeCompare(b.path));
+  return updated;
+}
+
+async function vaultDeleteFile(file) {
+  if (!file?.handle) return;
+  const ok = window.confirm(`Delete ${file.path}? This cannot be undone.`);
+  if (!ok) return;
+  const { dir, filename } = vaultSplitPath(file.path);
+  const parentHandle = await vaultGetDirHandleForPath(dir);
+  if (!parentHandle) return;
+  await parentHandle.removeEntry(filename);
+  vaultFiles = vaultFiles.filter((item) => item.path !== file.path);
+  if (vaultActiveFile?.path === file.path) {
+    vaultCloseFileView();
+  }
+  const stored = await chrome.storage.local.get(VAULT_LAST_FILE_KEY);
+  if (stored[VAULT_LAST_FILE_KEY] === file.path) {
+    chrome.storage.local.set({ [VAULT_LAST_FILE_KEY]: "" });
+  }
+  vaultRenderFileList();
+}
+
+function vaultShowFileMenu(x, y, file, buttonEl) {
+  const existing = document.getElementById("vaultFileMenu");
+  if (existing) existing.remove();
+  const menu = document.createElement("div");
+  menu.id = "vaultFileMenu";
+  menu.className = "vault-file-menu";
+
+  const mkItem = (label, onClick) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "vault-file-menu__item";
+    btn.textContent = label;
+    btn.addEventListener("click", () => {
+      onClick();
+      menu.remove();
+    });
+    return btn;
+  };
+
+  menu.appendChild(mkItem("Rename", async () => {
+    if (buttonEl) {
+      vaultBeginInlineRename(buttonEl, file);
+      return;
+    }
+  }));
+  menu.appendChild(mkItem("Delete", async () => {
+    await vaultDeleteFile(file);
+  }));
+
+  document.body.appendChild(menu);
+  const rect = menu.getBoundingClientRect();
+  const pad = 8;
+  let left = x;
+  let top = y;
+  if (left + rect.width > window.innerWidth - pad) left = window.innerWidth - rect.width - pad;
+  if (top + rect.height > window.innerHeight - pad) top = window.innerHeight - rect.height - pad;
+  if (left < pad) left = pad;
+  if (top < pad) top = pad;
+  menu.style.left = left + "px";
+  menu.style.top = top + "px";
+  const close = () => menu.remove();
+  setTimeout(() => {
+    document.addEventListener("click", close, { once: true });
+    document.addEventListener("scroll", close, { once: true, capture: true });
+  }, 0);
+}
+
+async function vaultCreateNewFile() {
+  if (!vaultDirHandle) return;
+  const base = "Untitled";
+  let finalName = `${base}.md`;
+  let counter = 1;
+  while (true) {
+    try {
+      await vaultDirHandle.getFileHandle(finalName);
+      finalName = `${base} ${counter}.md`;
+      counter += 1;
+    } catch (err) {
+      break;
+    }
+  }
+  const handle = await vaultDirHandle.getFileHandle(finalName, { create: true });
+  const writable = await handle.createWritable();
+  await writable.write("");
+  await writable.close();
+  const newFile = { path: finalName, handle };
+  vaultFiles.push(newFile);
+  vaultFiles.sort((a, b) => a.path.localeCompare(b.path));
+  vaultRenderFileList();
+  await vaultOpenFile(newFile);
+  if (vaultFileTitleInput) {
+    vaultFileTitleInput.focus();
+    vaultFileTitleInput.select();
+  }
 }
 
 async function vaultLoadFiles() {
@@ -639,7 +887,8 @@ async function vaultOpenFile(file) {
   vaultActiveFile = file;
   vaultDirty = false;
   if (vaultSaveBtn) vaultSaveBtn.disabled = true;
-  if (vaultFileTitle) vaultFileTitle.textContent = file.path;
+  if (vaultDeleteBtn) vaultDeleteBtn.disabled = false;
+  vaultSetTitleInput(vaultGetBasename(file.path), true);
   chrome.storage.local.set({ [VAULT_LAST_FILE_KEY]: file.path });
   vaultUpdatePreview();
   vaultScheduleCaretUpdate();
@@ -691,7 +940,7 @@ async function vaultPickDirectory() {
     vaultDirty = false;
     if (vaultEditorInput) vaultEditorInput.value = "";
     if (vaultEditorPreview) vaultEditorPreview.innerHTML = "";
-    if (vaultFileTitle) vaultFileTitle.textContent = "Select a file to start editing";
+    vaultSetTitleInput("", false);
     if (vaultSaveBtn) vaultSaveBtn.disabled = true;
     await vaultLoadFiles();
   } catch (err) {}
@@ -756,14 +1005,50 @@ function initVaultTab() {
     vaultEditorInput.addEventListener("scroll", vaultOnSourceScrollSync);
     vaultEditorInput.addEventListener("scroll", vaultScheduleCaretUpdate);
   }
-  if (vaultEditorPreview) vaultEditorPreview.addEventListener("scroll", vaultOnPreviewScrollSync);
+  if (vaultFileTitleInput) {
+    vaultFileTitleInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        vaultFileTitleInput.blur();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        vaultSetTitleInput(vaultGetBasename(vaultActiveFile?.path), !!vaultActiveFile);
+        vaultFileTitleInput.blur();
+      }
+    });
+    vaultFileTitleInput.addEventListener("blur", () => {
+      if (!vaultActiveFile) return;
+      vaultRenameActiveFile(vaultFileTitleInput.value);
+    });
+  }
+  if (vaultEditorPreview) {
+    vaultEditorPreview.addEventListener("scroll", vaultOnPreviewScrollSync);
+    vaultEditorPreview.addEventListener("click", (e) => {
+      handlePreviewCheckboxToggle(e, vaultEditorInput, vaultUpdatePreview, () => {
+        vaultDirty = true;
+        if (vaultSaveBtn) vaultSaveBtn.disabled = false;
+        vaultScheduleCaretUpdate();
+      });
+    });
+  }
   if (vaultSaveBtn) vaultSaveBtn.addEventListener("click", vaultSaveActiveFile);
+  if (vaultDeleteBtn) vaultDeleteBtn.addEventListener("click", () => vaultDeleteFile(vaultActiveFile));
+  if (vaultNewFileBtn) vaultNewFileBtn.addEventListener("click", vaultCreateNewFile);
   if (vaultFileSearch) {
     vaultFileSearch.addEventListener("input", () => vaultRenderFileList());
   }
   initVaultEditorResizer();
   vaultRestoreDirectory();
 }
+
+document.addEventListener("keydown", (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+    if (!vaultTabPanel || vaultTabPanel.hidden) return;
+    e.preventDefault();
+    if (!vaultActiveFile || !vaultEditorInput) return;
+    vaultSaveActiveFile();
+  }
+});
 
 let optionsCountDisplay = "both";
 let optionsSyncScrollEnabled = false;

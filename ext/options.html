@@ -518,6 +518,9 @@
             <div class="vault-files">
               <div class="vault-files-header">
                 <span class="options-pane-label">Files</span>
+                <button id="vaultNewFileBtn" class="settings-btn settings-btn--compact" type="button">
+                  New file
+                </button>
               </div>
               <input
                 id="vaultFileSearch"
@@ -534,9 +537,14 @@
             </div>
             <div id="vaultEditorRoot" class="options-editor-root vault-editor-root">
               <div class="vault-editor-header">
-                <span id="vaultFileTitle" class="vault-file-title"
-                  >Select a file to start editing</span
-                >
+                <input
+                  id="vaultFileTitleInput"
+                  class="vault-file-title-input"
+                  type="text"
+                  placeholder="Select a file to start editing"
+                  spellcheck="false"
+                  disabled
+                />
                 <button
                   id="vaultSaveBtn"
                   class="settings-btn"
@@ -544,6 +552,14 @@
                   disabled
                 >
                   Save
+                </button>
+                <button
+                  id="vaultDeleteBtn"
+                  class="settings-btn settings-btn--secondary"
+                  type="button"
+                  disabled
+                >
+                  Delete
                 </button>
               </div>
               <div id="vaultEditorWrap" class="options-editor-wrap">

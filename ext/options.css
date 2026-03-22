@@ -241,21 +241,21 @@ input {
 
 #optionsMarkdownInput,
 #vaultEditorInput {
-  width: 100%;
-  height: 100%;
-  min-height: 120px;
-  border: none;
-  resize: none;
-  font-family: var(--font-editor);
-  font-size: calc(var(--font-size) * 1.077);
-  line-height: var(--line-height, 1.6);
-  background: transparent;
-  color: var(--ink);
-  caret-color: transparent;
+    width: 100%;
+    height: 100%;
+    min-height: 120px;
+    border: none;
+    resize: none;
+    font-family: var(--font-editor);
+    font-size: calc(var(--font-size) * 1.077);
+    line-height: var(--line-height, 1.6);
+    background: transparent;
+    color: var(--ink);
+    caret-color: transparent;
 }
 
 #optionsMarkdownInput::placeholder {
-  color: var(--muted);
+    color: var(--muted);
 }
 
 #optionsMarkdownInput::selection,
@@ -845,8 +845,9 @@ input {
     background: var(--accent-hover);
 }
 
-.settings-btn--secondary {
-    margin-top: 4px;
+.settings-btn--compact {
+    padding: 4px 8px;
+    font-size: calc(var(--font-size) * 0.846);
 }
 
 .settings-apply-row {
@@ -919,6 +920,14 @@ input {
     justify-content: space-between;
 }
 
+.vault-files-header .settings-btn--secondary {
+    margin-top: 0;
+}
+
+.vault-files-header .settings-btn--compact {
+    margin-top: 0;
+}
+
 .vault-editor-root {
     min-width: 0;
     display: grid;
@@ -931,6 +940,28 @@ input {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+}
+
+.vault-file-title-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    border-radius: var(--radius);
+    padding: 6px 8px;
+    font-size: var(--font-size);
+    font-weight: 600;
+    background: var(--panel-strong);
+    color: var(--ink);
+    height: 100%;
+}
+
+.vault-file-title-input::placeholder {
+    color: var(--muted);
+}
+
+.vault-file-title-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .vault-file-title {
@@ -963,34 +994,63 @@ input {
     color: var(--ink);
 }
 
-.vault-file-list--compact .vault-file-item button {
-    padding: 6px 8px;
-    border-radius: calc(var(--radius) - 2px);
-    font-size: calc(var(--font-size) * 0.846);
+ .vault-file-list--compact .vault-file-entry {
+  padding: 6px 8px;
+  border-radius: calc(var(--radius) - 2px);
+  font-size: calc(var(--font-size) * 0.846);
 }
 
-.vault-file-item button {
-    width: 100%;
-    text-align: left;
-    border: none;
-    background: transparent;
-    color: var(--ink);
-    cursor: pointer;
-    transition: background 0.2s ease;
+.vault-file-entry {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.2s ease;
+  padding: 6px 8px;
+  border-radius: calc(var(--radius) - 2px);
+  font-size: calc(var(--font-size) * 0.846);
 }
 
-.vault-file-item button:hover {
-    background: var(--panel-strong);
+.vault-file-entry:hover {
+  background: var(--panel-strong);
 }
 
-.vault-file-item.is-active button {
-    background: var(--accent);
+.vault-file-item.is-active .vault-file-entry {
+  background: var(--accent);
 }
 
 .vault-file-empty {
     font-size: calc(var(--font-size) * 0.846);
     color: var(--muted);
     padding: 4px 2px;
+}
+
+.vault-file-menu {
+    position: fixed;
+    z-index: 1200;
+    background: var(--panel);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 4px;
+    min-width: 140px;
+}
+
+.vault-file-menu__item {
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    text-align: left;
+    padding: 6px 10px;
+    border-radius: calc(var(--radius) - 2px);
+    cursor: pointer;
+    font-size: calc(var(--font-size) * 0.923);
+}
+
+.vault-file-menu__item:hover {
+    background: var(--panel-strong);
 }
 
 @media (max-width: 1100px) {
