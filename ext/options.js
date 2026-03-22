@@ -325,6 +325,8 @@ const caretMovementSelect = document.getElementById("caretMovementSelect");
 const defaultVaultInput = document.getElementById("defaultVault");
 const defaultFolderInput = document.getElementById("defaultFolder");
 const countDisplaySelect = document.getElementById("countDisplaySelect");
+const syntaxHighlightToggle = document.getElementById("syntaxHighlightToggle");
+const vaultAutosaveToggle = document.getElementById("vaultAutosaveToggle");
 const importObsidianNoteName = document.getElementById("importObsidianNoteName");
 const importObsidianFolder = document.getElementById("importObsidianFolder");
 const exportTemplateInput = document.getElementById("exportTemplateInput");
@@ -342,6 +344,7 @@ const optionsEditorRoot = document.getElementById("optionsEditorRoot");
 const optionsEditorWrap = document.getElementById("optionsEditorWrap");
 const optionsEditorResizer = document.getElementById("optionsEditorResizer");
 const optionsMarkdownInput = document.getElementById("optionsMarkdownInput");
+const optionsSyntaxMirror = document.getElementById("optionsSyntaxMirror");
 const optionsMarkdownPreview = document.getElementById("optionsMarkdownPreview");
 const optionsSourceCount = document.getElementById("optionsSourceCount");
 const optionsCaretMirror = document.getElementById("optionsCaretMirror");
@@ -365,10 +368,12 @@ const vaultLayout = document.querySelector(".vault-layout");
 const vaultEditorWrap = document.getElementById("vaultEditorWrap");
 const vaultEditorResizer = document.getElementById("vaultEditorResizer");
 const vaultEditorInput = document.getElementById("vaultEditorInput");
+const vaultSyntaxMirror = document.getElementById("vaultSyntaxMirror");
 const vaultEditorPreview = document.getElementById("vaultEditorPreview");
 const vaultCaretMirror = document.getElementById("vaultCaretMirror");
 const vaultFakeCaret = document.getElementById("vaultFakeCaret");
 const vaultSaveBtn = document.getElementById("vaultSaveBtn");
+const vaultExportBtn = document.getElementById("vaultExportBtn");
 const vaultDeleteBtn = document.getElementById("vaultDeleteBtn");
 
 function setActiveTab(tabId, { updateHash = true } = {}) {
@@ -410,6 +415,8 @@ let vaultDirHandle = null;
 let vaultFiles = [];
 let vaultActiveFile = null;
 let vaultDirty = false;
+let vaultAutosaveEnabled = true;
+let vaultAutosaveTimeout = null;
 let vaultSyncScrollInProgress = false;
 let vaultCaretBlinkTimer = null;
 let vaultCaretVisible = true;
@@ -480,6 +487,7 @@ function vaultCloseFileView() {
   if (vaultEditorPreview) vaultEditorPreview.innerHTML = "";
   vaultSetTitleInput("", false);
   if (vaultSaveBtn) vaultSaveBtn.disabled = true;
+  if (vaultExportBtn) vaultExportBtn.disabled = true;
   if (vaultDeleteBtn) vaultDeleteBtn.disabled = true;
   if (vaultDeleteBtn) vaultDeleteBtn.disabled = true;
 }
@@ -543,6 +551,7 @@ function vaultSetFilesVisibility(hidden) {
 }
 
 function vaultUpdatePreview() {
+  updateSyntaxMirror(vaultEditorInput, vaultSyntaxMirror);
   if (!vaultEditorPreview || !vaultEditorInput) return;
   if (vaultEditorWrap?.classList.contains("preview-hidden")) return;
   vaultEditorPreview.innerHTML = typeof renderMarkdown === "function"
@@ -899,6 +908,7 @@ async function vaultOpenFile(file) {
   vaultActiveFile = file;
   vaultDirty = false;
   if (vaultSaveBtn) vaultSaveBtn.disabled = true;
+  if (vaultExportBtn) vaultExportBtn.disabled = false;
   if (vaultDeleteBtn) vaultDeleteBtn.disabled = false;
   vaultSetTitleInput(vaultGetBasename(file.path), true);
   chrome.storage.local.set({ [VAULT_LAST_FILE_KEY]: file.path });
@@ -931,6 +941,28 @@ async function vaultSaveActiveFile() {
       }, 1500);
     }
   } catch (err) {}
+}
+
+function vaultScheduleAutosave() {
+  if (!vaultAutosaveEnabled) return;
+  clearTimeout(vaultAutosaveTimeout);
+  vaultAutosaveTimeout = setTimeout(() => {
+    vaultAutosaveTimeout = null;
+    vaultSaveActiveFile();
+  }, 800);
+}
+
+async function vaultExportToEditor() {
+  if (!vaultActiveFile || !vaultEditorInput) return;
+  const title = vaultGetBasename(vaultActiveFile.path).replace(/\.(md|markdown)$/i, "");
+  const payload = {
+    vault: optionsVaultInput?.value?.trim() ?? "",
+    title,
+    folder: "",
+    content: vaultEditorInput.value
+  };
+  await chrome.storage.sync.set({ [STORAGE_KEY]: payload });
+  setActiveTab("editor");
 }
 
 async function vaultPickDirectory() {
@@ -1001,6 +1033,7 @@ function initVaultTab() {
       if (vaultSaveBtn) vaultSaveBtn.disabled = false;
       vaultUpdatePreview();
       vaultScheduleCaretUpdate();
+      vaultScheduleAutosave();
     });
     vaultEditorInput.addEventListener("keydown", vaultHandleEditorKeydown);
     vaultEditorInput.addEventListener("click", vaultScheduleCaretUpdate);
@@ -1016,6 +1049,7 @@ function initVaultTab() {
     });
     vaultEditorInput.addEventListener("scroll", vaultOnSourceScrollSync);
     vaultEditorInput.addEventListener("scroll", vaultScheduleCaretUpdate);
+    vaultEditorInput.addEventListener("scroll", () => updateSyntaxMirror(vaultEditorInput, vaultSyntaxMirror));
   }
   if (vaultFileTitleInput) {
     vaultFileTitleInput.addEventListener("keydown", (e) => {
@@ -1044,6 +1078,7 @@ function initVaultTab() {
     });
   }
   if (vaultSaveBtn) vaultSaveBtn.addEventListener("click", vaultSaveActiveFile);
+  if (vaultExportBtn) vaultExportBtn.addEventListener("click", vaultExportToEditor);
   if (vaultDeleteBtn) vaultDeleteBtn.addEventListener("click", () => vaultDeleteFile(vaultActiveFile));
   if (vaultNewFileBtn) vaultNewFileBtn.addEventListener("click", vaultCreateNewFile);
   if (vaultToggleFilesBtn) {
@@ -1136,6 +1171,7 @@ function optionsUpdateCounts() {
 }
 
 function optionsUpdatePreview() {
+  updateSyntaxMirror(optionsMarkdownInput, optionsSyntaxMirror);
   if (!optionsMarkdownPreview || !optionsMarkdownInput || !optionsEditorWrap) return;
   if (optionsEditorWrap.classList.contains("preview-hidden")) return;
   optionsMarkdownPreview.innerHTML = typeof renderMarkdown === "function"
@@ -1184,6 +1220,37 @@ function optionsEscapeHtml(s) {
   const div = document.createElement("div");
   div.textContent = s;
   return div.innerHTML;
+}
+
+let optionsSyntaxHighlight = false;
+
+function highlightMarkdownSyntax(text) {
+  const lines = String(text || "").split("\n");
+  const highlighted = lines.map((line) => {
+    let escaped = optionsEscapeHtml(line);
+    escaped = escaped.replace(/^(#{1,6})(\s*)/, (m, hashes, space) => `<span class="md-syntax">${hashes}</span>${space}`);
+    escaped = escaped.replace(/^(>)(\s*)/, (m, sym, space) => `<span class="md-syntax">${sym}</span>${space}`);
+    escaped = escaped.replace(/^(\s*)([-*+]|\d+\.)\s+/, (m, ws, marker) => `${ws}<span class="md-syntax">${marker}</span> `);
+    escaped = escaped.replace(/\[( |x|X)\]/g, (m) => `<span class="md-syntax">${m}</span>`);
+    escaped = escaped.replace(/(\*\*|__|`|~~|==|\*|_|\[|\]|\(|\))/g, '<span class="md-syntax">$1</span>');
+    return escaped;
+  });
+  let html = highlighted.join("<br>");
+  if (text.endsWith("\n")) html += "<br>";
+  return html;
+}
+
+function updateSyntaxMirror(textarea, mirror) {
+  if (!textarea || !mirror) return;
+  if (!optionsSyntaxHighlight) {
+    mirror.innerHTML = "";
+    mirror.hidden = true;
+    return;
+  }
+  mirror.hidden = false;
+  mirror.innerHTML = highlightMarkdownSyntax(textarea.value);
+  mirror.scrollTop = textarea.scrollTop;
+  mirror.scrollLeft = textarea.scrollLeft;
 }
 
 function optionsGetCaretCoordinates() {
@@ -1999,6 +2066,7 @@ async function initOptionsEditor() {
   });
   optionsMarkdownInput.addEventListener("scroll", optionsOnSourceScrollSync);
   optionsMarkdownInput.addEventListener("scroll", optionsScheduleCaretUpdate);
+  optionsMarkdownInput.addEventListener("scroll", () => updateSyntaxMirror(optionsMarkdownInput, optionsSyntaxMirror));
   optionsMarkdownPreview.addEventListener("scroll", optionsOnPreviewScrollSync);
   [optionsVaultInput, optionsTitleInput, optionsFolderInput].forEach((el) => {
     if (!el) return;
@@ -2249,6 +2317,10 @@ async function loadSettings() {
   previewToggle.checked = s.previewEnabled !== false;
   if (showPaneHeadersToggle) showPaneHeadersToggle.checked = s.showPaneHeaders !== false;
   if (saveScrollToggle) saveScrollToggle.checked = s.saveScrollPosition !== false;
+  if (vaultAutosaveToggle) vaultAutosaveToggle.checked = s.vaultAutosave !== false;
+  vaultAutosaveEnabled = s.vaultAutosave !== false;
+  if (syntaxHighlightToggle) syntaxHighlightToggle.checked = s.syntaxHighlighting === true;
+  optionsSyntaxHighlight = s.syntaxHighlighting === true;
   const syncScrollToggle = document.getElementById("syncScrollToggle");
   if (syncScrollToggle) syncScrollToggle.checked = s.syncScroll === true;
   const minimalModeToggle = document.getElementById("minimalModeToggle");
@@ -2335,6 +2407,22 @@ if (showPaneHeadersToggle) {
 if (saveScrollToggle) {
   saveScrollToggle.addEventListener("change", () => {
     saveSettings({ saveScrollPosition: saveScrollToggle.checked });
+  });
+}
+
+if (vaultAutosaveToggle) {
+  vaultAutosaveToggle.addEventListener("change", () => {
+    vaultAutosaveEnabled = vaultAutosaveToggle.checked;
+    saveSettings({ vaultAutosave: vaultAutosaveToggle.checked });
+  });
+}
+
+if (syntaxHighlightToggle) {
+  syntaxHighlightToggle.addEventListener("change", () => {
+    optionsSyntaxHighlight = syntaxHighlightToggle.checked;
+    saveSettings({ syntaxHighlighting: syntaxHighlightToggle.checked });
+    updateSyntaxMirror(optionsMarkdownInput, optionsSyntaxMirror);
+    updateSyntaxMirror(vaultEditorInput, vaultSyntaxMirror);
   });
 }
 
@@ -2538,6 +2626,16 @@ chrome.storage.onChanged.addListener((changes, area) => {
       optionsUpdateCounts();
     }
     if (s.syncScroll !== undefined) optionsSyncScrollEnabled = s.syncScroll === true;
+    if (s.syntaxHighlighting !== undefined) {
+      optionsSyntaxHighlight = s.syntaxHighlighting === true;
+      if (syntaxHighlightToggle) syntaxHighlightToggle.checked = optionsSyntaxHighlight;
+      updateSyntaxMirror(optionsMarkdownInput, optionsSyntaxMirror);
+      updateSyntaxMirror(vaultEditorInput, vaultSyntaxMirror);
+    }
+    if (s.vaultAutosave !== undefined) {
+      vaultAutosaveEnabled = s.vaultAutosave !== false;
+      if (vaultAutosaveToggle) vaultAutosaveToggle.checked = vaultAutosaveEnabled;
+    }
     if (s.caretStyle) {
       optionsCaretStyle = s.caretStyle;
       if (optionsFakeCaret) optionsFakeCaret.dataset.style = optionsCaretStyle;

@@ -1,749 +1,943 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Onyx</title>
-    <link rel="stylesheet" href="options.css" />
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap");
-    </style>
-    <style id="customFonts"></style>
-  </head>
-  <body>
-    <div class="options-page">
-      <h1 class="options-title">
-        <img src="icon.png" />
-        Onyx
-      </h1>
-      <div class="options-layout">
-        <div class="options-tabs" role="tablist" aria-label="Options tabs">
-          <button
-            id="settingsTabBtn"
-            class="options-tab is-active"
-            type="button"
-            role="tab"
-            aria-controls="settingsTabPanel"
-            aria-selected="true"
-          >
-            Settings
-          </button>
-          <button
-            id="vaultTabBtn"
-            class="options-tab"
-            type="button"
-            role="tab"
-            aria-controls="vaultTabPanel"
-            aria-selected="false"
-          >
-            Vault
-          </button>
-          <button
-            id="editorTabBtn"
-            class="options-tab"
-            type="button"
-            role="tab"
-            aria-controls="editorTabPanel"
-            aria-selected="false"
-          >
-            Editor
-          </button>
-        </div>
-
-        <div
-          id="settingsTabPanel"
-          class="options-tab-panel"
-          role="tabpanel"
-          aria-labelledby="settingsTabBtn"
-        >
-          <section class="options-section">
-            <h2 class="options-heading">Themes</h2>
-            <p class="options-hint">
-              Choose a built-in theme or import a custom theme from a JSON file.
-              Docs are available
-              <a href="https://tryonyx.vercel.app/docs/themes" target="_blank"
-                >here</a
-              >.
-            </p>
-            <div class="settings-block">
-              <label class="settings-label" for="themeSelect">Theme</label>
-              <select id="themeSelect" class="settings-select">
-                <option value="system">System</option>
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-                <option value="oled">OLED</option>
-                <option value="cyberpunk">Cyberpunk</option>
-                <option value="sepia">Sepia</option>
-                <option value="nord">Nord</option>
-                <option value="dracula">Dracula</option>
-                <option value="tokyo-night">Tokyo Night</option>
-                <option value="blueberry">Blueberry</option>
-                <option value="monokai">Monokai</option>
-              </select>
-            </div>
-            <div class="settings-block">
-              <input
-                id="themeFileInput"
-                type="file"
-                accept=".json,application/json"
-                hidden
-              />
-              <button
-                type="button"
-                id="importThemeBtn"
-                class="settings-btn settings-btn--secondary"
-              >
-                Import theme
-              </button>
-              <ul
-                id="customThemesList"
-                class="custom-themes-list"
-                aria-label="Imported custom themes"
-              ></ul>
-            </div>
-          </section>
-
-          <section class="options-section">
-            <h2 class="options-heading">Caret</h2>
-            <p class="options-hint">
-              Customize the caret's appearance in the editor.
-            </p>
-            <div class="settings-block">
-              <label class="settings-label" for="caretStyleSelect"
-                >Caret shape</label
-              >
-              <select id="caretStyleSelect" class="settings-select">
-                <option value="line">Line</option>
-                <option value="block">Block</option>
-                <option value="underline">Underline</option>
-              </select>
-            </div>
-            <div class="settings-block">
-              <label class="settings-label" for="caretAnimationSelect"
-                >Caret animation</label
-              >
-              <select id="caretAnimationSelect" class="settings-select">
-                <option value="solid">Solid</option>
-                <option value="blink">Blink</option>
-                <option value="phase">Phase</option>
-                <option value="expand">Expand</option>
-              </select>
-            </div>
-            <div class="settings-block">
-              <label class="settings-label" for="caretMovementSelect"
-                >Caret movement</label
-              >
-              <select id="caretMovementSelect" class="settings-select">
-                <option value="instant">Instant</option>
-                <option value="smooth">Smooth</option>
-              </select>
-            </div>
-          </section>
-
-          <section id="section-fonts" class="options-section">
-            <h2 class="options-heading">Fonts</h2>
-            <p class="options-hint">
-              Choose a preset or select “Custom” to paste an @import URL and/or
-              provide a font family name.
-            </p>
-
-            <div class="settings-block">
-              <label class="settings-label" for="interfaceFontSelect"
-                >Interface font</label
-              >
-              <select id="interfaceFontSelect" class="settings-select"></select>
-              <div id="interfaceFontCustom" class="settings-font-custom" hidden>
-                <input
-                  id="interfaceFontUrl"
-                  class="settings-input"
-                  type="text"
-                  placeholder="Paste @import url(...) or Google Fonts link"
-                />
-                <input
-                  id="interfaceFontFamily"
-                  class="settings-input"
-                  type="text"
-                  placeholder="Font family name (e.g. Inter, Roboto)"
-                />
-              </div>
-            </div>
-
-            <div class="settings-block">
-              <label class="settings-label" for="editorFontSelect"
-                >Editor font</label
-              >
-              <select id="editorFontSelect" class="settings-select"></select>
-              <div id="editorFontCustom" class="settings-font-custom" hidden>
-                <input
-                  id="editorFontUrl"
-                  class="settings-input"
-                  type="text"
-                  placeholder="Paste @import url(...) or Google Fonts link"
-                />
-                <input
-                  id="editorFontFamily"
-                  class="settings-input"
-                  type="text"
-                  placeholder="Font family name (e.g. JetBrains Mono)"
-                />
-              </div>
-            </div>
-
-            <div class="settings-block">
-              <label class="settings-label" for="codeFontSelect"
-                >Monospace / code font</label
-              >
-              <select id="codeFontSelect" class="settings-select"></select>
-              <div id="codeFontCustom" class="settings-font-custom" hidden>
-                <input
-                  id="codeFontUrl"
-                  class="settings-input"
-                  type="text"
-                  placeholder="Paste @import url(...) or Google Fonts link"
-                />
-                <input
-                  id="codeFontFamily"
-                  class="settings-input"
-                  type="text"
-                  placeholder="Font family name (e.g. Fira Code)"
-                />
-              </div>
-            </div>
-          </section>
-
-          <section class="options-section">
-            <h2 class="options-heading">Import into Obsidian</h2>
-            <p class="options-hint">
-              Defaults used when you right-click selected text and choose
-              “Import selection to Obsidian”.
-            </p>
-            <div class="settings-block">
-              <label class="settings-label" for="importObsidianNoteName"
-                >Import note name</label
-              >
-              <input
-                id="importObsidianNoteName"
-                class="settings-input"
-                type="text"
-                placeholder="Import From Onyx"
-              />
-            </div>
-            <div class="settings-block">
-              <label class="settings-label" for="importObsidianFolder"
-                >Folder</label
-              >
-              <input
-                id="importObsidianFolder"
-                class="settings-input"
-                type="text"
-                placeholder="Root (blank for vault root)"
-              />
-            </div>
-          </section>
-
-          <section id="section-saved-vaults" class="options-section">
-            <h2 class="options-heading">Saved vaults</h2>
-            <p class="options-hint">
-              Vaults you add here appear in the side panel dropdown. Choose one
-              when exporting to Obsidian.
-            </p>
-            <div class="settings-block">
-              <label class="settings-label" for="newVaultInput"
-                >Add vault</label
-              >
-              <div class="settings-inline-row">
-                <input
-                  id="newVaultInput"
-                  class="settings-input"
-                  type="text"
-                  placeholder="Vault name"
-                />
-                <button type="button" id="addVaultBtn" class="settings-btn">
-                  Add
-                </button>
-              </div>
-            </div>
-            <ul
-              id="savedVaultsList"
-              class="saved-vaults-list"
-              aria-label="Saved vaults"
-            ></ul>
-          </section>
-
-          <section class="options-section">
-            <h2 class="options-heading">Export template</h2>
-            <p class="options-hint">
-              Prepended to the note when you click “Export to Obsidian”. Use
-              <code>{{date}}</code>, <code>{{time}}</code>, and
-              <code>{{title}}</code> as paremeters.
-            </p>
-            <div class="settings-block">
-              <label class="settings-label" for="exportTemplateInput"
-                >Template</label
-              >
-              <textarea
-                id="exportTemplateInput"
-                class="settings-textarea"
-                rows="6"
-                placeholder="---&#10;tags: [web-clip]&#10;date: {{date}}&#10;---&#10;&#10;"
-                spellcheck="false"
-              ></textarea>
-            </div>
-          </section>
-
-          <section class="options-section">
-            <h2 class="options-heading">Custom CSS</h2>
-            <p class="options-hint">
-              CSS applied only to the side panel (not this Settings page).
-            </p>
-            <div class="settings-block">
-              <label class="settings-label" for="customCssInput"
-                >Custom CSS</label
-              >
-              <textarea
-                id="customCssInput"
-                class="settings-textarea"
-                rows="8"
-                placeholder=".app { }"
-                spellcheck="false"
-              ></textarea>
-              <div class="settings-apply-row">
-                <button
-                  type="button"
-                  id="customCssApplyBtn"
-                  class="settings-btn"
-                >
-                  Apply CSS
-                </button>
-              </div>
-            </div>
-          </section>
-
-          <section class="options-section">
-            <h2 class="options-heading">Other</h2>
-            <p class="options-hint">
-              Miscellanous settings for a better experience.
-            </p>
-            <div class="settings-block">
-              <label class="settings-label" for="defaultVault"
-                >Default vault</label
-              >
-              <input
-                id="defaultVault"
-                class="settings-input"
-                type="text"
-                placeholder="Pre-fill vault in side panel when empty"
-              />
-            </div>
-            <div class="settings-block">
-              <label class="settings-label" for="defaultFolder"
-                >Default folder</label
-              >
-              <input
-                id="defaultFolder"
-                class="settings-input"
-                type="text"
-                placeholder="Pre-fill folder in side panel when empty"
-              />
-            </div>
-            <div class="settings-block">
-              <label class="settings-label" for="countDisplaySelect"
-                >Source pane count</label
-              >
-              <select id="countDisplaySelect" class="settings-select">
-                <option value="both">Words and characters</option>
-                <option value="words">Words only</option>
-                <option value="chars">Characters only</option>
-                <option value="none">None</option>
-              </select>
-            </div>
-            <div class="settings-item">
-              <label class="settings-label" for="radiusSlider"
-                >Corner radius</label
-              >
-              <div class="settings-slider-wrap">
-                <input
-                  id="radiusSlider"
-                  class="settings-slider"
-                  type="range"
-                  min="0"
-                  max="24"
-                  step="2"
-                  value="8"
-                  aria-valuemin="0"
-                  aria-valuemax="24"
-                  aria-valuenow="8"
-                />
-                <span
-                  id="radiusValue"
-                  class="settings-slider-value"
-                  aria-live="polite"
-                  >8px</span
-                >
-              </div>
-            </div>
-            <div class="settings-item">
-              <label class="settings-label" for="lineHeightSlider"
-                >Line height</label
-              >
-              <div class="settings-slider-wrap">
-                <input
-                  id="lineHeightSlider"
-                  class="settings-slider"
-                  type="range"
-                  min="1.1"
-                  max="2.2"
-                  step="0.05"
-                  value="1.6"
-                  aria-valuemin="1.1"
-                  aria-valuemax="2.2"
-                  aria-valuenow="1.6"
-                />
-                <span
-                  id="lineHeightValue"
-                  class="settings-slider-value"
-                  aria-live="polite"
-                  >1.6</span
-                >
-              </div>
-            </div>
-            <div class="settings-item">
-              <label class="settings-label" for="fontSizeSlider"
-                >Font size</label
-              >
-              <div class="settings-slider-wrap">
-                <input
-                  id="fontSizeSlider"
-                  class="settings-slider"
-                  type="range"
-                  min="10"
-                  max="22"
-                  step="1"
-                  value="13"
-                  aria-valuemin="10"
-                  aria-valuemax="22"
-                  aria-valuenow="13"
-                />
-                <span
-                  id="fontSizeValue"
-                  class="settings-slider-value"
-                  aria-live="polite"
-                  >13px</span
-                >
-              </div>
-            </div>
-            <div class="settings-item">
-              <label class="settings-label" for="previewToggle"
-                >Show preview</label
-              >
-              <label class="toggle-wrap" aria-label="Toggle preview">
-                <input id="previewToggle" type="checkbox" checked />
-                <span class="toggle-track"></span>
-              </label>
-            </div>
-            <div class="settings-item">
-              <label class="settings-label" for="syncScrollToggle"
-                >Sync source and preview scrolling</label
-              >
-              <label class="toggle-wrap" aria-label="Sync scrolling">
-                <input id="syncScrollToggle" type="checkbox" />
-                <span class="toggle-track"></span>
-              </label>
-            </div>
-            <div class="settings-item">
-              <label class="settings-label" for="minimalModeToggle"
-                >Compact mode</label
-              >
-              <label class="toggle-wrap" aria-label="Minimal mode">
-                <input id="minimalModeToggle" type="checkbox" />
-                <span class="toggle-track"></span>
-              </label>
-            </div>
-            <div class="settings-item">
-              <label class="settings-label" for="showPaneHeadersToggle"
-                >Show source and preview headers</label
-              >
-              <label class="toggle-wrap" aria-label="Show pane headers">
-                <input id="showPaneHeadersToggle" type="checkbox" checked />
-                <span class="toggle-track"></span>
-              </label>
-            </div>
-            <div class="settings-item">
-              <label class="settings-label" for="saveScrollToggle"
-                >Save scroll position</label
-              >
-              <label class="toggle-wrap" aria-label="Save scroll position">
-                <input id="saveScrollToggle" type="checkbox" checked />
-                <span class="toggle-track"></span>
-              </label>
-            </div>
-          </section>
-        </div>
-
-        <div
-          id="vaultTabPanel"
-          class="options-tab-panel options-tab-panel--vault"
-          role="tabpanel"
-          aria-labelledby="vaultTabBtn"
-          hidden
-        >
-          <section class="options-section">
-            <h2 class="options-heading">Vault folder</h2>
-            <p class="options-hint">
-              Select your Obsidian vault folder to browse and edit notes
-              directly.
-            </p>
-            <div class="vault-toolbar">
-              <div class="vault-toolbar__title">
-                <span id="vaultFolderName" class="vault-toolbar__name"
-                  >No folder selected</span
-                >
-              </div>
-              <div class="vault-toolbar__actions">
-                <button id="vaultPickBtn" class="settings-btn" type="button">
-                  Select folder
-                </button>
-                <button
-                  id="vaultRefreshBtn"
-                  class="settings-btn settings-btn--secondary"
-                  type="button"
-                >
-                  Refresh
-                </button>
-              </div>
-            </div>
-          </section>
-
-          <div class="vault-layout">
-            <div class="vault-files">
-              <div class="vault-files-header">
-                <span class="options-pane-label">Files</span>
-                <div class="vault-files-actions">
-                  <button id="vaultNewFileBtn" class="settings-btn settings-btn--compact" type="button">
-                    New file
-                  </button>
-                  <button
-                  id="vaultToggleFilesBtn"
-                  class="vault-icon-btn"
-                  type="button"
-                  aria-label="Toggle file explorer"
-                  title="Toggle file explorer"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="vault-icon-btn__svg"
-                    aria-hidden="true"
-                  >
-                    <rect width="18" height="18" x="3" y="3" rx="2" fill="none"></rect>
-                    <path d="M15 3v18" fill="none"></path>
-                    <rect x="15" y="3" width="6" height="18" rx="2" fill="currentColor" stroke="none"></rect>
-                  </svg>
-                </button>
-                </div>
-              </div>
-              <input
-                id="vaultFileSearch"
-                class="vault-file-search"
-                type="text"
-                placeholder="Search files"
-                spellcheck="false"
-              />
-              <ul
-                id="vaultFileList"
-                class="vault-file-list vault-file-list--compact"
-                aria-label="Vault files"
-              ></ul>
-            </div>
-            <div id="vaultEditorRoot" class="options-editor-root vault-editor-root">
-              <div class="vault-editor-header">
-                <button
-                  id="vaultToggleFilesBtnInline"
-                  class="vault-icon-btn vault-icon-btn--inline"
-                  type="button"
-                  aria-label="Show file explorer"
-                  title="Show file explorer"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="vault-icon-btn__svg"
-                    aria-hidden="true"
-                  >
-                    <rect width="18" height="18" x="3" y="3" rx="2" fill="none"></rect>
-                    <path d="M15 3v18" fill="none"></path>
-                    <rect x="15" y="3" width="6" height="18" rx="2" fill="currentColor" stroke="none"></rect>
-                  </svg>
-                </button>
-                <input
-                  id="vaultFileTitleInput"
-                  class="vault-file-title-input"
-                  type="text"
-                  placeholder="Select a file to start editing"
-                  spellcheck="false"
-                  disabled
-                />
-                <button
-                  id="vaultSaveBtn"
-                  class="settings-btn"
-                  type="button"
-                  disabled
-                >
-                  Save
-                </button>
-                <button
-                  id="vaultDeleteBtn"
-                  class="settings-btn settings-btn--secondary"
-                  type="button"
-                  disabled
-                >
-                  Delete
-                </button>
-              </div>
-              <div id="vaultEditorWrap" class="options-editor-wrap">
-                <div class="options-editor-pane">
-                  <label class="options-pane-label" for="vaultEditorInput"
-                    >Source</label
-                  >
-                  <div class="options-editor-caret-wrap">
-                    <textarea
-                      id="vaultEditorInput"
-                      placeholder="# Open a file to edit its contents..."
-                      spellcheck="true"
-                    ></textarea>
-                    <div
-                      id="vaultCaretMirror"
-                      class="options-editor-caret-mirror"
-                      aria-hidden="true"
-                    ></div>
-                    <div
-                      id="vaultFakeCaret"
-                      class="options-editor-fake-caret"
-                      aria-hidden="true"
-                    ></div>
-                  </div>
-                </div>
-                <div id="vaultEditorResizer" class="options-editor-resizer"></div>
-                <div class="options-preview-pane">
-                  <span class="options-pane-label">Preview</span>
-                  <div
-                    id="vaultEditorPreview"
-                    class="vault-editor-preview markdown-body"
-                    aria-live="polite"
-                  ></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          id="editorTabPanel"
-          class="options-tab-panel options-tab-panel--editor"
-          role="tabpanel"
-          aria-labelledby="editorTabBtn"
-          hidden
-        >
-          <div id="optionsEditorRoot" class="options-editor-root">
-            <div class="options-export-bar">
-              <div class="options-export-row options-export-row--single">
-                <label for="optionsVaultInput"
-                  >Vault
-                  <input
-                    id="optionsVaultInput"
-                    class="options-export-input"
-                    type="text"
-                    placeholder="MyVault"
-                  />
-                </label>
-                <label for="optionsTitleInput"
-                  >Title
-                  <input
-                    id="optionsTitleInput"
-                    class="options-export-input"
-                    type="text"
-                    placeholder="Untitled"
-                  />
-                </label>
-                <label for="optionsFolderInput"
-                  >Folder
-                  <input
-                    id="optionsFolderInput"
-                    class="options-export-input"
-                    type="text"
-                    placeholder="Folder (optional)"
-                  />
-                </label>
-                <button
-                  id="optionsExportBtn"
-                  class="settings-btn"
-                  type="button"
-                >
-                  Export to Obsidian
-                </button>
-              </div>
-              <span id="optionsExportStatus" aria-live="polite"></span>
-            </div>
-            <div id="optionsEditorWrap" class="options-editor-wrap">
-              <div class="options-editor-pane">
-                <label class="options-pane-label" for="optionsMarkdownInput"
-                  >Source
-                  <span
-                    id="optionsSourceCount"
-                    class="options-pane-count"
-                    aria-live="polite"
-                  ></span
-                ></label>
-                <div class="options-editor-caret-wrap">
-                  <textarea
-                    id="optionsMarkdownInput"
-                    placeholder="# Start writing markdown..."
-                    spellcheck="true"
-                  ></textarea>
-                  <div
-                    id="optionsCaretMirror"
-                    class="options-editor-caret-mirror"
-                    aria-hidden="true"
-                  ></div>
-                  <div
-                    id="optionsFakeCaret"
-                    class="options-editor-fake-caret"
-                    aria-hidden="true"
-                  ></div>
-                </div>
-              </div>
-              <div
-                id="optionsEditorResizer"
-                class="options-editor-resizer"
-              ></div>
-              <div class="options-preview-pane">
-                <span class="options-pane-label">Preview</span>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Onyx</title>
+        <link rel="stylesheet" href="options.css" />
+        <style>
+            @import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap");
+        </style>
+        <style id="customFonts"></style>
+    </head>
+    <body>
+        <div class="options-page">
+            <h1 class="options-title">
+                <img src="icon.png" />
+                Onyx
+            </h1>
+            <div class="options-layout">
                 <div
-                  id="optionsMarkdownPreview"
-                  class="markdown-body"
-                  aria-live="polite"
-                ></div>
-              </div>
+                    class="options-tabs"
+                    role="tablist"
+                    aria-label="Options tabs"
+                >
+                    <button
+                        id="settingsTabBtn"
+                        class="options-tab is-active"
+                        type="button"
+                        role="tab"
+                        aria-controls="settingsTabPanel"
+                        aria-selected="true"
+                    >
+                        Settings
+                    </button>
+                    <button
+                        id="vaultTabBtn"
+                        class="options-tab"
+                        type="button"
+                        role="tab"
+                        aria-controls="vaultTabPanel"
+                        aria-selected="false"
+                    >
+                        Vault
+                    </button>
+                    <button
+                        id="editorTabBtn"
+                        class="options-tab"
+                        type="button"
+                        role="tab"
+                        aria-controls="editorTabPanel"
+                        aria-selected="false"
+                    >
+                        Editor
+                    </button>
+                </div>
+
+                <div
+                    id="settingsTabPanel"
+                    class="options-tab-panel"
+                    role="tabpanel"
+                    aria-labelledby="settingsTabBtn"
+                >
+                    <section class="options-section">
+                        <h2 class="options-heading">Themes</h2>
+                        <p class="options-hint">
+                            Choose a built-in theme or import a custom theme
+                            from a JSON file. Docs are available
+                            <a
+                                href="https://tryonyx.vercel.app/docs/themes"
+                                target="_blank"
+                                >here</a
+                            >.
+                        </p>
+                        <div class="settings-block">
+                            <label class="settings-label" for="themeSelect"
+                                >Theme</label
+                            >
+                            <select id="themeSelect" class="settings-select">
+                                <option value="system">System</option>
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                                <option value="oled">OLED</option>
+                                <option value="cyberpunk">Cyberpunk</option>
+                                <option value="sepia">Sepia</option>
+                                <option value="nord">Nord</option>
+                                <option value="dracula">Dracula</option>
+                                <option value="tokyo-night">Tokyo Night</option>
+                                <option value="blueberry">Blueberry</option>
+                                <option value="monokai">Monokai</option>
+                            </select>
+                        </div>
+                        <div class="settings-block">
+                            <input
+                                id="themeFileInput"
+                                type="file"
+                                accept=".json,application/json"
+                                hidden
+                            />
+                            <button
+                                type="button"
+                                id="importThemeBtn"
+                                class="settings-btn settings-btn--secondary"
+                            >
+                                Import theme
+                            </button>
+                            <ul
+                                id="customThemesList"
+                                class="custom-themes-list"
+                                aria-label="Imported custom themes"
+                            ></ul>
+                        </div>
+                    </section>
+
+                    <section class="options-section">
+                        <h2 class="options-heading">Caret</h2>
+                        <p class="options-hint">
+                            Customize the caret's appearance in the editor.
+                        </p>
+                        <div class="settings-block">
+                            <label class="settings-label" for="caretStyleSelect"
+                                >Caret shape</label
+                            >
+                            <select
+                                id="caretStyleSelect"
+                                class="settings-select"
+                            >
+                                <option value="line">Line</option>
+                                <option value="block">Block</option>
+                                <option value="underline">Underline</option>
+                            </select>
+                        </div>
+                        <div class="settings-block">
+                            <label
+                                class="settings-label"
+                                for="caretAnimationSelect"
+                                >Caret animation</label
+                            >
+                            <select
+                                id="caretAnimationSelect"
+                                class="settings-select"
+                            >
+                                <option value="solid">Solid</option>
+                                <option value="blink">Blink</option>
+                                <option value="phase">Phase</option>
+                                <option value="expand">Expand</option>
+                            </select>
+                        </div>
+                        <div class="settings-block">
+                            <label
+                                class="settings-label"
+                                for="caretMovementSelect"
+                                >Caret movement</label
+                            >
+                            <select
+                                id="caretMovementSelect"
+                                class="settings-select"
+                            >
+                                <option value="instant">Instant</option>
+                                <option value="smooth">Smooth</option>
+                            </select>
+                        </div>
+                    </section>
+
+                    <section id="section-fonts" class="options-section">
+                        <h2 class="options-heading">Fonts</h2>
+                        <p class="options-hint">
+                            Choose a preset or select “Custom” to paste an
+                            @import URL and/or provide a font family name.
+                        </p>
+
+                        <div class="settings-block">
+                            <label
+                                class="settings-label"
+                                for="interfaceFontSelect"
+                                >Interface font</label
+                            >
+                            <select
+                                id="interfaceFontSelect"
+                                class="settings-select"
+                            ></select>
+                            <div
+                                id="interfaceFontCustom"
+                                class="settings-font-custom"
+                                hidden
+                            >
+                                <input
+                                    id="interfaceFontUrl"
+                                    class="settings-input"
+                                    type="text"
+                                    placeholder="Paste @import url(...) or Google Fonts link"
+                                />
+                                <input
+                                    id="interfaceFontFamily"
+                                    class="settings-input"
+                                    type="text"
+                                    placeholder="Font family name (e.g. Inter, Roboto)"
+                                />
+                            </div>
+                        </div>
+
+                        <div class="settings-block">
+                            <label class="settings-label" for="editorFontSelect"
+                                >Editor font</label
+                            >
+                            <select
+                                id="editorFontSelect"
+                                class="settings-select"
+                            ></select>
+                            <div
+                                id="editorFontCustom"
+                                class="settings-font-custom"
+                                hidden
+                            >
+                                <input
+                                    id="editorFontUrl"
+                                    class="settings-input"
+                                    type="text"
+                                    placeholder="Paste @import url(...) or Google Fonts link"
+                                />
+                                <input
+                                    id="editorFontFamily"
+                                    class="settings-input"
+                                    type="text"
+                                    placeholder="Font family name (e.g. JetBrains Mono)"
+                                />
+                            </div>
+                        </div>
+
+                        <div class="settings-block">
+                            <label class="settings-label" for="codeFontSelect"
+                                >Monospace / code font</label
+                            >
+                            <select
+                                id="codeFontSelect"
+                                class="settings-select"
+                            ></select>
+                            <div
+                                id="codeFontCustom"
+                                class="settings-font-custom"
+                                hidden
+                            >
+                                <input
+                                    id="codeFontUrl"
+                                    class="settings-input"
+                                    type="text"
+                                    placeholder="Paste @import url(...) or Google Fonts link"
+                                />
+                                <input
+                                    id="codeFontFamily"
+                                    class="settings-input"
+                                    type="text"
+                                    placeholder="Font family name (e.g. Fira Code)"
+                                />
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="options-section">
+                        <h2 class="options-heading">Import into Obsidian</h2>
+                        <p class="options-hint">
+                            Defaults used when you right-click selected text and
+                            choose “Import selection to Obsidian”.
+                        </p>
+                        <div class="settings-block">
+                            <label
+                                class="settings-label"
+                                for="importObsidianNoteName"
+                                >Import note name</label
+                            >
+                            <input
+                                id="importObsidianNoteName"
+                                class="settings-input"
+                                type="text"
+                                placeholder="Import From Onyx"
+                            />
+                        </div>
+                        <div class="settings-block">
+                            <label
+                                class="settings-label"
+                                for="importObsidianFolder"
+                                >Folder</label
+                            >
+                            <input
+                                id="importObsidianFolder"
+                                class="settings-input"
+                                type="text"
+                                placeholder="Root (blank for vault root)"
+                            />
+                        </div>
+                    </section>
+
+                    <section id="section-saved-vaults" class="options-section">
+                        <h2 class="options-heading">Saved vaults</h2>
+                        <p class="options-hint">
+                            Vaults you add here appear in the side panel
+                            dropdown. Choose one when exporting to Obsidian.
+                        </p>
+                        <div class="settings-block">
+                            <label class="settings-label" for="newVaultInput"
+                                >Add vault</label
+                            >
+                            <div class="settings-inline-row">
+                                <input
+                                    id="newVaultInput"
+                                    class="settings-input"
+                                    type="text"
+                                    placeholder="Vault name"
+                                />
+                                <button
+                                    type="button"
+                                    id="addVaultBtn"
+                                    class="settings-btn"
+                                >
+                                    Add
+                                </button>
+                            </div>
+                        </div>
+                        <ul
+                            id="savedVaultsList"
+                            class="saved-vaults-list"
+                            aria-label="Saved vaults"
+                        ></ul>
+                    </section>
+
+                    <section class="options-section">
+                        <h2 class="options-heading">Export template</h2>
+                        <p class="options-hint">
+                            Prepended to the note when you click “Export to
+                            Obsidian”. Use
+                            <code>{{date}}</code>, <code>{{time}}</code>, and
+                            <code>{{title}}</code> as paremeters.
+                        </p>
+                        <div class="settings-block">
+                            <label
+                                class="settings-label"
+                                for="exportTemplateInput"
+                                >Template</label
+                            >
+                            <textarea
+                                id="exportTemplateInput"
+                                class="settings-textarea"
+                                rows="6"
+                                placeholder="---&#10;tags: [web-clip]&#10;date: {{date}}&#10;---&#10;&#10;"
+                                spellcheck="false"
+                            ></textarea>
+                        </div>
+                    </section>
+
+                    <section class="options-section">
+                        <h2 class="options-heading">Custom CSS</h2>
+                        <p class="options-hint">
+                            CSS applied only to the side panel (not this
+                            Settings page).
+                        </p>
+                        <div class="settings-block">
+                            <label class="settings-label" for="customCssInput"
+                                >Custom CSS</label
+                            >
+                            <textarea
+                                id="customCssInput"
+                                class="settings-textarea"
+                                rows="8"
+                                placeholder=".app { }"
+                                spellcheck="false"
+                            ></textarea>
+                            <div class="settings-apply-row">
+                                <button
+                                    type="button"
+                                    id="customCssApplyBtn"
+                                    class="settings-btn"
+                                >
+                                    Apply CSS
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="options-section">
+                        <h2 class="options-heading">Other</h2>
+                        <p class="options-hint">
+                            Miscellanous settings for a better experience.
+                        </p>
+                        <div class="settings-block">
+                            <label class="settings-label" for="defaultVault"
+                                >Default vault</label
+                            >
+                            <input
+                                id="defaultVault"
+                                class="settings-input"
+                                type="text"
+                                placeholder="Pre-fill vault in side panel when empty"
+                            />
+                        </div>
+                        <div class="settings-block">
+                            <label class="settings-label" for="defaultFolder"
+                                >Default folder</label
+                            >
+                            <input
+                                id="defaultFolder"
+                                class="settings-input"
+                                type="text"
+                                placeholder="Pre-fill folder in side panel when empty"
+                            />
+                        </div>
+                        <div class="settings-block">
+                            <label
+                                class="settings-label"
+                                for="countDisplaySelect"
+                                >Source pane count</label
+                            >
+                            <select
+                                id="countDisplaySelect"
+                                class="settings-select"
+                            >
+                                <option value="both">
+                                    Words and characters
+                                </option>
+                                <option value="words">Words only</option>
+                                <option value="chars">Characters only</option>
+                                <option value="none">None</option>
+                            </select>
+                        </div>
+                        <div class="settings-item">
+                            <label class="settings-label" for="radiusSlider"
+                                >Corner radius</label
+                            >
+                            <div class="settings-slider-wrap">
+                                <input
+                                    id="radiusSlider"
+                                    class="settings-slider"
+                                    type="range"
+                                    min="0"
+                                    max="24"
+                                    step="2"
+                                    value="8"
+                                    aria-valuemin="0"
+                                    aria-valuemax="24"
+                                    aria-valuenow="8"
+                                />
+                                <span
+                                    id="radiusValue"
+                                    class="settings-slider-value"
+                                    aria-live="polite"
+                                    >8px</span
+                                >
+                            </div>
+                        </div>
+                        <div class="settings-item">
+                            <label class="settings-label" for="lineHeightSlider"
+                                >Line height</label
+                            >
+                            <div class="settings-slider-wrap">
+                                <input
+                                    id="lineHeightSlider"
+                                    class="settings-slider"
+                                    type="range"
+                                    min="1.1"
+                                    max="2.2"
+                                    step="0.05"
+                                    value="1.6"
+                                    aria-valuemin="1.1"
+                                    aria-valuemax="2.2"
+                                    aria-valuenow="1.6"
+                                />
+                                <span
+                                    id="lineHeightValue"
+                                    class="settings-slider-value"
+                                    aria-live="polite"
+                                    >1.6</span
+                                >
+                            </div>
+                        </div>
+                        <div class="settings-item">
+                            <label class="settings-label" for="fontSizeSlider"
+                                >Font size</label
+                            >
+                            <div class="settings-slider-wrap">
+                                <input
+                                    id="fontSizeSlider"
+                                    class="settings-slider"
+                                    type="range"
+                                    min="10"
+                                    max="22"
+                                    step="1"
+                                    value="13"
+                                    aria-valuemin="10"
+                                    aria-valuemax="22"
+                                    aria-valuenow="13"
+                                />
+                                <span
+                                    id="fontSizeValue"
+                                    class="settings-slider-value"
+                                    aria-live="polite"
+                                    >13px</span
+                                >
+                            </div>
+                        </div>
+                        <div class="settings-item">
+                            <label class="settings-label" for="previewToggle"
+                                >Show preview</label
+                            >
+                            <label
+                                class="toggle-wrap"
+                                aria-label="Toggle preview"
+                            >
+                                <input
+                                    id="previewToggle"
+                                    type="checkbox"
+                                    checked
+                                />
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+                        <div class="settings-item">
+                            <label class="settings-label" for="syncScrollToggle"
+                                >Sync source and preview scrolling</label
+                            >
+                            <label
+                                class="toggle-wrap"
+                                aria-label="Sync scrolling"
+                            >
+                                <input id="syncScrollToggle" type="checkbox" />
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+                        <div class="settings-item">
+                            <label
+                                class="settings-label"
+                                for="minimalModeToggle"
+                                >Compact mode (Sidepanel)</label
+                            >
+                            <label
+                                class="toggle-wrap"
+                                aria-label="Minimal mode"
+                            >
+                                <input id="minimalModeToggle" type="checkbox" />
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+                        <div class="settings-item">
+                            <label
+                                class="settings-label"
+                                for="showPaneHeadersToggle"
+                                >Show source and preview headers</label
+                            >
+                            <label
+                                class="toggle-wrap"
+                                aria-label="Show pane headers"
+                            >
+                                <input
+                                    id="showPaneHeadersToggle"
+                                    type="checkbox"
+                                    checked
+                                />
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+                        <div class="settings-item">
+                            <label class="settings-label" for="saveScrollToggle"
+                                >Save scroll position</label
+                            >
+                            <label
+                                class="toggle-wrap"
+                                aria-label="Save scroll position"
+                            >
+                                <input
+                                    id="saveScrollToggle"
+                                    type="checkbox"
+                                    checked
+                                />
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+                        <div class="settings-item">
+                            <label class="settings-label" for="syntaxHighlightToggle"
+                                >Syntax highlighting (beta)</label
+                            >
+                            <label
+                                class="toggle-wrap"
+                                aria-label="Syntax highlighting"
+                            >
+                                <input id="syntaxHighlightToggle" type="checkbox" />
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+                        <div class="settings-item">
+                            <label class="settings-label" for="vaultAutosaveToggle"
+                                >Vault autosave</label
+                            >
+                            <label
+                                class="toggle-wrap"
+                                aria-label="Vault autosave"
+                            >
+                                <input
+                                    id="vaultAutosaveToggle"
+                                    type="checkbox"
+                                    checked
+                                />
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+                    </section>
+                </div>
+
+                <div
+                    id="vaultTabPanel"
+                    class="options-tab-panel options-tab-panel--vault"
+                    role="tabpanel"
+                    aria-labelledby="vaultTabBtn"
+                    hidden
+                >
+                    <section class="options-section">
+                        <h2 class="options-heading">Vault folder</h2>
+                        <p class="options-hint">
+                            Select your Obsidian vault folder to browse and edit
+                            notes directly.
+                        </p>
+                        <div class="vault-toolbar">
+                            <div class="vault-toolbar__title">
+                                <span
+                                    id="vaultFolderName"
+                                    class="vault-toolbar__name"
+                                    >No folder selected</span
+                                >
+                            </div>
+                            <div class="vault-toolbar__actions">
+                                <button
+                                    id="vaultPickBtn"
+                                    class="settings-btn"
+                                    type="button"
+                                >
+                                    Select folder
+                                </button>
+                                <button
+                                    id="vaultRefreshBtn"
+                                    class="settings-btn settings-btn--secondary"
+                                    type="button"
+                                >
+                                    Refresh
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="vault-layout">
+                        <div class="vault-files">
+                            <div class="vault-files-header">
+                                <span class="options-pane-label">Files</span>
+                                <div class="vault-files-actions">
+                                    <button
+                                        id="vaultNewFileBtn"
+                                        class="settings-btn settings-btn--compact"
+                                        type="button"
+                                    >
+                                        New file
+                                    </button>
+                                    <button
+                                        id="vaultToggleFilesBtn"
+                                        class="vault-icon-btn"
+                                        type="button"
+                                        aria-label="Toggle file explorer"
+                                        title="Toggle file explorer"
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="24"
+                                            height="24"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            class="vault-icon-btn__svg"
+                                            aria-hidden="true"
+                                        >
+                                            <rect
+                                                width="18"
+                                                height="18"
+                                                x="3"
+                                                y="3"
+                                                rx="2"
+                                                fill="none"
+                                            ></rect>
+                                            <path
+                                                d="M15 3v18"
+                                                fill="none"
+                                            ></path>
+                                            <rect
+                                                x="15"
+                                                y="3"
+                                                width="6"
+                                                height="18"
+                                                rx="2"
+                                                fill="currentColor"
+                                                stroke="none"
+                                            ></rect>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <input
+                                id="vaultFileSearch"
+                                class="vault-file-search"
+                                type="text"
+                                placeholder="Search files"
+                                spellcheck="false"
+                            />
+                            <ul
+                                id="vaultFileList"
+                                class="vault-file-list vault-file-list--compact"
+                                aria-label="Vault files"
+                            ></ul>
+                        </div>
+                        <div
+                            id="vaultEditorRoot"
+                            class="options-editor-root vault-editor-root"
+                        >
+                            <div class="vault-editor-header">
+                                <button
+                                    id="vaultToggleFilesBtnInline"
+                                    class="vault-icon-btn vault-icon-btn--inline"
+                                    type="button"
+                                    aria-label="Show file explorer"
+                                    title="Show file explorer"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="24"
+                                        height="24"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        class="vault-icon-btn__svg"
+                                        aria-hidden="true"
+                                    >
+                                        <rect
+                                            width="18"
+                                            height="18"
+                                            x="3"
+                                            y="3"
+                                            rx="2"
+                                            fill="none"
+                                        ></rect>
+                                        <path d="M15 3v18" fill="none"></path>
+                                        <rect
+                                            x="15"
+                                            y="3"
+                                            width="6"
+                                            height="18"
+                                            rx="2"
+                                            fill="currentColor"
+                                            stroke="none"
+                                        ></rect>
+                                    </svg>
+                                </button>
+                                <input
+                                    id="vaultFileTitleInput"
+                                    class="vault-file-title-input"
+                                    type="text"
+                                    placeholder="Select a file to start editing"
+                                    spellcheck="false"
+                                    disabled
+                                />
+                                <button
+                                    id="vaultSaveBtn"
+                                    class="settings-btn"
+                                    type="button"
+                                    title="Command/Ctrl + S"
+                                    disabled
+                                >
+                                    Save
+                                </button>
+                                <button
+                                    id="vaultExportBtn"
+                                    class="settings-btn"
+                                    type="button"
+                                    disabled
+                                >
+                                    Export
+                                </button>
+                                <button
+                                    id="vaultDeleteBtn"
+                                    class="settings-btn settings-btn--secondary"
+                                    type="button"
+                                    disabled
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                            <div
+                                id="vaultEditorWrap"
+                                class="options-editor-wrap"
+                            >
+                                <div class="options-editor-pane">
+                                    <label
+                                        class="options-pane-label"
+                                        for="vaultEditorInput"
+                                        >Source</label
+                                    >
+                                    <div class="options-editor-caret-wrap">
+                                        <textarea
+                                            id="vaultEditorInput"
+                                            placeholder="# Open a file to edit its contents..."
+                                            spellcheck="true"
+                                        ></textarea>
+                                        <div
+                                            id="vaultCaretMirror"
+                                            class="options-editor-caret-mirror"
+                                            aria-hidden="true"
+                                        ></div>
+                                        <div
+                                            id="vaultFakeCaret"
+                                            class="options-editor-fake-caret"
+                                            aria-hidden="true"
+                                        ></div>
+                                    </div>
+                                </div>
+                                <div
+                                    id="vaultEditorResizer"
+                                    class="options-editor-resizer"
+                                ></div>
+                                <div class="options-preview-pane">
+                                    <span class="options-pane-label"
+                                        >Preview</span
+                                    >
+                                    <div
+                                        id="vaultEditorPreview"
+                                        class="vault-editor-preview markdown-body"
+                                        aria-live="polite"
+                                    ></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    id="editorTabPanel"
+                    class="options-tab-panel options-tab-panel--editor"
+                    role="tabpanel"
+                    aria-labelledby="editorTabBtn"
+                    hidden
+                >
+                    <div id="optionsEditorRoot" class="options-editor-root">
+                        <div class="options-export-bar">
+                            <div
+                                class="options-export-row options-export-row--single"
+                            >
+                                <label for="optionsVaultInput"
+                                    >Vault
+                                    <input
+                                        id="optionsVaultInput"
+                                        class="options-export-input"
+                                        type="text"
+                                        placeholder="MyVault"
+                                    />
+                                </label>
+                                <label for="optionsTitleInput"
+                                    >Title
+                                    <input
+                                        id="optionsTitleInput"
+                                        class="options-export-input"
+                                        type="text"
+                                        placeholder="Untitled"
+                                    />
+                                </label>
+                                <label for="optionsFolderInput"
+                                    >Folder
+                                    <input
+                                        id="optionsFolderInput"
+                                        class="options-export-input"
+                                        type="text"
+                                        placeholder="Folder (optional)"
+                                    />
+                                </label>
+                                <button
+                                    id="optionsExportBtn"
+                                    class="settings-btn"
+                                    type="button"
+                                >
+                                    Export to Obsidian
+                                </button>
+                            </div>
+                            <span
+                                id="optionsExportStatus"
+                                aria-live="polite"
+                            ></span>
+                        </div>
+                        <div id="optionsEditorWrap" class="options-editor-wrap">
+                            <div class="options-editor-pane">
+                                <label
+                                    class="options-pane-label"
+                                    for="optionsMarkdownInput"
+                                    >Source
+                                    <span
+                                        id="optionsSourceCount"
+                                        class="options-pane-count"
+                                        aria-live="polite"
+                                    ></span
+                                ></label>
+                                <div class="options-editor-caret-wrap">
+                                    <textarea
+                                        id="optionsMarkdownInput"
+                                        placeholder="# Start writing markdown..."
+                                        spellcheck="true"
+                                    ></textarea>
+                                    <div
+                                        id="optionsCaretMirror"
+                                        class="options-editor-caret-mirror"
+                                        aria-hidden="true"
+                                    ></div>
+                                    <div
+                                        id="optionsFakeCaret"
+                                        class="options-editor-fake-caret"
+                                        aria-hidden="true"
+                                    ></div>
+                                </div>
+                            </div>
+                            <div
+                                id="optionsEditorResizer"
+                                class="options-editor-resizer"
+                            ></div>
+                            <div class="options-preview-pane">
+                                <span class="options-pane-label">Preview</span>
+                                <div
+                                    id="optionsMarkdownPreview"
+                                    class="markdown-body"
+                                    aria-live="polite"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
-    </div>
-    <script src="markdown.js"></script>
-    <script src="options.js"></script>
-  </body>
+        <script src="markdown.js"></script>
+        <script src="options.js"></script>
+    </body>
 </html>
