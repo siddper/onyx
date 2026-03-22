@@ -907,6 +907,14 @@ input {
     min-height: max(640px, calc(100vh - 220px));
 }
 
+.vault-layout.files-hidden {
+    grid-template-columns: 1fr;
+}
+
+.vault-layout.files-hidden .vault-files {
+    display: none;
+}
+
 .vault-files {
     min-width: 0;
     display: flex;
@@ -920,12 +928,53 @@ input {
     justify-content: space-between;
 }
 
+.vault-files-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
 .vault-files-header .settings-btn--secondary {
     margin-top: 0;
 }
 
 .vault-files-header .settings-btn--compact {
     margin-top: 0;
+}
+
+.vault-icon-btn {
+    min-width: 24px;
+    height: auto;
+    border: none;
+    border-radius: calc(var(--radius) - 1px);
+    background: var(--panel-strong);
+    color: var(--ink);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    padding: 4px 6px;
+}
+
+.vault-icon-btn:hover {
+    background: var(--accent-hover);
+}
+
+.vault-icon-btn__svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+.vault-icon-btn--inline {
+    display: none;
+    height: var(--vault-title-height, 34px);
+    padding: 0 8px;
+}
+
+.vault-layout.files-hidden .vault-icon-btn--inline {
+    display: inline-flex;
 }
 
 .vault-editor-root {
@@ -939,7 +988,7 @@ input {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 8px;
 }
 
 .vault-file-title-input {
@@ -949,10 +998,9 @@ input {
     border-radius: var(--radius);
     padding: 6px 8px;
     font-size: var(--font-size);
-    font-weight: 600;
     background: var(--panel-strong);
     color: var(--ink);
-    height: 100%;
+    height: var(--vault-title-height, 34px);
 }
 
 .vault-file-title-input::placeholder {
@@ -994,31 +1042,31 @@ input {
     color: var(--ink);
 }
 
- .vault-file-list--compact .vault-file-entry {
-  padding: 6px 8px;
-  border-radius: calc(var(--radius) - 2px);
-  font-size: calc(var(--font-size) * 0.846);
+.vault-file-list--compact .vault-file-entry {
+    padding: 6px 8px;
+    border-radius: calc(var(--radius) - 2px);
+    font-size: calc(var(--font-size) * 0.846);
 }
 
 .vault-file-entry {
-  width: 100%;
-  text-align: left;
-  border: none;
-  background: transparent;
-  color: var(--ink);
-  cursor: pointer;
-  transition: background 0.2s ease;
-  padding: 6px 8px;
-  border-radius: calc(var(--radius) - 2px);
-  font-size: calc(var(--font-size) * 0.846);
+    width: 100%;
+    text-align: left;
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 0.2s ease;
+    padding: 6px 8px;
+    border-radius: calc(var(--radius) - 2px);
+    font-size: calc(var(--font-size) * 0.846);
 }
 
 .vault-file-entry:hover {
-  background: var(--panel-strong);
+    background: var(--panel-strong);
 }
 
 .vault-file-item.is-active .vault-file-entry {
-  background: var(--accent);
+    background: var(--accent);
 }
 
 .vault-file-empty {

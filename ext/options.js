@@ -357,8 +357,11 @@ const vaultFolderName = document.getElementById("vaultFolderName");
 const vaultFileList = document.getElementById("vaultFileList");
 const vaultFileSearch = document.getElementById("vaultFileSearch");
 const vaultNewFileBtn = document.getElementById("vaultNewFileBtn");
+const vaultToggleFilesBtn = document.getElementById("vaultToggleFilesBtn");
+const vaultToggleFilesBtnInline = document.getElementById("vaultToggleFilesBtnInline");
 const vaultFileTitleInput = document.getElementById("vaultFileTitleInput");
 const vaultEditorRoot = document.getElementById("vaultEditorRoot");
+const vaultLayout = document.querySelector(".vault-layout");
 const vaultEditorWrap = document.getElementById("vaultEditorWrap");
 const vaultEditorResizer = document.getElementById("vaultEditorResizer");
 const vaultEditorInput = document.getElementById("vaultEditorInput");
@@ -528,6 +531,15 @@ function vaultBeginInlineRename(entryEl, file) {
     entryEl.removeEventListener("keydown", onKey);
   };
   entryEl.addEventListener("blur", cleanup, { once: true });
+}
+
+function vaultSetFilesVisibility(hidden) {
+  if (!vaultLayout) return;
+  vaultLayout.classList.toggle("files-hidden", hidden);
+  if (vaultToggleFilesBtn) vaultToggleFilesBtn.setAttribute("aria-label", hidden ? "Show file explorer" : "Hide file explorer");
+  if (vaultToggleFilesBtn) vaultToggleFilesBtn.setAttribute("title", hidden ? "Show file explorer" : "Hide file explorer");
+  if (vaultToggleFilesBtnInline) vaultToggleFilesBtnInline.setAttribute("aria-label", hidden ? "Show file explorer" : "Hide file explorer");
+  if (vaultToggleFilesBtnInline) vaultToggleFilesBtnInline.setAttribute("title", hidden ? "Show file explorer" : "Hide file explorer");
 }
 
 function vaultUpdatePreview() {
@@ -1034,6 +1046,17 @@ function initVaultTab() {
   if (vaultSaveBtn) vaultSaveBtn.addEventListener("click", vaultSaveActiveFile);
   if (vaultDeleteBtn) vaultDeleteBtn.addEventListener("click", () => vaultDeleteFile(vaultActiveFile));
   if (vaultNewFileBtn) vaultNewFileBtn.addEventListener("click", vaultCreateNewFile);
+  if (vaultToggleFilesBtn) {
+    vaultToggleFilesBtn.addEventListener("click", () => {
+      const hidden = vaultLayout?.classList.contains("files-hidden");
+      vaultSetFilesVisibility(!hidden);
+    });
+  }
+  if (vaultToggleFilesBtnInline) {
+    vaultToggleFilesBtnInline.addEventListener("click", () => {
+      vaultSetFilesVisibility(false);
+    });
+  }
   if (vaultFileSearch) {
     vaultFileSearch.addEventListener("input", () => vaultRenderFileList());
   }

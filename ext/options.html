@@ -518,9 +518,36 @@
             <div class="vault-files">
               <div class="vault-files-header">
                 <span class="options-pane-label">Files</span>
-                <button id="vaultNewFileBtn" class="settings-btn settings-btn--compact" type="button">
-                  New file
+                <div class="vault-files-actions">
+                  <button id="vaultNewFileBtn" class="settings-btn settings-btn--compact" type="button">
+                    New file
+                  </button>
+                  <button
+                  id="vaultToggleFilesBtn"
+                  class="vault-icon-btn"
+                  type="button"
+                  aria-label="Toggle file explorer"
+                  title="Toggle file explorer"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="vault-icon-btn__svg"
+                    aria-hidden="true"
+                  >
+                    <rect width="18" height="18" x="3" y="3" rx="2" fill="none"></rect>
+                    <path d="M15 3v18" fill="none"></path>
+                    <rect x="15" y="3" width="6" height="18" rx="2" fill="currentColor" stroke="none"></rect>
+                  </svg>
                 </button>
+                </div>
               </div>
               <input
                 id="vaultFileSearch"
@@ -537,6 +564,31 @@
             </div>
             <div id="vaultEditorRoot" class="options-editor-root vault-editor-root">
               <div class="vault-editor-header">
+                <button
+                  id="vaultToggleFilesBtnInline"
+                  class="vault-icon-btn vault-icon-btn--inline"
+                  type="button"
+                  aria-label="Show file explorer"
+                  title="Show file explorer"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="vault-icon-btn__svg"
+                    aria-hidden="true"
+                  >
+                    <rect width="18" height="18" x="3" y="3" rx="2" fill="none"></rect>
+                    <path d="M15 3v18" fill="none"></path>
+                    <rect x="15" y="3" width="6" height="18" rx="2" fill="currentColor" stroke="none"></rect>
+                  </svg>
+                </button>
                 <input
                   id="vaultFileTitleInput"
                   class="vault-file-title-input"
