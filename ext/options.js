@@ -656,6 +656,45 @@ function vaultStopCaretBlink() {
 }
 
 function vaultHandleEditorKeydown(e) {
+  if (e.key === "Tab") {
+    const handled = handleListIndentOnTab(vaultEditorInput, (nextValue, cursorPos) => {
+      vaultEditorInput.value = nextValue;
+      vaultEditorInput.setSelectionRange(cursorPos, cursorPos);
+      vaultUpdatePreview();
+      vaultScheduleCaretUpdate();
+      vaultScheduleAutosave();
+    }, e.shiftKey);
+    if (handled) {
+      e.preventDefault();
+      return;
+    }
+  }
+  if ((e.key === "Delete" || e.key === "Backspace") && vaultEditorInput) {
+    const handled = handleListClearOnDelete(vaultEditorInput, (nextValue, cursorPos) => {
+      vaultEditorInput.value = nextValue;
+      vaultEditorInput.setSelectionRange(cursorPos, cursorPos);
+      vaultUpdatePreview();
+      vaultScheduleCaretUpdate();
+      vaultScheduleAutosave();
+    });
+    if (handled) {
+      e.preventDefault();
+      return;
+    }
+  }
+  if (e.key === "Enter" && vaultEditorInput) {
+    const handled = handleListContinuation(vaultEditorInput, (nextValue, cursorPos) => {
+      vaultEditorInput.value = nextValue;
+      vaultEditorInput.setSelectionRange(cursorPos, cursorPos);
+      vaultUpdatePreview();
+      vaultScheduleCaretUpdate();
+      vaultScheduleAutosave();
+    });
+    if (handled) {
+      e.preventDefault();
+      return;
+    }
+  }
   if (e.key !== "Tab" || !vaultEditorInput) return;
   e.preventDefault();
   const start = vaultEditorInput.selectionStart;
@@ -1365,6 +1404,91 @@ function optionsEditorInsert(replaceStart, replaceEnd, text, cursorStart, cursor
   optionsScheduleCaretUpdate();
 }
 
+function handleListContinuation(textarea, applyChange) {
+  if (!textarea) return false;
+  if (textarea.selectionStart !== textarea.selectionEnd) return false;
+  const pos = textarea.selectionStart;
+  const value = textarea.value;
+  const lineStart = value.lastIndexOf("\n", pos - 1) + 1;
+  let lineEnd = value.indexOf("\n", pos);
+  if (lineEnd === -1) lineEnd = value.length;
+  const line = value.slice(lineStart, lineEnd);
+  const match = line.match(/^(\s*)([-*+]|\d+\.)\s+(?:\[( |x|X)\]\s+)?(.*)$/);
+  if (!match) return false;
+  const indent = match[1] || "";
+  const marker = match[2];
+  const hasCheckbox = match[3] !== undefined;
+  const content = match[4] || "";
+  if (content.trim() === "" && pos === lineEnd) {
+    const before = value.slice(0, lineStart);
+    const after = value.slice(lineEnd);
+    const afterTrimmed = after.startsWith("\n") ? after.slice(1) : after;
+    const nextValue = before + "\n" + afterTrimmed;
+    const cursorPos = before.length + 1;
+    applyChange(nextValue, cursorPos);
+    return true;
+  }
+  let nextMarker = marker;
+  if (/^\d+\.$/.test(marker)) {
+    const n = parseInt(marker, 10);
+    if (!Number.isNaN(n)) nextMarker = `${n + 1}.`;
+  }
+  const checkbox = hasCheckbox ? "[ ] " : "";
+  const insert = "\n" + indent + nextMarker + " " + checkbox;
+  const nextValue = value.slice(0, pos) + insert + value.slice(pos);
+  const cursorPos = pos + insert.length;
+  applyChange(nextValue, cursorPos);
+  return true;
+}
+
+function handleListIndentOnTab(textarea, applyChange, shiftKey) {
+  if (!textarea) return false;
+  if (textarea.selectionStart !== textarea.selectionEnd) return false;
+  const pos = textarea.selectionStart;
+  const value = textarea.value;
+  const lineStart = value.lastIndexOf("\n", pos - 1) + 1;
+  let lineEnd = value.indexOf("\n", pos);
+  if (lineEnd === -1) lineEnd = value.length;
+  const line = value.slice(lineStart, lineEnd);
+  const match = line.match(/^(\s*)([-*+]|\d+\.)\s+(?:\[( |x|X)\]\s+)?/);
+  if (!match) return false;
+  const indent = "    ";
+  const currentIndent = match[1] || "";
+  if (shiftKey) {
+    if (!currentIndent.startsWith(indent)) return false;
+    const nextValue = value.slice(0, lineStart) + value.slice(lineStart + indent.length);
+    const cursorPos = Math.max(lineStart, pos - indent.length);
+    applyChange(nextValue, cursorPos);
+    return true;
+  }
+  const nextValue = value.slice(0, lineStart) + indent + value.slice(lineStart);
+  const cursorPos = pos + indent.length;
+  applyChange(nextValue, cursorPos);
+  return true;
+}
+
+function handleListClearOnDelete(textarea, applyChange) {
+  if (!textarea) return false;
+  if (textarea.selectionStart !== textarea.selectionEnd) return false;
+  const pos = textarea.selectionStart;
+  const value = textarea.value;
+  const lineStart = value.lastIndexOf("\n", pos - 1) + 1;
+  let lineEnd = value.indexOf("\n", pos);
+  if (lineEnd === -1) lineEnd = value.length;
+  const line = value.slice(lineStart, lineEnd);
+  const match = line.match(/^(\s*)([-*+]|\d+\.)\s+(?:\[( |x|X)\]\s+)?(.*)$/);
+  if (!match) return false;
+  const indent = match[1] || "";
+  const content = match[4] || "";
+  if (!indent || indent.length < 4) return false;
+  if (content.trim() !== "") return false;
+  if (pos < lineStart + indent.length) return false;
+  const nextValue = value.slice(0, lineStart) + indent.slice(4) + value.slice(lineStart + indent.length);
+  const cursorPos = Math.max(lineStart, pos - 4);
+  applyChange(nextValue, cursorPos);
+  return true;
+}
+
 function optionsToggleAsteriskWrap(marker) {
   const start = optionsMarkdownInput.selectionStart;
   const end = optionsMarkdownInput.selectionEnd;
@@ -1408,6 +1532,48 @@ function optionsToggleAsteriskWrap(marker) {
 }
 
 function optionsHandleEditorKeydown(e) {
+  if (e.key === "Tab") {
+    const handled = handleListIndentOnTab(optionsMarkdownInput, (nextValue, cursorPos) => {
+      optionsMarkdownInput.value = nextValue;
+      optionsMarkdownInput.setSelectionRange(cursorPos, cursorPos);
+      optionsUpdatePreview();
+      optionsUpdateCounts();
+      optionsScheduleSave();
+      optionsScheduleCaretUpdate();
+    }, e.shiftKey);
+    if (handled) {
+      e.preventDefault();
+      return;
+    }
+  }
+  if (e.key === "Delete" || e.key === "Backspace") {
+    const handled = handleListClearOnDelete(optionsMarkdownInput, (nextValue, cursorPos) => {
+      optionsMarkdownInput.value = nextValue;
+      optionsMarkdownInput.setSelectionRange(cursorPos, cursorPos);
+      optionsUpdatePreview();
+      optionsUpdateCounts();
+      optionsScheduleSave();
+      optionsScheduleCaretUpdate();
+    });
+    if (handled) {
+      e.preventDefault();
+      return;
+    }
+  }
+  if (e.key === "Enter") {
+    const handled = handleListContinuation(optionsMarkdownInput, (nextValue, cursorPos) => {
+      optionsMarkdownInput.value = nextValue;
+      optionsMarkdownInput.setSelectionRange(cursorPos, cursorPos);
+      optionsUpdatePreview();
+      optionsUpdateCounts();
+      optionsScheduleSave();
+      optionsScheduleCaretUpdate();
+    });
+    if (handled) {
+      e.preventDefault();
+      return;
+    }
+  }
   const start = optionsMarkdownInput.selectionStart;
   const end = optionsMarkdownInput.selectionEnd;
   const hasSelection = start !== end;
