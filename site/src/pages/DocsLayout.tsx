@@ -4,6 +4,7 @@ import { TocProvider, useToc } from "../contexts/TocContext";
 const DOC_TABS = [
   { slug: "get-started", label: "Get started" },
   { slug: "editor", label: "Editor" },
+  { slug: "vault", label: "Vault" },
   { slug: "themes", label: "Themes" },
   { slug: "fonts", label: "Fonts" },
   { slug: "export-template", label: "Export template" },

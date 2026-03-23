@@ -70,18 +70,40 @@ input {
 
 .options-title {
     display: flex;
-    justify-content: start;
+    flex-direction: row;
     align-items: center;
-    font-size: calc(var(--font-size) * 1.692);
-    font-weight: 600;
+    justify-content: flex-start;
     margin: 0 0 24px;
     color: var(--ink);
-    gap: 8px;
 }
 
-.options-title img {
-    width: 32px;
-    height: 32px;
+.options-title__brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1;
+}
+
+.options-title__lead {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: calc(var(--font-size) * 1.4);
+    font-weight: 600;
+}
+
+.options-title__brand img {
+    width: 28px;
+    height: 28px;
+}
+
+.options-title__version {
+    font-size: calc(var(--font-size) * 0.8);
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+    margin-left: 8px;
+    line-height: 1;
 }
 
 .options-tabs {
@@ -132,6 +154,34 @@ input {
 
 .options-tab-panel--vault {
     min-height: max(640px, calc(100vh - 170px));
+}
+
+.options-tab-panel--review {
+    padding-left: 24px;
+}
+
+.options-review {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.options-review__text {
+    margin: 0;
+    font-size: var(--font-size);
+    line-height: 1.5;
+    color: var(--muted);
+}
+
+.options-review__link {
+    display: inline-block;
+    text-decoration: none;
+    text-align: center;
+}
+
+.options-review__link:hover {
+    text-decoration: none;
 }
 
 .options-editor-root {

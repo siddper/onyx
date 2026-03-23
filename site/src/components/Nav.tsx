@@ -7,7 +7,7 @@ function Nav() {
         <img src="/icon.png" alt="Onyx" className="w-8 h-8" />
         <h1 className="text-xl font-bold text-ink">Onyx</h1>
       </Link>
-      <div className="flex items-center justify-center gap-8 text-sm font-medium">
+      <div className="flex items-center justify-center gap-10 text-sm font-medium">
         <a
           href="https://github.com/siddper/onyx"
           target="_blank"
@@ -16,7 +16,12 @@ function Nav() {
         >
           GitHub
         </a>
-
+        <Link
+          to="/changelog"
+          className="text-ink hover:text-muted transition-colors duration-300"
+        >
+          Changelog
+        </Link>
         <Link
           to="/docs"
           className="text-ink hover:text-muted transition-colors duration-300"

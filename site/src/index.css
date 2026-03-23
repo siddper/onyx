@@ -23,3 +23,7 @@
 ::selection {
     background: var(--color-accent-hover);
 }
+
+html, body {
+  background-color: var(--color-bg);
+}

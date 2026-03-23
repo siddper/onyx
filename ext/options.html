@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Onyx</title>
+        <title>Onyx - Settings</title>
         <link rel="stylesheet" href="options.css" />
         <style>
             @import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap");
@@ -13,8 +13,13 @@
     <body>
         <div class="options-page">
             <h1 class="options-title">
-                <img src="icon.png" />
-                Onyx
+                <span class="options-title__brand">
+                    <span class="options-title__lead">
+                        <img src="icon.png" alt="" />
+                        <span>Onyx</span>
+                    </span>
+                    <span class="options-title__version">v1.1</span>
+                </span>
             </h1>
             <div class="options-layout">
                 <div
@@ -51,6 +56,16 @@
                         aria-selected="false"
                     >
                         Editor
+                    </button>
+                    <button
+                        id="reviewTabBtn"
+                        class="options-tab"
+                        type="button"
+                        role="tab"
+                        aria-controls="reviewTabPanel"
+                        aria-selected="false"
+                    >
+                        Support 
                     </button>
                 </div>
 
@@ -769,7 +784,7 @@
                                     id="vaultSaveBtn"
                                     class="settings-btn"
                                     type="button"
-                                    title="Command/Ctrl + S"
+                                    title="Save file (⌘S or Ctrl+S)"
                                     disabled
                                 >
                                     Save
@@ -933,6 +948,29 @@
                                 ></div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <div
+                    id="reviewTabPanel"
+                    class="options-tab-panel options-tab-panel--review"
+                    role="tabpanel"
+                    aria-labelledby="reviewTabBtn"
+                    hidden
+                >
+                    <div class="options-review">
+                        <p class="options-review__text">
+                            If you're enjoying Onyx and like to support my work, I'd really appreciate if you left a review on the Chrome Web
+                            Store. Thanks <span>:)</span>
+                        </p>
+                        <a
+                            class="settings-btn options-review__link"
+                            href="https://chromewebstore.google.com/detail/onyx-markdown-notes-for-o/dnondieboejpiebkebiclbldblhapeaf"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Leave a review
+                        </a>
                     </div>
                 </div>
             </div>

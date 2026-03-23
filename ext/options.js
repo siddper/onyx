@@ -337,9 +337,11 @@ const savedVaultsList = document.getElementById("savedVaultsList");
 const settingsTabBtn = document.getElementById("settingsTabBtn");
 const vaultTabBtn = document.getElementById("vaultTabBtn");
 const editorTabBtn = document.getElementById("editorTabBtn");
+const reviewTabBtn = document.getElementById("reviewTabBtn");
 const settingsTabPanel = document.getElementById("settingsTabPanel");
 const vaultTabPanel = document.getElementById("vaultTabPanel");
 const editorTabPanel = document.getElementById("editorTabPanel");
+const reviewTabPanel = document.getElementById("reviewTabPanel");
 const optionsEditorRoot = document.getElementById("optionsEditorRoot");
 const optionsEditorWrap = document.getElementById("optionsEditorWrap");
 const optionsEditorResizer = document.getElementById("optionsEditorResizer");
@@ -377,9 +379,15 @@ const vaultExportBtn = document.getElementById("vaultExportBtn");
 const vaultDeleteBtn = document.getElementById("vaultDeleteBtn");
 
 function setActiveTab(tabId, { updateHash = true } = {}) {
-  const normalized = tabId === "editor" || tabId === "vault" ? tabId : "settings";
+  let normalized = "settings";
+  if (tabId === "editor") normalized = "editor";
+  else if (tabId === "vault") normalized = "vault";
+  else if (tabId === "review") normalized = "review";
+
   const showEditor = normalized === "editor";
   const showVault = normalized === "vault";
+  const showReview = normalized === "review";
+
   if (settingsTabBtn) {
     settingsTabBtn.classList.toggle("is-active", normalized === "settings");
     settingsTabBtn.setAttribute("aria-selected", String(normalized === "settings"));
@@ -392,23 +400,63 @@ function setActiveTab(tabId, { updateHash = true } = {}) {
     editorTabBtn.classList.toggle("is-active", showEditor);
     editorTabBtn.setAttribute("aria-selected", String(showEditor));
   }
+  if (reviewTabBtn) {
+    reviewTabBtn.classList.toggle("is-active", showReview);
+    reviewTabBtn.setAttribute("aria-selected", String(showReview));
+  }
   if (settingsTabPanel) settingsTabPanel.hidden = normalized !== "settings";
   if (vaultTabPanel) vaultTabPanel.hidden = !showVault;
   if (editorTabPanel) editorTabPanel.hidden = !showEditor;
+  if (reviewTabPanel) reviewTabPanel.hidden = !showReview;
 
   if (updateHash) {
-    const hash = normalized === "editor" ? "#editor" : normalized === "vault" ? "#vault" : "#settings";
+    const hash =
+      normalized === "editor"
+        ? "#editor"
+        : normalized === "vault"
+          ? "#vault"
+          : normalized === "review"
+            ? "#review"
+            : "#settings";
     history.replaceState(null, "", hash);
   }
+
+  const tabTitles = {
+    settings: "Onyx - Settings",
+    editor: "Onyx - Editor",
+    vault: "Onyx - Vault",
+    review: "Onyx - Review",
+  };
+  document.title = tabTitles[normalized] || "Onyx";
 }
 
 function initTabs() {
   const hash = window.location.hash || "";
-  const startTab = hash === "#editor" ? "editor" : hash === "#vault" ? "vault" : "settings";
+  const startTab =
+    hash === "#editor"
+      ? "editor"
+      : hash === "#vault"
+        ? "vault"
+        : hash === "#review"
+          ? "review"
+          : "settings";
   setActiveTab(startTab, { updateHash: false });
   if (settingsTabBtn) settingsTabBtn.addEventListener("click", () => setActiveTab("settings"));
   if (vaultTabBtn) vaultTabBtn.addEventListener("click", () => setActiveTab("vault"));
   if (editorTabBtn) editorTabBtn.addEventListener("click", () => setActiveTab("editor"));
+  if (reviewTabBtn) reviewTabBtn.addEventListener("click", () => setActiveTab("review"));
+  window.addEventListener("hashchange", () => {
+    const h = window.location.hash || "";
+    const tab =
+      h === "#editor"
+        ? "editor"
+        : h === "#vault"
+          ? "vault"
+          : h === "#review"
+            ? "review"
+            : "settings";
+    setActiveTab(tab, { updateHash: false });
+  });
 }
 
 let vaultDirHandle = null;
@@ -541,13 +589,20 @@ function vaultBeginInlineRename(entryEl, file) {
   entryEl.addEventListener("blur", cleanup, { once: true });
 }
 
+const VAULT_FILES_TOGGLE_HINT = " (⌘\\ or Ctrl+\\)";
+
 function vaultSetFilesVisibility(hidden) {
   if (!vaultLayout) return;
   vaultLayout.classList.toggle("files-hidden", hidden);
-  if (vaultToggleFilesBtn) vaultToggleFilesBtn.setAttribute("aria-label", hidden ? "Show file explorer" : "Hide file explorer");
-  if (vaultToggleFilesBtn) vaultToggleFilesBtn.setAttribute("title", hidden ? "Show file explorer" : "Hide file explorer");
-  if (vaultToggleFilesBtnInline) vaultToggleFilesBtnInline.setAttribute("aria-label", hidden ? "Show file explorer" : "Hide file explorer");
-  if (vaultToggleFilesBtnInline) vaultToggleFilesBtnInline.setAttribute("title", hidden ? "Show file explorer" : "Hide file explorer");
+  const showLabel = hidden ? `Show file explorer${VAULT_FILES_TOGGLE_HINT}` : `Hide file explorer${VAULT_FILES_TOGGLE_HINT}`;
+  if (vaultToggleFilesBtn) {
+    vaultToggleFilesBtn.setAttribute("aria-label", showLabel);
+    vaultToggleFilesBtn.setAttribute("title", showLabel);
+  }
+  if (vaultToggleFilesBtnInline) {
+    vaultToggleFilesBtnInline.setAttribute("aria-label", showLabel);
+    vaultToggleFilesBtnInline.setAttribute("title", showLabel);
+  }
 }
 
 function vaultUpdatePreview() {
@@ -1136,6 +1191,7 @@ function initVaultTab() {
   }
   initVaultEditorResizer();
   vaultRestoreDirectory();
+  if (vaultLayout) vaultSetFilesVisibility(vaultLayout.classList.contains("files-hidden"));
 }
 
 document.addEventListener("keydown", (e) => {
@@ -1144,6 +1200,12 @@ document.addEventListener("keydown", (e) => {
     e.preventDefault();
     if (!vaultActiveFile || !vaultEditorInput) return;
     vaultSaveActiveFile();
+  }
+  if ((e.metaKey || e.ctrlKey) && (e.key === "\\" || e.code === "Backslash")) {
+    if (!vaultTabPanel || vaultTabPanel.hidden || !vaultLayout) return;
+    e.preventDefault();
+    const hidden = vaultLayout.classList.contains("files-hidden");
+    vaultSetFilesVisibility(!hidden);
   }
 });
 

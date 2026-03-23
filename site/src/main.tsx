@@ -11,7 +11,9 @@ import Themes from './pages/docs/Themes'
 import Fonts from './pages/docs/Fonts'
 import ExportTemplate from './pages/docs/ExportTemplate'
 import CustomCss from './pages/docs/CustomCss'
+import Vault from './pages/docs/Vault'
 import Privacy from './pages/Privacy'
+import Changelog from './pages/Changelog'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -20,10 +22,12 @@ createRoot(document.getElementById('root')!).render(
         <Route element={<Layout />}>
           <Route index element={<Landing />} />
           <Route path="privacy" element={<Privacy />} />
+          <Route path="changelog" element={<Changelog />} />
           <Route path="docs" element={<DocsLayout />}>
             <Route index element={<Navigate to="get-started" replace />} />
             <Route path="get-started" element={<GetStarted />} />
             <Route path="editor" element={<Editor />} />
+            <Route path="vault" element={<Vault />} />
             <Route path="themes" element={<Themes />} />
             <Route path="fonts" element={<Fonts />} />
             <Route path="export-template" element={<ExportTemplate />} />

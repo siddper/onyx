@@ -58,6 +58,12 @@ export default function Landing() {
               </p>
             </li>
             <li>
+              <h3 className="font-semibold text-ink">Vault integration</h3>
+              <p className="text-muted text-sm mt-1">
+                Full vault browser with live file editing and sync between the web and your vault.
+              </p>
+            </li>
+            <li>
               <h3 className="font-semibold text-ink">Export to Obsidian</h3>
               <p className="text-muted text-sm mt-1">
                 One click sends the note to Obsidian via{" "}
@@ -110,18 +116,6 @@ export default function Landing() {
               <p className="text-muted text-sm mt-1">
                 Fonts (interface, editor, code), caret shape/animation, corner
                 radius, and custom CSS for the side panel.
-              </p>
-            </li>
-            <li>
-              <h3 className="font-semibold text-ink">Sync scroll</h3>
-              <p className="text-muted text-sm mt-1">
-                Sync scroll between the editor and the current page.
-              </p>
-            </li>
-            <li>
-              <h3 className="font-semibold text-ink">Compact mode</h3>
-              <p className="text-muted text-sm mt-1">
-                Compact mode for more editor space.
               </p>
             </li>
             <p className="text-muted text-sm mt-1">And so much more...</p>
