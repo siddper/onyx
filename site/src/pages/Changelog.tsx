@@ -44,7 +44,7 @@ export default function Changelog() {
       <VersionBlock
         isFirst
         version="v1.1"
-        date="Coming soon"
+        date="March 24, 2026"
         title="Editor, vault, and quality-of-life improvements."
       >
         <ul className="list-disc list-inside space-y-3">
@@ -71,7 +71,7 @@ export default function Changelog() {
 
       <VersionBlock
         version="v1.0"
-        date="February 9, 2025"
+        date="February 9, 2026"
         title="Onyx released!"
       >
         <p className="leading-relaxed">
