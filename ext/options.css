@@ -59,7 +59,7 @@ a {
 }
 
 .options-page {
-    max-width: 80%;
+    max-width: 90%;
     margin: 0 auto;
     padding: 32px 24px;
 }
@@ -110,13 +110,23 @@ input {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    min-width: 0;
+    grid-column: 1;
+    grid-row: 1;
 }
 
 .options-layout {
     display: grid;
-    grid-template-columns: 170px minmax(0, 1fr);
-    gap: 16px;
-    align-items: start;
+    --options-tabs-width: 190px;
+    --options-tabs-min: 36px;
+    --options-tabs-max: 260px;
+    --options-divider-gap: 12px;
+    grid-template-columns:
+        minmax(var(--options-tabs-min), var(--options-tabs-width))
+        calc(var(--options-divider-gap) * 2 + 10px)
+        minmax(0, 1fr);
+    gap: 0;
+    align-items: stretch;
 }
 
 .options-tab {
@@ -130,6 +140,28 @@ input {
     transition: background 0.2s ease;
     width: 100%;
     text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.options-tab__icon {
+    display: inline-flex;
+    width: 18px;
+    height: 18px;
+    color: currentColor;
+    flex: 0 0 auto;
+}
+
+.options-tab__icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.options-tab__label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .options-tab:hover {
@@ -140,8 +172,53 @@ input {
     background: var(--accent);
 }
 
+.options-layout-resizer {
+    grid-column: 2;
+    grid-row: 1;
+    width: calc(var(--options-divider-gap) * 2 + 10px);
+    cursor: col-resize;
+    position: relative;
+}
+
+.options-layout-resizer::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 4px;
+    bottom: 4px;
+    width: 1px;
+    transform: translateX(-50%);
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.options-layout:hover .options-layout-resizer::before,
+.options-layout:focus-within .options-layout-resizer::before,
+.options-layout.is-resizing .options-layout-resizer::before {
+    opacity: 0.35;
+}
+
+.options-layout.is-resizing,
+.options-layout.is-resizing * {
+    cursor: col-resize !important;
+    user-select: none !important;
+}
+
+.options-layout--compact-tabs .options-tab {
+    justify-content: center;
+    padding-inline: 10px;
+}
+
+.options-layout--compact-tabs .options-tab__label {
+    display: none;
+}
+
 .options-tab-panel {
+    grid-column: 3;
+    grid-row: 1;
     min-height: 0;
+    min-width: 0;
 }
 
 .options-tab-panel[hidden] {
@@ -154,10 +231,6 @@ input {
 
 .options-tab-panel--vault {
     min-height: max(640px, calc(100vh - 170px));
-}
-
-.options-tab-panel--review {
-    padding-left: 24px;
 }
 
 .options-review {

@@ -338,6 +338,9 @@ const settingsTabBtn = document.getElementById("settingsTabBtn");
 const vaultTabBtn = document.getElementById("vaultTabBtn");
 const editorTabBtn = document.getElementById("editorTabBtn");
 const reviewTabBtn = document.getElementById("reviewTabBtn");
+const optionsLayout = document.querySelector(".options-layout");
+const optionsTabs = document.querySelector(".options-tabs");
+const optionsLayoutResizer = document.getElementById("optionsLayoutResizer");
 const settingsTabPanel = document.getElementById("settingsTabPanel");
 const vaultTabPanel = document.getElementById("vaultTabPanel");
 const editorTabPanel = document.getElementById("editorTabPanel");
@@ -377,6 +380,52 @@ const vaultFakeCaret = document.getElementById("vaultFakeCaret");
 const vaultSaveBtn = document.getElementById("vaultSaveBtn");
 const vaultExportBtn = document.getElementById("vaultExportBtn");
 const vaultDeleteBtn = document.getElementById("vaultDeleteBtn");
+
+const OPTIONS_TABS_MIN_WIDTH = 36;
+const OPTIONS_TABS_MAX_WIDTH = 280;
+const OPTIONS_TABS_ICON_MODE_WIDTH = 70;
+
+function clampTabsWidth(width) {
+  return Math.max(OPTIONS_TABS_MIN_WIDTH, Math.min(OPTIONS_TABS_MAX_WIDTH, width));
+}
+
+function updateTabsCompactMode(width) {
+  if (!optionsLayout) return;
+  optionsLayout.classList.toggle("options-layout--compact-tabs", width <= OPTIONS_TABS_ICON_MODE_WIDTH);
+}
+
+function setTabsWidth(width) {
+  if (!optionsLayout) return;
+  const next = clampTabsWidth(width);
+  optionsLayout.style.setProperty("--options-tabs-width", `${next}px`);
+  updateTabsCompactMode(next);
+}
+
+function initOptionsLayoutResizer() {
+  if (!optionsLayout || !optionsTabs || !optionsLayoutResizer) return;
+  setTabsWidth(optionsTabs.getBoundingClientRect().width || 190);
+
+  optionsLayoutResizer.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = optionsTabs.getBoundingClientRect().width;
+    optionsLayout.classList.add("is-resizing");
+
+    const onMove = (ev) => {
+      const dx = ev.clientX - startX;
+      setTabsWidth(startWidth + dx);
+    };
+
+    const onUp = () => {
+      optionsLayout.classList.remove("is-resizing");
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  });
+}
 
 function setActiveTab(tabId, { updateHash = true } = {}) {
   let normalized = "settings";
@@ -710,11 +759,73 @@ function vaultStopCaretBlink() {
   }
 }
 
+const VAULT_WRAP_CLOSE = { "`": "`", "*": "*", "(": ")", "{": "}", "[": "]", "~": "~" };
+const VAULT_WRAP_OPEN = { Backquote: "`" };
+const VAULT_CLOSE_TO_OPEN = { "`": "`", "*": "*", ")": "(", "}": "{", "]": "[", "~": "~" };
+const VAULT_SOFT_TAB = "    ";
+
+function vaultEditorInsert(replaceStart, replaceEnd, text, cursorStart, cursorEnd) {
+  if (!vaultEditorInput) return;
+  vaultEditorInput.focus();
+  vaultEditorInput.setSelectionRange(replaceStart, replaceEnd);
+  document.execCommand("insertText", false, text);
+  vaultEditorInput.setSelectionRange(cursorStart, cursorEnd ?? cursorStart);
+  vaultDirty = true;
+  if (vaultSaveBtn) vaultSaveBtn.disabled = false;
+  vaultUpdatePreview();
+  vaultScheduleCaretUpdate();
+  vaultScheduleAutosave();
+}
+
+function vaultToggleAsteriskWrap(marker) {
+  const start = vaultEditorInput.selectionStart;
+  const end = vaultEditorInput.selectionEnd;
+  const value = vaultEditorInput.value;
+  const markerLen = marker.length;
+  const hasSelection = start !== end;
+
+  if (hasSelection) {
+    const selected = value.slice(start, end);
+    if (
+      selected.length >= markerLen * 2 &&
+      selected.startsWith(marker) &&
+      selected.endsWith(marker)
+    ) {
+      const unwrapped = selected.slice(markerLen, selected.length - markerLen);
+      vaultEditorInsert(start, end, unwrapped, start, start + unwrapped.length);
+      return;
+    }
+    const hasOuterWrap =
+      start >= markerLen &&
+      value.slice(start - markerLen, start) === marker &&
+      value.slice(end, end + markerLen) === marker;
+    if (hasOuterWrap) {
+      vaultEditorInsert(start - markerLen, end + markerLen, selected, start - markerLen, end - markerLen);
+      return;
+    }
+    vaultEditorInsert(start, end, marker + selected + marker, start + markerLen, end + markerLen);
+    return;
+  }
+
+  const hasOuterWrap =
+    start >= markerLen &&
+    value.slice(start - markerLen, start) === marker &&
+    value.slice(start, start + markerLen) === marker;
+  if (hasOuterWrap) {
+    vaultEditorInsert(start - markerLen, start + markerLen, "", start - markerLen, start - markerLen);
+    return;
+  }
+
+  vaultEditorInsert(start, end, marker + marker, start + markerLen, start + markerLen);
+}
+
 function vaultHandleEditorKeydown(e) {
   if (e.key === "Tab") {
     const handled = handleListIndentOnTab(vaultEditorInput, (nextValue, cursorPos) => {
       vaultEditorInput.value = nextValue;
       vaultEditorInput.setSelectionRange(cursorPos, cursorPos);
+      vaultDirty = true;
+      if (vaultSaveBtn) vaultSaveBtn.disabled = false;
       vaultUpdatePreview();
       vaultScheduleCaretUpdate();
       vaultScheduleAutosave();
@@ -728,6 +839,8 @@ function vaultHandleEditorKeydown(e) {
     const handled = handleListClearOnDelete(vaultEditorInput, (nextValue, cursorPos) => {
       vaultEditorInput.value = nextValue;
       vaultEditorInput.setSelectionRange(cursorPos, cursorPos);
+      vaultDirty = true;
+      if (vaultSaveBtn) vaultSaveBtn.disabled = false;
       vaultUpdatePreview();
       vaultScheduleCaretUpdate();
       vaultScheduleAutosave();
@@ -741,6 +854,8 @@ function vaultHandleEditorKeydown(e) {
     const handled = handleListContinuation(vaultEditorInput, (nextValue, cursorPos) => {
       vaultEditorInput.value = nextValue;
       vaultEditorInput.setSelectionRange(cursorPos, cursorPos);
+      vaultDirty = true;
+      if (vaultSaveBtn) vaultSaveBtn.disabled = false;
       vaultUpdatePreview();
       vaultScheduleCaretUpdate();
       vaultScheduleAutosave();
@@ -750,17 +865,96 @@ function vaultHandleEditorKeydown(e) {
       return;
     }
   }
-  if (e.key !== "Tab" || !vaultEditorInput) return;
-  e.preventDefault();
+  if (!vaultEditorInput) return;
   const start = vaultEditorInput.selectionStart;
   const end = vaultEditorInput.selectionEnd;
+  const hasSelection = start !== end;
   const value = vaultEditorInput.value;
-  const insert = "    ";
-  vaultEditorInput.value = value.slice(0, start) + insert + value.slice(end);
-  const nextPos = start + insert.length;
-  vaultEditorInput.setSelectionRange(nextPos, nextPos);
-  vaultUpdatePreview();
-  vaultScheduleCaretUpdate();
+  const openChar = VAULT_WRAP_OPEN[e.key] ?? e.key;
+  const closeChar = VAULT_WRAP_CLOSE[openChar] ?? VAULT_WRAP_CLOSE[e.key];
+  const isClosingChar = VAULT_CLOSE_TO_OPEN[e.key] !== undefined || VAULT_WRAP_CLOSE[e.key] === e.key;
+
+  if (!hasSelection && isClosingChar && value[start] === e.key) {
+    e.preventDefault();
+    vaultEditorInput.setSelectionRange(start + 1, start + 1);
+    vaultScheduleCaretUpdate();
+    return;
+  }
+
+  if ((e.metaKey || e.ctrlKey) && e.key === "b") {
+    e.preventDefault();
+    vaultToggleAsteriskWrap("**");
+    return;
+  }
+
+  if ((e.metaKey || e.ctrlKey) && e.key === "i") {
+    e.preventDefault();
+    vaultToggleAsteriskWrap("*");
+    return;
+  }
+
+  if (hasSelection && e.key === "=") {
+    e.preventDefault();
+    const selected = value.slice(start, end);
+    vaultEditorInsert(start, end, "==" + selected + "==", start + 2, start + 2 + selected.length);
+    return;
+  }
+
+  if (!hasSelection && e.key === "Backspace" && start > 0) {
+    if (start >= VAULT_SOFT_TAB.length && value.slice(start - VAULT_SOFT_TAB.length, start) === VAULT_SOFT_TAB) {
+      e.preventDefault();
+      vaultEditorInsert(start - VAULT_SOFT_TAB.length, start, "", start - VAULT_SOFT_TAB.length, start - VAULT_SOFT_TAB.length);
+      return;
+    }
+    const charBefore = value[start - 1];
+    const charAfter = value[start];
+    const expectedClose = VAULT_WRAP_CLOSE[charBefore];
+    if (expectedClose !== undefined && charAfter === expectedClose) {
+      e.preventDefault();
+      vaultEditorInsert(start - 1, start + 1, "", start - 1, start - 1);
+      return;
+    }
+  }
+
+  if (!hasSelection && e.key === "Delete" && start > 0 && start < value.length) {
+    if (value.slice(start, start + VAULT_SOFT_TAB.length) === VAULT_SOFT_TAB) {
+      e.preventDefault();
+      vaultEditorInsert(start, start + VAULT_SOFT_TAB.length, "", start, start);
+      return;
+    }
+    const charBefore = value[start - 1];
+    const charAfter = value[start];
+    const expectedOpen = VAULT_CLOSE_TO_OPEN[charAfter];
+    if (expectedOpen !== undefined && charBefore === expectedOpen) {
+      e.preventDefault();
+      vaultEditorInsert(start - 1, start + 1, "", start - 1, start - 1);
+      return;
+    }
+  }
+
+  if (hasSelection && closeChar) {
+    e.preventDefault();
+    const selected = value.slice(start, end);
+    vaultEditorInsert(
+      start,
+      end,
+      openChar + selected + closeChar,
+      start + openChar.length,
+      start + openChar.length + selected.length
+    );
+    return;
+  }
+
+  if (!hasSelection && closeChar) {
+    e.preventDefault();
+    vaultEditorInsert(start, end, openChar + closeChar, start + openChar.length, start + openChar.length);
+    return;
+  }
+
+  if (e.key === "Tab") {
+    e.preventDefault();
+    vaultEditorInsert(start, end, VAULT_SOFT_TAB, start + VAULT_SOFT_TAB.length, start + VAULT_SOFT_TAB.length);
+  }
 }
 
 function vaultRenderFileList() {
@@ -2887,6 +3081,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 loadSettings().then(() => {
+  initOptionsLayoutResizer();
   initOptionsEditor();
   initTabs();
   initVaultTab();

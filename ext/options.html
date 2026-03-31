@@ -34,8 +34,12 @@
                         role="tab"
                         aria-controls="settingsTabPanel"
                         aria-selected="true"
+                        aria-label="Settings"
                     >
-                        Settings
+                        <span class="options-tab__icon" aria-hidden="true">
+                            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M11 10.27L7 3.34m4 10.39l-4 6.93M12 22v-2m0-18v2m2 8h8m-5 8.66l-1-1.73m1-15.59l-1 1.73M2 12h2m16.66 5l-1.73-1m1.73-9l-1.73 1M3.34 17l1.73-1M3.34 7l1.73 1"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="12" r="8"/></g></svg>
+                        </span>
+                        <span class="options-tab__label">Settings</span>
                     </button>
                     <button
                         id="vaultTabBtn"
@@ -44,8 +48,12 @@
                         role="tab"
                         aria-controls="vaultTabPanel"
                         aria-selected="false"
+                        aria-label="Vault"
                     >
-                        Vault
+                        <span class="options-tab__icon" aria-hidden="true">
+                            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/><path d="m7.9 7.9l2.7 2.7"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/><path d="m13.4 10.6l2.7-2.7"/><circle cx="7.5" cy="16.5" r=".5" fill="currentColor"/><path d="m7.9 16.1l2.7-2.7"/><circle cx="16.5" cy="16.5" r=".5" fill="currentColor"/><path d="m13.4 13.4l2.7 2.7"/><circle cx="12" cy="12" r="2"/></g></svg>
+                        </span>
+                        <span class="options-tab__label">Vault</span>
                     </button>
                     <button
                         id="editorTabBtn"
@@ -54,8 +62,12 @@
                         role="tab"
                         aria-controls="editorTabPanel"
                         aria-selected="false"
+                        aria-label="Editor"
                     >
-                        Editor
+                        <span class="options-tab__icon" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 8.7 2.7a2.41 2.41 0 0 0-3.4 0L2.7 5.3a2.41 2.41 0 0 0 0 3.4L7 13"/><path d="m8 6 2-2"/><path d="m18 16 2-2"/><path d="m17 11 4.3 4.3c.94.94.94 2.46 0 3.4l-2.6 2.6c-.94.94-2.46.94-3.4 0L11 17"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
+                        </span>
+                        <span class="options-tab__label">Editor</span>
                     </button>
                     <button
                         id="reviewTabBtn"
@@ -64,10 +76,21 @@
                         role="tab"
                         aria-controls="reviewTabPanel"
                         aria-selected="false"
+                        aria-label="Support"
                     >
-                        Support 
+                        <span class="options-tab__icon" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 12h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 14"/><path d="m7 18 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9"/><path d="m2 13 6 6"/></svg>
+                        </span>
+                        <span class="options-tab__label">Support</span>
                     </button>
                 </div>
+                <div
+                    id="optionsLayoutResizer"
+                    class="options-layout-resizer"
+                    role="separator"
+                    aria-label="Resize tabs"
+                    aria-orientation="vertical"
+                ></div>
 
                 <div
                     id="settingsTabPanel"
