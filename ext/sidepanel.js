@@ -1318,6 +1318,15 @@ function editorInsert(replaceStart, replaceEnd, text, cursorStart, cursorEnd) {
   scheduleCaretUpdate();
 }
 
+function handleEmptyListExit(value, lineStart, lineEnd, applyChange) {
+  const before = value.slice(0, lineStart);
+  const after = value.slice(lineEnd);
+  const afterTrimmed = after.startsWith("\n") ? after.slice(1) : after;
+  const nextValue = before + "\n" + afterTrimmed;
+  const cursorPos = before.length + 1;
+  applyChange(nextValue, cursorPos);
+}
+
 function handleListContinuation(textarea, applyChange) {
   if (!textarea) return false;
   if (textarea.selectionStart !== textarea.selectionEnd) return false;
@@ -1334,12 +1343,13 @@ function handleListContinuation(textarea, applyChange) {
   const hasCheckbox = match[3] !== undefined;
   const content = match[4] || "";
   if (content.trim() === "" && pos === lineEnd) {
-    const before = value.slice(0, lineStart);
-    const after = value.slice(lineEnd);
-    const afterTrimmed = after.startsWith("\n") ? after.slice(1) : after;
-    const nextValue = before + "\n" + afterTrimmed;
-    const cursorPos = before.length + 1;
-    applyChange(nextValue, cursorPos);
+    if (indent.length >= 4) {
+      const nextValue = value.slice(0, lineStart) + indent.slice(4) + value.slice(lineStart + indent.length);
+      const cursorPos = Math.max(lineStart, pos - 4);
+      applyChange(nextValue, cursorPos);
+      return true;
+    }
+    handleEmptyListExit(value, lineStart, lineEnd, applyChange);
     return true;
   }
   let nextMarker = marker;
@@ -1364,15 +1374,20 @@ function handleListIndentOnTab(textarea, applyChange, shiftKey) {
   let lineEnd = value.indexOf("\n", pos);
   if (lineEnd === -1) lineEnd = value.length;
   const line = value.slice(lineStart, lineEnd);
-  const match = line.match(/^(\s*)([-*+]|\d+\.)\s+(?:\[( |x|X)\]\s+)?/);
+  const match = line.match(/^(\s*)([-*+]|\d+\.)\s+(?:\[( |x|X)\]\s+)?(.*)$/);
   if (!match) return false;
   const indent = "    ";
   const currentIndent = match[1] || "";
+  const content = match[4] || "";
   if (shiftKey) {
-    if (!currentIndent.startsWith(indent)) return false;
-    const nextValue = value.slice(0, lineStart) + value.slice(lineStart + indent.length);
-    const cursorPos = Math.max(lineStart, pos - indent.length);
-    applyChange(nextValue, cursorPos);
+    if (currentIndent.startsWith(indent)) {
+      const nextValue = value.slice(0, lineStart) + value.slice(lineStart + indent.length);
+      const cursorPos = Math.max(lineStart, pos - indent.length);
+      applyChange(nextValue, cursorPos);
+      return true;
+    }
+    if (content.trim() !== "") return false;
+    handleEmptyListExit(value, lineStart, lineEnd, applyChange);
     return true;
   }
   const nextValue = value.slice(0, lineStart) + indent + value.slice(lineStart);
@@ -1394,12 +1409,15 @@ function handleListClearOnDelete(textarea, applyChange) {
   if (!match) return false;
   const indent = match[1] || "";
   const content = match[4] || "";
-  if (!indent || indent.length < 4) return false;
   if (content.trim() !== "") return false;
   if (pos < lineStart + indent.length) return false;
-  const nextValue = value.slice(0, lineStart) + indent.slice(4) + value.slice(lineStart + indent.length);
-  const cursorPos = Math.max(lineStart, pos - 4);
-  applyChange(nextValue, cursorPos);
+  if (indent.length >= 4) {
+    const nextValue = value.slice(0, lineStart) + indent.slice(4) + value.slice(lineStart + indent.length);
+    const cursorPos = Math.max(lineStart, pos - 4);
+    applyChange(nextValue, cursorPos);
+    return true;
+  }
+  handleEmptyListExit(value, lineStart, lineEnd, applyChange);
   return true;
 }
 
