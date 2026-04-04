@@ -384,6 +384,9 @@ const vaultDeleteBtn = document.getElementById("vaultDeleteBtn");
 const OPTIONS_TABS_MIN_WIDTH = 36;
 const OPTIONS_TABS_MAX_WIDTH = 280;
 const OPTIONS_TABS_ICON_MODE_WIDTH = 70;
+let optionsTabsWidthPref = null;
+let optionsTabsWidth = null;
+let vaultFilesHiddenPref = null;
 
 function clampTabsWidth(width) {
   return Math.max(OPTIONS_TABS_MIN_WIDTH, Math.min(OPTIONS_TABS_MAX_WIDTH, width));
@@ -397,13 +400,18 @@ function updateTabsCompactMode(width) {
 function setTabsWidth(width) {
   if (!optionsLayout) return;
   const next = clampTabsWidth(width);
+  optionsTabsWidth = next;
   optionsLayout.style.setProperty("--options-tabs-width", `${next}px`);
   updateTabsCompactMode(next);
 }
 
 function initOptionsLayoutResizer() {
   if (!optionsLayout || !optionsTabs || !optionsLayoutResizer) return;
-  setTabsWidth(optionsTabs.getBoundingClientRect().width || 190);
+  const initialWidth =
+    typeof optionsTabsWidthPref === "number"
+      ? optionsTabsWidthPref
+      : optionsTabs.getBoundingClientRect().width || 190;
+  setTabsWidth(initialWidth);
 
   optionsLayoutResizer.addEventListener("mousedown", (e) => {
     e.preventDefault();
@@ -420,6 +428,9 @@ function initOptionsLayoutResizer() {
       optionsLayout.classList.remove("is-resizing");
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
+      if (typeof optionsTabsWidth === "number") {
+        saveSettings({ optionsTabsWidth });
+      }
     };
 
     window.addEventListener("mousemove", onMove);
@@ -640,7 +651,7 @@ function vaultBeginInlineRename(entryEl, file) {
 
 const VAULT_FILES_TOGGLE_HINT = " (⌘\\ or Ctrl+\\)";
 
-function vaultSetFilesVisibility(hidden) {
+function vaultSetFilesVisibility(hidden, { persist = true } = {}) {
   if (!vaultLayout) return;
   vaultLayout.classList.toggle("files-hidden", hidden);
   const showLabel = hidden ? `Show file explorer${VAULT_FILES_TOGGLE_HINT}` : `Hide file explorer${VAULT_FILES_TOGGLE_HINT}`;
@@ -652,6 +663,7 @@ function vaultSetFilesVisibility(hidden) {
     vaultToggleFilesBtnInline.setAttribute("aria-label", showLabel);
     vaultToggleFilesBtnInline.setAttribute("title", showLabel);
   }
+  if (persist) saveSettings({ vaultFilesHidden: hidden });
 }
 
 function vaultUpdatePreview() {
@@ -1385,7 +1397,13 @@ function initVaultTab() {
   }
   initVaultEditorResizer();
   vaultRestoreDirectory();
-  if (vaultLayout) vaultSetFilesVisibility(vaultLayout.classList.contains("files-hidden"));
+  if (vaultLayout) {
+    const hidden =
+      typeof vaultFilesHiddenPref === "boolean"
+        ? vaultFilesHiddenPref
+        : vaultLayout.classList.contains("files-hidden");
+    vaultSetFilesVisibility(hidden, { persist: false });
+  }
 }
 
 document.addEventListener("keydown", (e) => {
@@ -2744,6 +2762,12 @@ function applyFontSize(value) {
 async function loadSettings() {
   const data = await chrome.storage.sync.get(EDITOR_SETTINGS_KEY);
   const s = data[EDITOR_SETTINGS_KEY] || {};
+  if (typeof s.optionsTabsWidth === "number") {
+    optionsTabsWidthPref = clampTabsWidth(s.optionsTabsWidth);
+  }
+  if (typeof s.vaultFilesHidden === "boolean") {
+    vaultFilesHiddenPref = s.vaultFilesHidden;
+  }
   customThemesCache = s.customThemes && typeof s.customThemes === "object" ? s.customThemes : {};
   if (themeSelect) {
     themeSelect.querySelectorAll('option[value^="custom:"]').forEach((o) => o.remove());
@@ -3075,6 +3099,14 @@ chrome.storage.onChanged.addListener((changes, area) => {
     if (s.vaultAutosave !== undefined) {
       vaultAutosaveEnabled = s.vaultAutosave !== false;
       if (vaultAutosaveToggle) vaultAutosaveToggle.checked = vaultAutosaveEnabled;
+    }
+    if (typeof s.optionsTabsWidth === "number") {
+      optionsTabsWidthPref = clampTabsWidth(s.optionsTabsWidth);
+      setTabsWidth(optionsTabsWidthPref);
+    }
+    if (typeof s.vaultFilesHidden === "boolean") {
+      vaultFilesHiddenPref = s.vaultFilesHidden;
+      vaultSetFilesVisibility(vaultFilesHiddenPref, { persist: false });
     }
     if (s.caretStyle) {
       optionsCaretStyle = s.caretStyle;
